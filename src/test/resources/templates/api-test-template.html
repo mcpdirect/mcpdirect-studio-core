@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>API 测试界面 - [[${apiInfo.title}]]</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .api-header { background-color: #f5f5f5; padding: 20px; border-radius: 5px; margin-bottom: 30px; }
+        .endpoint { border: 1px solid #ddd; margin-bottom: 30px; padding: 20px; border-radius: 5px; }
+        .method { font-weight: bold; padding: 3px 8px; border-radius: 3px; color: white; display: inline-block; margin-right: 10px; }
+        .get { background-color: #61affe; }
+        .post { background-color: #49cc90; }
+        .put { background-color: #fca130; }
+        .delete { background-color: #f93e3e; }
+        .patch { background-color: #50e3c2; }
+        .operation-header { margin-bottom: 15px; }
+        .operation-desc { color: #555; margin: 10px 0; }
+        .param-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .param-table th, .param-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .param-table th { background-color: #f2f2f2; }
+        .param-table tr:nth-child(even) { background-color: #f9f9f9; }
+        .required { color: red; }
+        .send-btn { background-color: #4CAF50; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        .response { margin-top: 20px; border: 1px solid #ddd; padding: 15px; background-color: #f9f9f9; border-radius: 5px; }
+        .response pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
+        .section-title { border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="api-header">
+        <h1>[[${apiInfo.title}]] <small>v[[${apiInfo.version}]]</small></h1>
+        <p th:if="${apiInfo.description}" th:text="${apiInfo.description}"></p>
+        <p th:if="${apiInfo.termsOfService}"><strong>服务条款:</strong> [[${apiInfo.termsOfService}]]</p>
+        <p th:if="${apiInfo.contact}"><strong>联系信息:</strong> [[${apiInfo.contact.name}]] ([[${apiInfo.contact.email}]])</p>
+    </div>
+    
+    <h2 class="section-title">API 端点</h2>
+    
+    <div th:each="endpoint : ${endpoints}">
+        <div class="endpoint">
+            <h3>[[${endpoint.path}]]</h3>
+            <p th:if="${endpoint.description}" class="operation-desc" th:text="${endpoint.description}"></p>
+            
+            <div th:each="operation : ${endpoint.operations}">
+                <div class="operation-header">
+                    <span class="method [[${operation.method}]]">[[${operation.method}]]</span>
+                    <strong>[[${operation.summary}]]</strong>
+                </div>
+                <p th:if="${operation.description}" class="operation-desc" th:text="${operation.description}"></p>
+                
+                <div th:if="${not #lists.isEmpty(operation.parameters)}">
+                    <h4>参数</h4>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>名称</th>
+                                <th>位置</th>
+                                <th>类型</th>
+                                <th>是否必需</th>
+                                <th>描述</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="param : ${operation.parameters}">
+                                <td>[[${param.name}]]</td>
+
+                                <td>[[${param.schema.type}]]</td>
+                                <td><span th:if="${param.required}" class="required">是</span><span th:unless="${param.required}">否</span></td>
+                                <td>[[${param.description}]]</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div th:if="${operation.requestBody}">
+                    <h4>请求体</h4>
+                    <p th:if="${operation.requestBody.description}" th:text="${operation.requestBody.description}"></p>
+                    <textarea th:if="${operation.requestBody.content}" style="width: 100%; height: 150px; font-family: monospace;" 
+                              th:text="${operation.requestBody.content}"></textarea>
+                </div>
+                
+                <form class="test-form" th:attr="data-path=${endpoint.path}, data-method=${operation.method}">
+                    <h4>测试请求</h4>
+                    
+                    <div th:each="param : ${operation.parameters}">
+                        <div style="margin: 10px 0;">
+
+                            <input type="text" th:name="${param.name}" style="width: 100%; padding: 5px;" 
+                                   th:placeholder="类型: [[${param.schema.type}]]" th:required="${param.required}">
+                            <p th:if="${param.description}" style="margin: 5px 0 0 0; color: #666; font-size: 0.9em;" 
+                               th:text="${param.description}"></p>
+                        </div>
+                    </div>
+                    
+                    <div th:if="${operation.requestBody}">
+                        <label>请求体 (JSON)</label>
+                        <textarea th:name="requestBody" style="width: 100%; height: 100px; font-family: monospace;"></textarea>
+                    </div>
+                    
+                    <button type="button" class="send-btn" onclick="sendRequest(this)">发送请求</button>
+                </form>
+                
+                <div class="response" style="display: none;">
+                    <h4>响应</h4>
+                    <pre class="response-content"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function sendRequest(button) {
+            const form = button.closest('.test-form');
+            const path = form.getAttribute('data-path');
+            const method = form.getAttribute('data-method');
+            const responseDiv = form.nextElementSibling;
+            
+            // 收集表单数据
+            const params = {};
+            const bodyParams = {};
+            let requestBody = null;
+            
+            const inputs = form.querySelectorAll('input');
+            inputs.forEach(input => {
+                if (input.value) {
+                    params[input.name] = input.value;
+                }
+            });
+            
+            const textareas = form.querySelectorAll('textarea[name="requestBody"]');
+            if (textareas.length > 0 && textareas[0].value) {
+                try {
+                    requestBody = JSON.parse(textareas[0].value);
+                } catch (e) {
+                    alert('请求体必须是有效的JSON');
+                    return;
+                }
+            }
+            
+            // 构建URL (处理路径参数和查询参数)
+            let url = path;
+            Object.keys(params).forEach(key => {
+                if (url.includes(`{${key}}`)) {
+                    url = url.replace(`{${key}}`, encodeURIComponent(params[key]));
+                    delete params[key];
+                }
+            });
+            
+            // 添加查询参数
+            const queryParams = new URLSearchParams();
+            Object.keys(params).forEach(key => {
+                queryParams.append(key, params[key]);
+            });
+            
+            if (queryParams.toString()) {
+                url += (url.includes('?') ? '&' : '?') + queryParams.toString();
+            }
+            
+            // 显示加载状态
+            button.disabled = true;
+            button.textContent = '发送中...';
+            responseDiv.style.display = 'block';
+            responseDiv.querySelector('.response-content').textContent = '请求中...';
+            
+            // 发送请求
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: method !== 'GET' && requestBody ? JSON.stringify(requestBody) : null
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                responseDiv.querySelector('.response-content').textContent = 
+                    JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                responseDiv.querySelector('.response-content').textContent = 
+                    '错误: ' + error.message;
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.textContent = '发送请求';
+            });
+        }
+    </script>
+</body>
+</html>

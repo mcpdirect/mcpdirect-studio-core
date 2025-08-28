@@ -1,0 +1,6 @@
+{
+  "ai.mcpdirect.studio": {
+    "hstp_webport": "$$AI_MCPDIRECT_HSTP_WEBPORT,'https://hstp.mcpdirect.ai/hstp/'$$",
+    "admin_provider":"$$AI_MCPDIRECT_ADMIN_PROVIDER,'admin.mcpdirect.ai'$$"
+  }
+}

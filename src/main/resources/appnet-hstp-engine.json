@@ -1,0 +1,6 @@
+{
+  "_hosts" : ["localhost:53100"],
+  "gateways": ["$$AI_MCPDIRECT_HSTP_GATEWAY,'hstp.mcpdirect.ai:53100'$$"],
+  "serviceSelectionPolicy": "|peerResolve",
+  "properties": "classpath:ai.mcpdirect.studio.MCPDirectStudio//appnet-hstp-engine-properties.json"
+}
