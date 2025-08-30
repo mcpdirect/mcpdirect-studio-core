@@ -7,6 +7,7 @@ import ai.mcpdirect.studio.handler.*;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
 import appnet.hstp.*;
 import appnet.hstp.annotation.ServiceScan;
+import appnet.hstp.engine.HstpServiceEngine;
 import appnet.hstp.engine.util.JSON;
 import appnet.hstp.exception.ServiceException;
 import appnet.hstp.exception.ServiceNotFoundException;
@@ -40,7 +41,7 @@ public class MCPDirectStudio {
     private static final String hstpWebport;
     private static final String adminProvider;
     private static final String authenticationServiceAddress;
-    private static final String machineId;
+    private static final long machineId;
     private static String machineName;
     private static USL aitoolsManagementUSL;
     private static USL accountServiceUSL;
@@ -81,16 +82,17 @@ public class MCPDirectStudio {
                         }
                     }
                 }
+                if(mid==null) {
+                    process = Runtime.getRuntime().exec("wmic computersystem get model");
+                    reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-                process = Runtime.getRuntime().exec("wmic computersystem get model");
-                reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-                boolean firstLine = true;
-                while ((line = reader.readLine()) != null) {
-                    if (!line.trim().isEmpty() && !firstLine) {
-                        machineName = line.trim();
+                    boolean firstLine = true;
+                    while ((line = reader.readLine()) != null) {
+                        if (!line.trim().isEmpty() && !firstLine) {
+                            machineName = line.trim();
+                        }
+                        firstLine = false;
                     }
-                    firstLine = false;
                 }
             }
             // Linux系统可以读取/etc/machine-id或/var/lib/dbus/machine-id
@@ -101,7 +103,7 @@ public class MCPDirectStudio {
                 BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream()));
                 mid = reader.readLine();
-            } else if(os.contains("macos")) {
+            } else if(os.contains("mac os")||os.contains("macos")) {
                 //macOS
                 Process process = Runtime.getRuntime().exec(
                         "system_profiler SPHardwareDataType | grep UUID");
@@ -153,27 +155,30 @@ public class MCPDirectStudio {
 //        }catch (Exception ignore){}
 
         if(mid==null) try {
+            String home = System.getProperty("user.home");
             BasicFileAttributes attrs = Files.readAttributes(
-                    Path.of(System.getProperty("user.home")), BasicFileAttributes.class);
+                    Path.of(home), BasicFileAttributes.class);
             
             FileTime creationTime = attrs.creationTime();
-            mid = Long.toString(creationTime.toMillis());
+            mid = System.getProperty("user.name")+","+home+","+ creationTime.toMillis();
         } catch (IOException e) {
-            mid = "0";
+            mid = System.getProperty("user.name")+","+System.getProperty("user.home")+",0";
         }
 
-        machineId = mid;
-        ServiceEngineFactory.setServiceEngineIdSeed("ai.mcpdirect.studio."+machineId);
+        machineId = AIPortAccessKeyValidator.hashCode(mid);
+//        ServiceEngineFactory.setServiceEngineIdSeed("ai.mcpdirect.studio."+machineId);
         if(machineName==null){
             machineName = System.getProperty("os.name");
         }
 
     }
-    private static void start() throws Exception {
-        serviceEngine = ServiceEngineFactory.getServiceEngine();
+    private static void start(String keySeed) throws Exception {
+//        serviceEngine = ServiceEngineFactory.getServiceEngine();
 //        hstpWebport= serviceEngine.getProperty("appnet.hstp.labs.aiport.mcpwings/hstp_webport").toString();
 //        String adminProvider = serviceEngine.getProperty("appnet.hstp.labs.aiport.mcpwings/admin_provider").toString();
 //        authenticationServiceAddress="authentication@"+ adminProvider;
+        serviceEngine = new HstpServiceEngine(null,null,
+                "ai.mcpdirect.studio."+machineId+"."+keySeed);
         accountServiceUSL = new USL("account.management", adminProvider);
         aitoolsManagementUSL = new USL("aitools.management", adminProvider);
         LOG.info("ServiceEngine {} started", serviceEngine);
@@ -344,6 +349,7 @@ public class MCPDirectStudio {
     }
     private static class AccountDetails {
         public String account;
+        public String accountKeySeed;
         public String accessToken;
         public int accessTokenType;
         public boolean newAccount;
@@ -376,7 +382,7 @@ public class MCPDirectStudio {
 //                    "ai.mcpdirect.studio."+machineId+"."+accountDetails.userInfo.id);
 //            System.setProperty(ServiceEngineConfiguration.ENGINE_ID_SEED_PROPERTY,
 //                    "ai.mcpdirect.studio."+machineId);
-            start();
+            start(accountDetails.accountKeySeed);
             authHeaders = new ServiceHeaders()
                     .addHeader("hstp-auth", accountDetails.accessToken)
                     .addHeader("mcpdirect-device",userDevice);
@@ -392,7 +398,8 @@ public class MCPDirectStudio {
         }
         long milliseconds = System.currentTimeMillis();
         String hashedPassword = SHA256.digest(password);
-        String userDevice = ServiceEngineFactory.getEngineId();
+//        String userDevice = ServiceEngineFactory.getEngineId();
+        String userDevice = serviceEngine.getEngineId();
         SimpleServiceResponseMessage<AccountDetails> httpResp = HstpHttpClient.hstpRequest(
                 hstpWebport,authenticationServiceAddress+"/login",userDevice,
                 Map.of("account",account,
@@ -443,7 +450,7 @@ public class MCPDirectStudio {
         String language = languageCode+"-"+countryCode;
         SimpleServiceResponseMessage<AIPortAccessKeyCredential> httpResp = HstpHttpClient.hstpRequest(
                 hstpWebport,authenticationServiceAddress+"/register/anonymous",null,
-                Map.of("deviceId",machineId,"userInfo",Map.of("language",language)),
+                Map.of("deviceId",Long.toString(machineId),"userInfo",Map.of("language",language)),
                 new TypeReference<>(){});
         if(httpResp.code== Service.SERVICE_SUCCESSFUL){
             if((otpId = httpResp.data.id)>0){
@@ -462,7 +469,8 @@ public class MCPDirectStudio {
         }
         long milliseconds = System.currentTimeMillis();
         String hashedPassword = SHA256.digest(password);
-        String userDevice = ServiceEngineFactory.getEngineId();
+//        String userDevice = ServiceEngineFactory.getEngineId();
+        String userDevice = Long.toString(machineId);
         SimpleServiceResponseMessage<AccountDetails> httpResp = HstpHttpClient.hstpRequest(
                 hstpWebport,authenticationServiceAddress+"/login/anonymous",userDevice,
                 Map.of("id", AIPortAccessKeyValidator.hashCode(password),
@@ -474,6 +482,9 @@ public class MCPDirectStudio {
         return accountDetails !=null;
     }
     public static void logout() throws Exception {
+        if(serviceEngine==null){
+            return;
+        }
         Service service = accountServiceUSL.appendPath("logout")
                 .createServiceClient()
                 .headers(authHeaders)
@@ -485,6 +496,7 @@ public class MCPDirectStudio {
             accountDetails = null;
             authHeaders = null;
             toolAgentDetails = null;
+            mcpServerConfigs.clear();
         }else{
             throw new ServiceException("Service request failed. Error="+service.getErrorCode());
         }
@@ -652,7 +664,8 @@ public class MCPDirectStudio {
                         service = aitoolsManagementUSL.appendPath("tool_agent/init")
                                 .createServiceClient()
                                 .headers(authHeaders)
-                                .content(Map.of("device", machineName))
+                                .content(Map.of("deviceId",machineId,
+                                        "device", machineName))
                                 .request(serviceEngine);
 
                         code = service.getErrorCode();

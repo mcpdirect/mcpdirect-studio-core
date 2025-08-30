@@ -42,6 +42,7 @@ public class MCPServer extends MCPServerConfig {
 	public static int STATUS_OFF = 0;
 	public static int STATUS_ERROR = -1;
 	protected int status;
+    protected String statusMessage;
 	public MCPServer(String url, String command, List<String> args, Map<String, String> env, String serverName) {
 		super(url, command, args, env);
 		this.name = serverName;
@@ -50,6 +51,9 @@ public class MCPServer extends MCPServerConfig {
 	public int status(){
 		return status;
 	}
+    public String statusMessage(){
+        return statusMessage;
+    }
 
 	public Collection<? extends AITool> getTools(){
 		return tools.values();

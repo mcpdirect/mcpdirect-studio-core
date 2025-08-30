@@ -62,6 +62,7 @@ public class MCPToolProvider extends MCPServer{
         try(McpSyncClient mcpClient = createMcpSyncClient()) {
             mcpClient.initialize();
             status = STATUS_ON;
+            statusMessage = "successful";
             McpSchema.ListToolsResult tools = mcpClient.listTools();
             for (McpSchema.Tool tool : tools.tools()) {
                 LOG.info("refreshTools({},{},{})",tool.name(),tool.description(),tool.inputSchema());
@@ -69,6 +70,7 @@ public class MCPToolProvider extends MCPServer{
             }
         }catch (Exception e){
             status = STATUS_ERROR;
+            statusMessage = e.getMessage();
         }
     }
 
