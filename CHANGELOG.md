@@ -1,3 +1,18 @@
+## 2025-09-10
+
+**Summary:** Configuration enhancements and dependency updates for improved connectivity.
+
+**Detail:**
+- Updated project version from 1.1.0-SNAPSHOT to 1.1.1-SNAPSHOT
+- Updated hstp-service-engine version from 1.3.0 to 1.4.0
+- Added mcpdirect-studio.properties configuration file for better environment configuration
+- Enhanced configuration loading to support both properties file and environment variables
+- Improved HSTP service engine configuration with dynamic gateway detection
+- Added SSL context factory for secure connections
+- Removed unused MAC address based machine ID generation code
+- Updated appnet-hstp-engine.json to support dynamic gateway configuration
+- Added test methods for tool listing and tool call functionality
+
 ## 2025-08-30
 
 **Summary:** Enhance device identification, improve machine ID generation, and add status tracking.

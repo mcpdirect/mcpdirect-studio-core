@@ -5,6 +5,7 @@ import ai.mcpdirect.backend.dao.entity.aitool.*;
 import ai.mcpdirect.backend.util.AIPortAccessKeyValidator;
 import ai.mcpdirect.studio.handler.*;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
+import appnet.communicator.ssl.SSLContextGenerator;
 import appnet.hstp.*;
 import appnet.hstp.annotation.ServiceScan;
 import appnet.hstp.engine.HstpServiceEngine;
@@ -24,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -41,6 +43,7 @@ public class MCPDirectStudio {
     private static final String hstpWebport;
     private static final String adminProvider;
     private static final String authenticationServiceAddress;
+    private static final ServiceEngineConfiguration engineConfig;
     private static final long machineId;
     private static String machineName;
     private static USL aitoolsManagementUSL;
@@ -54,9 +57,42 @@ public class MCPDirectStudio {
 
 
     static{
-        String env =System.getenv("AI_MCPDIRECT_HSTP_WEBPORT");
-        hstpWebport = env==null?"https://hstp.mcpdirect.ai/hstp/":env;
-        env = System.getenv("AI_MCPDIRECT_ADMIN_PROVIDER");
+        Properties props = new Properties();
+        try(InputStream resourceAsStream = MCPDirectStudio.class.getResourceAsStream("/mcpdirect-studio.properties")){
+            props.load(resourceAsStream);
+        }catch (Exception ignore){}
+        String webportURL = props.getProperty("ai.mcpdirect.hstp.webport");
+        String serviceGateway = props.getProperty("ai.mcpdirect.hstp.service.gateway");
+        if(webportURL==null||webportURL.isEmpty()){
+            webportURL = System.getenv("AI_MCPDIRECT_HSTP_WEBPORT");
+        }
+        if(serviceGateway==null||serviceGateway.isEmpty()){
+            serviceGateway = System.getenv("AI_MCPDIRECT_HSTP_SERVICE_GATEWAY");
+        }
+        if(webportURL==null||(webportURL=webportURL.trim()).isEmpty()){
+            throw new RuntimeException("Please set 'ai.mcpdirect.hstp.webport' properties in mcpdirect-studio.properties\n" +
+                    "or set environment variable 'AI_MCPDIRECT_HSTP_WEBPORT'");
+        }
+        hstpWebport = webportURL;
+        if(serviceGateway==null||(serviceGateway=serviceGateway.trim()).isEmpty()){
+            serviceGateway = URI.create(webportURL).getHost()+":53100";
+        }
+        try {
+            engineConfig = ServiceEngineConfiguration.load(Map.of(
+                    "gateways", List.of(serviceGateway),
+                    "serviceSelectionPolicy", "|peerResolve"
+            ));
+        }catch (Exception e){
+            throw new RuntimeException(e);
+        }
+        ServiceEngineFactory.setSSLContextFactory(((config, isClient) -> {
+            try {
+                return SSLContextGenerator.createTrustAllClientSSLContext();
+            }catch (Exception e){
+                throw new RuntimeException(e);
+            }
+        }));
+        String env = System.getenv("AI_MCPDIRECT_ADMIN_PROVIDER");
         adminProvider = env == null?"admin.mcpdirect.ai":env;
         authenticationServiceAddress="authentication@"+ adminProvider;
         String mid = null;
@@ -134,26 +170,6 @@ public class MCPDirectStudio {
             }
         } catch (Exception ignore) {}
 
-//        if(mid==null)try {
-//            //MAC
-//            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-//            while (networkInterfaces.hasMoreElements()) {
-//                NetworkInterface networkInterface = networkInterfaces.nextElement();
-//                if (networkInterface.getHardwareAddress() != null) {
-//                    byte[] mac = networkInterface.getHardwareAddress();
-//
-//                    // 使用MAC地址和时间戳生成UUID
-//                    long mostSigBits = 0;
-//                    for (int i = 0; i < 8; i++) {
-//                        mostSigBits = (mostSigBits << 8) | (mac[i % mac.length] & 0xff);
-//                    }
-//
-//                    mid = Long.toString(mostSigBits,16);
-//                    break;
-//                }
-//            }
-//        }catch (Exception ignore){}
-
         if(mid==null) try {
             String home = System.getProperty("user.home");
             BasicFileAttributes attrs = Files.readAttributes(
@@ -172,12 +188,9 @@ public class MCPDirectStudio {
         }
 
     }
+
     private static void start(String keySeed) throws Exception {
-//        serviceEngine = ServiceEngineFactory.getServiceEngine();
-//        hstpWebport= serviceEngine.getProperty("appnet.hstp.labs.aiport.mcpwings/hstp_webport").toString();
-//        String adminProvider = serviceEngine.getProperty("appnet.hstp.labs.aiport.mcpwings/admin_provider").toString();
-//        authenticationServiceAddress="authentication@"+ adminProvider;
-        serviceEngine = new HstpServiceEngine(null,null,
+        serviceEngine = new HstpServiceEngine(engineConfig,null,
                 "ai.mcpdirect.studio."+machineId+"."+keySeed);
         accountServiceUSL = new USL("account.management", adminProvider);
         aitoolsManagementUSL = new USL("aitools.management", adminProvider);
