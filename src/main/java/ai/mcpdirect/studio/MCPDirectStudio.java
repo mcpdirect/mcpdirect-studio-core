@@ -64,6 +64,12 @@ public class MCPDirectStudio {
         String webportURL = props.getProperty("ai.mcpdirect.hstp.webport");
         String serviceGateway = props.getProperty("ai.mcpdirect.hstp.service.gateway");
         if(webportURL==null||webportURL.isEmpty()){
+            webportURL = System.getProperty("ai.mcpdirect.hstp.webport");
+        }
+        if(serviceGateway==null||serviceGateway.isEmpty()){
+            serviceGateway = System.getProperty("ai.mcpdirect.hstp.service.gateway");
+        }
+        if(webportURL==null||webportURL.isEmpty()){
             webportURL = System.getenv("AI_MCPDIRECT_HSTP_WEBPORT");
         }
         if(serviceGateway==null||serviceGateway.isEmpty()){

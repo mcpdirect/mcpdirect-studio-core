@@ -1,5 +1,14 @@
 ## 2025-09-10
 
+**Summary:** Enhanced configuration loading with system property support.
+
+**Detail:**
+- Updated project version from 1.1.1-SNAPSHOT to 1.1.2-SNAPSHOT
+- Enhanced configuration loading to support system properties in addition to properties file and environment variables
+- Added support for reading ai.mcpdirect.hstp.webport and ai.mcpdirect.hstp.service.gateway from system properties
+
+## 2025-09-10
+
 **Summary:** Configuration enhancements and dependency updates for improved connectivity.
 
 **Detail:**
