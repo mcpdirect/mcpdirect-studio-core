@@ -1,3 +1,11 @@
+## 2025-09-11
+
+**Summary:** Fixed machine ID generation for Windows systems.
+
+**Detail:**
+- Updated project version from 1.1.2-SNAPSHOT to 1.1.3-SNAPSHOT
+- Fixed machine ID generation on Windows systems by correcting array index access for MachineGuid
+
 ## 2025-09-10
 
 **Summary:** Enhanced configuration loading with system property support.
