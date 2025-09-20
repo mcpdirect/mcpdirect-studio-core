@@ -1,5 +1,20 @@
 ## 2025-09-11
 
+**Summary:** Enhanced machine identification and dependency updates.
+
+**Detail:**
+- Updated project version from 1.1.3-SNAPSHOT to 1.1.4-SNAPSHOT
+- Updated mcp-version from 0.11.3 to 0.12.1
+- Updated hstp-service-engine version from 1.4.0 to 1.4.2
+- Enhanced machine identification with improved hostname and model detection
+- Added frontend-maven-plugin dependency for testing
+- Improved Windows system detection with additional system information
+- Enhanced Linux system detection with product name retrieval
+- Improved macOS system detection with better model name and UUID extraction
+- Added test methods for machine name identification
+
+## 2025-09-11
+
 **Summary:** Fixed machine ID generation for Windows systems.
 
 **Detail:**

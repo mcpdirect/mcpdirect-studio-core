@@ -25,9 +25,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.InetAddress;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
@@ -103,7 +105,15 @@ public class MCPDirectStudio {
         authenticationServiceAddress="authentication@"+ adminProvider;
         String mid = null;
         try {
-            String os = System.getProperty("os.name").toLowerCase();
+            String os = System.getProperty("os.name");
+            try {
+                machineName = os+","+ InetAddress.getLocalHost().getHostName();
+            } catch (Exception ignore) {
+            }
+            if(machineName==null){
+                machineName = os+","+System.getProperty("user.name");
+            }
+            os = os.toLowerCase();
             // Windows系统获取机器GUID
             if (os.contains("win")) {
                 Process process = Runtime.getRuntime().exec(
@@ -118,61 +128,78 @@ public class MCPDirectStudio {
                     if (line.trim().startsWith("MachineGuid")) {
                         String[] parts = line.trim().split("\\s+");
                         if (parts.length >= 3) {
-                            mid = parts[2];
+                            mid = parts[3];
                             break;
-//                                System.out.println("Windows机器GUID: " + parts[3]);
                         }
                     }
                 }
-                if(mid==null) {
-                    process = Runtime.getRuntime().exec("wmic computersystem get model");
+                try {
+                    process = Runtime.getRuntime().exec("wmic computersystem get name");
                     reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
                     boolean firstLine = true;
+                    String name = null;
                     while ((line = reader.readLine()) != null) {
                         if (!line.trim().isEmpty() && !firstLine) {
-                            machineName = line.trim();
+                            name = line.trim();
                         }
                         firstLine = false;
                     }
-                }
+
+                    process = Runtime.getRuntime().exec("wmic computersystem get systemfamily");
+                    reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    firstLine = true;
+                    String family = null;
+                    while ((line = reader.readLine()) != null) {
+                        if (!line.trim().isEmpty() && !firstLine) {
+                            family = line.trim();
+                        }
+                        firstLine = false;
+                    }
+                    if(name!=null){
+                        machineName = os+","+name;
+                    }
+                    if(family!=null){
+                        machineName = family+","+machineName;
+                    }
+                }catch (Exception ignore){}
             }
             // Linux系统可以读取/etc/machine-id或/var/lib/dbus/machine-id
             else if(os.contains("linux")){
                 Process process = Runtime.getRuntime().exec("cat /etc/machine-id");
                 process.waitFor();
-                
+
                 BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream()));
+                        new InputStreamReader(process.getInputStream()));
                 mid = reader.readLine();
+                try {
+                    Path path = Paths.get("/sys/class/dmi/id/product_name");
+                    if (Files.exists(path)) {
+                        String model = Files.readString(path).trim();
+                        if (!model.isEmpty() && !model.equals("To be filled by O.E.M.")) {
+                            machineName=model+","+machineName;
+                        }
+                    }
+                } catch (Exception ignored) {}
             } else if(os.contains("mac os")||os.contains("macos")) {
                 //macOS
                 Process process = Runtime.getRuntime().exec(
-                        "system_profiler SPHardwareDataType | grep UUID");
+                        new String[]{"/bin/sh", "-c", "system_profiler SPHardwareDataType"});
 
                 BufferedReader reader = new BufferedReader(
                         new InputStreamReader(process.getInputStream()));
 
-                String line = reader.readLine();
-                if (line != null) {
-                    mid = line.split(":")[1].trim();
+                String line;
+                String model = null;
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    if(line.startsWith("Model Name")){
+                        model = line.split(":")[1].trim();
+                    }else if(line.startsWith("Hardware UUID")){
+                        mid = line.split(":")[1].trim();
+                    }
                 }
-                process = Runtime.getRuntime().exec("sysctl -n hw.model");
-                reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                if(model!=null) machineName=model+","+machineName;
 
-                String model = reader.readLine();
-
-                if (model.startsWith("Macmini")) {
-                    machineName = "Mac mini";
-                } else if (model.startsWith("MacBookPro")) {
-                    machineName = "MacBook Pro";
-                } else if (model.startsWith("MacBookAir")) {
-                    machineName = "MacBook Air";
-                } else if (model.startsWith("iMac")) {
-                    machineName = "iMac";
-                } else if (model.startsWith("MacPro")) {
-                    machineName = "Mac Pro";
-                }
             }
         } catch (Exception ignore) {}
 

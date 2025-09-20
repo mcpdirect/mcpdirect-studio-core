@@ -13,6 +13,10 @@ import junit.framework.TestCase;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 
 @ServiceName
@@ -57,5 +61,66 @@ public class MCPDirectStudioApplicationTest extends TestCase {
                 Map.of()
         );
         System.out.println(s);
+    }
+    public void testMachineName() throws Exception{
+        try {
+            String hostname = InetAddress.getLocalHost().getHostName();
+            System.out.println("主机名: " + hostname);
+        } catch (UnknownHostException e) {
+            System.err.println("无法获取主机名: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
+            String path = "/sys/class/dmi/id/product_name";
+            if (Files.exists(Paths.get(path))) {
+                String model = Files.readString(Paths.get(path)).trim();
+                if (!model.isEmpty() && !model.equals("To be filled by O.E.M.")) {
+                    System.out.println(model);
+                }
+            }
+        } catch (Exception ignored) {}
+        try {
+            Process process = Runtime.getRuntime().exec(new String[]{
+                    "/bin/sh", "-c", "dmidecode -s system-product-name 2>/dev/null"
+            });
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream())
+            );
+            String model = reader.readLine();
+            if (model != null && !model.trim().isEmpty()) {
+                System.out.println(model);
+            }
+        } catch (Exception ignored) {}
+        Process process = Runtime.getRuntime().exec(
+                new String[]{"/bin/sh", "-c", "system_profiler SPHardwareDataType"});
+
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
+
+        String line;
+        String modelName = null;
+        String mid = null;
+        while ((line = reader.readLine()) != null) {
+//            mid = line.split(":")[1].trim();
+            line = line.trim();
+            if(line.startsWith("Model Name")){
+                modelName = line.split(":")[1].trim();
+            }else if(line.startsWith("Hardware UUID")){
+                mid = line.split(":")[1].trim();
+            }
+
+        }
+        System.out.println(modelName);
+        System.out.println(mid);
+        process = Runtime.getRuntime().exec("sysctl -n hw.model");
+        reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+//        String model = reader.readLine();
+//        System.out.println(model);
+        while ((line = reader.readLine()) != null) {
+//            mid = line.split(":")[1].trim();
+            System.out.println(line);
+        }
     }
 }
