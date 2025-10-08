@@ -9,6 +9,7 @@ import appnet.hstp.exception.ServiceEngineException;
 import appnet.hstp.exception.ServiceException;
 import appnet.hstp.exception.USLSyntaxException;
 import appnet.hstp.labs.util.http.HstpHttpClient;
+import io.modelcontextprotocol.client.transport.ServerParameters;
 import junit.framework.TestCase;
 
 import java.io.BufferedReader;
@@ -17,6 +18,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 
 @ServiceName
@@ -122,5 +124,17 @@ public class MCPDirectStudioApplicationTest extends TestCase {
 //            mid = line.split(":")[1].trim();
             System.out.println(line);
         }
+    }
+    public static ServerParameters createNPXServerParameters() {
+        if (System.getProperty("os.name").toLowerCase().contains("win")) {
+            return ServerParameters.builder("cmd.exe")
+                    .args("/c", "npx.cmd", "-y", "@modelcontextprotocol/server-everything", "stdio")
+                    .build();
+        }
+        return ServerParameters.builder("npx").args("-y", "@modelcontextprotocol/server-everything", "stdio").build();
+    }
+    public void testMapof(){
+        HashMap<Object, Object> objectObjectHashMap = new HashMap<>();
+        objectObjectHashMap.put("k",null);
     }
 }

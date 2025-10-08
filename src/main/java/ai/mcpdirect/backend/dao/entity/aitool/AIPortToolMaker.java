@@ -8,6 +8,7 @@ public class AIPortToolMaker {
     public long hash;
     public String tools;
 
+    public static final int TYPE_VIRTUAL = 0;
     public static final int TYPE_MCP = 1000;
     /**
      * 1000 is MCP

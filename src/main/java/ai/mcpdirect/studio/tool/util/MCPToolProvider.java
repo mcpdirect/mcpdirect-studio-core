@@ -8,6 +8,7 @@ import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.client.transport.ServerParameters;
 import io.modelcontextprotocol.client.transport.StdioClientTransport;
+import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import java.util.Map;
 
 public class MCPToolProvider extends MCPServer{
     private static final Logger LOG = LoggerFactory.getLogger(MCPToolProvider.class);
+    public static final McpJsonMapper JSON_MAPPER = McpJsonMapper.getDefault();
     private final String baseUrl;
     private final String sseEndpoint;
     private final McpSchema.Implementation clientInfo;
@@ -35,7 +37,7 @@ public class MCPToolProvider extends MCPServer{
         McpClientTransport transport;
         if(command!=null&&!command.isEmpty()) {
             ServerParameters parameters = ServerParameters.builder(command).args(args).env(env).build();
-            transport = new StdioClientTransport(parameters);
+            transport = new StdioClientTransport(parameters,JSON_MAPPER);
         }else{
             HttpRequest.Builder builder = HttpRequest.newBuilder();
             builder.header("Content-Type", "application/json");

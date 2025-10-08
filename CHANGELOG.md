@@ -1,3 +1,19 @@
+## 2025-10-08
+
+**Summary:** Enhanced tool maker functionality and virtual tool support.
+
+**Detail:**
+- Updated project version from 1.1.4-SNAPSHOT to 1.2.0-SNAPSHOT
+- Updated mcp-version from 0.12.1 to 0.14.0
+- Added new AIPortVirtualTool entity for virtual tool management
+- Implemented ToolMakerNotificationHandler interface with tool maker notifications
+- Added virtual tool creation and modification capabilities in MCPDirectStudio
+- Enhanced MCPToolProvider with JSON mapper for improved serialization
+- Modified AIPortToolMaker to support TYPE_VIRTUAL (0) constant
+- Added query and modification methods for tools and virtual tools
+- Added test methods and ServerParameters helper for NPX execution
+- Improved communication with backend services for tool maker operations
+
 ## 2025-09-11
 
 **Summary:** Enhanced machine identification and dependency updates.

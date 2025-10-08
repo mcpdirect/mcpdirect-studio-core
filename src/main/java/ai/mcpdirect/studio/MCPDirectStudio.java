@@ -21,6 +21,7 @@ import ai.mcpdirect.studio.tool.AITool;
 import appnet.hstp.labs.util.http.HstpHttpClient;
 import appnet.util.crypto.SHA256;
 import com.fasterxml.jackson.core.type.TypeReference;
+import javassist.tools.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker.TYPE_MCP;
@@ -1098,6 +1100,196 @@ public class MCPDirectStudio {
             if(resp.code==0){
                 notifyAccessKeyPermissions(resp.data);
             }
+        }
+    }
+
+    private static ToolMakerNotificationHandler toolMakerHandler;
+    public static void setToolMakerNotificationHandler(ToolMakerNotificationHandler handler){
+        toolMakerHandler = handler;
+    }
+    private static void notifyToolMakers(int code,String message,String name,Integer type,List<AIPortToolMaker> makers){
+        if(toolMakerHandler!=null){
+            toolMakerHandler.onToolMakersNotification(code,message,name,type,makers);
+        }
+    }
+    private static void notifyToolMaker(int code,String message, AIPortToolMaker maker){
+        if(toolMakerHandler!=null){
+            toolMakerHandler.onToolMakerNotification(code,message,maker);
+        }
+    }
+    public interface Callback<T>{
+        void onResult(int code,String message,T data);
+    }
+    private static class RequestOfToolMaker{
+        public Long id;
+        public Integer type;
+        public String name;
+        public String tags;
+        public Integer status;
+
+        public RequestOfToolMaker(Long id, Integer type, String name, String tags, Integer status) {
+            this.id = id;
+            this.type = type;
+            this.name = name;
+            this.tags = tags;
+            this.status = status;
+        }
+    }
+    public static void queryToolMakers(Integer type,String name,Callback<List<AIPortToolMaker>> callback) throws Exception{
+
+        Service service = aitoolsManagementUSL
+                .appendPath("tool_maker/query")
+                .createServiceClient()
+                .headers(authHeaders)
+                .content(JSON.toJson(
+                        new RequestOfToolMaker(null,type,name,null,null)
+                ))
+                .request(serviceEngine);
+        if(service.getErrorCode()==0) {
+            SimpleServiceResponseMessage<List<AIPortToolMaker>> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            if(resp.code==0){
+                callback.onResult(resp.code,resp.message,resp.data);
+            }
+        }else{
+            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+        }
+    }
+
+    public static void createToolMaker(int type,String name, String tags, Callback<AIPortToolMaker> callback) throws Exception{
+        Service service = aitoolsManagementUSL
+                .appendPath("tool_maker/create")
+                .createServiceClient()
+                .headers(authHeaders)
+                .content(JSON.toJson(Map.of(
+                        "name",name,
+                        "type",type,
+                        "tags",tags
+                )))
+                .request(serviceEngine);
+        if(service.getErrorCode()==0) {
+            SimpleServiceResponseMessage<AIPortToolMaker> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            if(resp.code==0){
+                callback.onResult(resp.code,resp.message,resp.data);
+            }
+        }else{
+            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+        }
+    }
+
+    private static void modifyToolMaker(String field,long id,String name, String tags,Integer status, Callback<AIPortToolMaker> callback) throws Exception{
+        Service service = aitoolsManagementUSL
+                .appendPath("tool_maker/"+field+"/modify")
+                .createServiceClient()
+                .headers(authHeaders)
+                .content(JSON.toJson(
+                        new RequestOfToolMaker(id,null,name,tags,status)
+                ))
+                .request(serviceEngine);
+        if(service.getErrorCode()==0) {
+            SimpleServiceResponseMessage<AIPortToolMaker> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            if(resp.code==0){
+                callback.onResult(resp.code,resp.message,resp.data);
+            }
+        }else{
+            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+        }
+    }
+
+    public static void modifyToolMakerName(long id,String name,Callback<AIPortToolMaker> callback) throws Exception{
+        modifyToolMaker("name",id,name,null,null,callback);
+    }
+    public static void modifyToolMakerTags(long id,String tags,Callback<AIPortToolMaker> callback) throws Exception{
+        modifyToolMaker("tags",id,null,tags,null,callback);
+    }
+    public static void modifyToolMakerStatus(long id,Integer status, Callback<AIPortToolMaker> callback) throws Exception{
+        modifyToolMaker("status",id,null,null,status,callback);
+    }
+
+    public static class RequestOfQueryTools{
+        public Long toolId;
+        public String name;
+        public Long agentId;
+        public Long makerId;
+        public Integer status;
+
+        public RequestOfQueryTools(Long toolId,String name, Long agentId, Long makerId, Integer status) {
+            this.toolId = toolId;
+            this.name = name;
+            this.agentId = agentId;
+            this.makerId = makerId;
+            this.status = status;
+        }
+    }
+    public static void queryTools(Long toolId,Integer status,Long agentId,Long makerId,String name,Callback<List<AIPortTool>> callback) throws Exception{
+
+        Service service = aitoolsManagementUSL
+                .appendPath("tool/query")
+                .createServiceClient()
+                .headers(authHeaders)
+                .content(JSON.toJson(
+                        new RequestOfQueryTools(toolId,name,agentId,makerId,status)
+                ))
+                .request(serviceEngine);
+        if(service.getErrorCode()==0) {
+            SimpleServiceResponseMessage<List<AIPortTool>> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            if(resp.code==0){
+                callback.onResult(resp.code,resp.message,resp.data);
+            }
+        }else{
+            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+        }
+    }
+
+    private static class RequestOfModifyVirtualTools{
+        public long makerId;
+        public List<AIPortVirtualTool> tools;
+
+        public RequestOfModifyVirtualTools(long makerId, List<AIPortVirtualTool> tools) {
+            this.makerId = makerId;
+            this.tools = tools;
+        }
+    }
+    public static void modifyVirtualTools(long makerId,List<AIPortVirtualTool> tools, Callback<List<AIPortVirtualTool>> callback) throws Exception{
+        Service service = aitoolsManagementUSL
+                .appendPath("tool/virtual/modify")
+                .createServiceClient()
+                .headers(authHeaders)
+                .content(JSON.toJson(
+                        new RequestOfModifyVirtualTools(makerId,tools)
+                ))
+                .request(serviceEngine);
+        if(service.getErrorCode()==0) {
+            SimpleServiceResponseMessage<List<AIPortVirtualTool>> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            if(resp.code==0){
+                callback.onResult(resp.code,resp.message,resp.data);
+            }
+        }else{
+            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+        }
+    }
+
+    public static void queryVirtualTools(long makerId, Callback<List<AIPortVirtualTool>> callback) throws Exception{
+        Service service = aitoolsManagementUSL
+                .appendPath("tool/virtual/query")
+                .createServiceClient()
+                .headers(authHeaders)
+                .content(JSON.toJson(
+                        Map.of("makerId",makerId)
+                ))
+                .request(serviceEngine);
+        if(service.getErrorCode()==0) {
+            SimpleServiceResponseMessage<List<AIPortVirtualTool>> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            if(resp.code==0){
+                callback.onResult(resp.code,resp.message,resp.data);
+            }
+        }else{
+            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
         }
     }
 }
