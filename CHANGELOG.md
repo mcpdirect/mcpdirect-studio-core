@@ -1,3 +1,17 @@
+## 2025-10-09
+
+**Summary:** Added tool permissions and tool agent management functionality.
+
+**Detail:**
+- Added AIPortVirtualToolPermission entity with originalToolId field
+- Added AIPortToolPermission entity for tool permission management
+- Enhanced MCPDirectStudio with queryToolPermissions and queryVirtualToolPermissions methods
+- Added queryToolAgents method to MCPDirectStudio for tool agent management
+- Modified RequestOfToolMaker to include toolAgentId field
+- Updated queryToolMakers method to accept toolAgentId parameter
+- Fixed constructor parameter order in RequestOfToolMaker
+- Added new API endpoints for permission and agent queries
+
 ## 2025-10-08
 
 **Summary:** Enhanced tool maker functionality and virtual tool support.

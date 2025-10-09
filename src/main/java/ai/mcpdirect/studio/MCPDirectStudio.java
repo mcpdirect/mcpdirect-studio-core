@@ -1122,27 +1122,29 @@ public class MCPDirectStudio {
     }
     private static class RequestOfToolMaker{
         public Long id;
+        public Long toolAgentId;
         public Integer type;
         public String name;
         public String tags;
         public Integer status;
 
-        public RequestOfToolMaker(Long id, Integer type, String name, String tags, Integer status) {
+        public RequestOfToolMaker(Long id,Long toolAgentId, Integer type, String name, String tags, Integer status) {
             this.id = id;
+            this.toolAgentId = toolAgentId;
             this.type = type;
             this.name = name;
             this.tags = tags;
             this.status = status;
         }
     }
-    public static void queryToolMakers(Integer type,String name,Callback<List<AIPortToolMaker>> callback) throws Exception{
+    public static void queryToolMakers(Integer type,String name, Long toolAgentId,Callback<List<AIPortToolMaker>> callback) throws Exception{
 
         Service service = aitoolsManagementUSL
                 .appendPath("tool_maker/query")
                 .createServiceClient()
                 .headers(authHeaders)
                 .content(JSON.toJson(
-                        new RequestOfToolMaker(null,type,name,null,null)
+                        new RequestOfToolMaker(null,toolAgentId,type,name,null,null)
                 ))
                 .request(serviceEngine);
         if(service.getErrorCode()==0) {
@@ -1184,7 +1186,7 @@ public class MCPDirectStudio {
                 .createServiceClient()
                 .headers(authHeaders)
                 .content(JSON.toJson(
-                        new RequestOfToolMaker(id,null,name,tags,status)
+                        new RequestOfToolMaker(id,null,null,name,tags,status)
                 ))
                 .request(serviceEngine);
         if(service.getErrorCode()==0) {
@@ -1284,6 +1286,61 @@ public class MCPDirectStudio {
                 .request(serviceEngine);
         if(service.getErrorCode()==0) {
             SimpleServiceResponseMessage<List<AIPortVirtualTool>> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            if(resp.code==0){
+                callback.onResult(resp.code,resp.message,resp.data);
+            }
+        }else{
+            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+        }
+    }
+    public static void queryToolPermissions(long accessKeyId, Callback<List<AIPortToolPermission>> callback) throws Exception{
+        Service service = aitoolsManagementUSL
+                .appendPath("tool/virtual/query")
+                .createServiceClient()
+                .headers(authHeaders)
+                .content(JSON.toJson(
+                        Map.of("accessKeyId",accessKeyId)
+                ))
+                .request(serviceEngine);
+        if(service.getErrorCode()==0) {
+            SimpleServiceResponseMessage<List<AIPortToolPermission>> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            if(resp.code==0){
+                callback.onResult(resp.code,resp.message,resp.data);
+            }
+        }else{
+            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+        }
+    }
+    public static void queryVirtualToolPermissions(long accessKeyId, Callback<List<AIPortVirtualToolPermission>> callback) throws Exception{
+        Service service = aitoolsManagementUSL
+                .appendPath("tool/virtual/permission/query")
+                .createServiceClient()
+                .headers(authHeaders)
+                .content(JSON.toJson(
+                        Map.of("accessKeyId",accessKeyId)
+                ))
+                .request(serviceEngine);
+        if(service.getErrorCode()==0) {
+            SimpleServiceResponseMessage<List<AIPortVirtualToolPermission>> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            if(resp.code==0){
+                callback.onResult(resp.code,resp.message,resp.data);
+            }
+        }else{
+            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+        }
+    }
+
+    public static void queryToolAgents(Callback<List<AIPortToolAgent>> callback) throws Exception {
+        Service service = aitoolsManagementUSL.appendPath("tool_agent/query")
+                .createServiceClient()
+                .headers(authHeaders)
+                .content("{}")
+                .request(serviceEngine);
+        if(service.getErrorCode()==0) {
+            SimpleServiceResponseMessage<List<AIPortToolAgent>> resp
                     = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
             if(resp.code==0){
                 callback.onResult(resp.code,resp.message,resp.data);
