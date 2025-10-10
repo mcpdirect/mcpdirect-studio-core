@@ -1,3 +1,18 @@
+## 2025-10-10
+
+**Summary:** Enhanced permission system with agentId support and tool inheritance.
+
+**Detail:**
+- Modified AIPortTool to include agentId field
+- Added parameterized constructor to AIPortToolAgent for name initialization
+- Extended AIPortToolPermission with agentId, makerId, and name fields
+- Added copy() method to AIPortToolPermission for creating permission copies
+- Made AIPortVirtualToolPermission extend AIPortToolPermission for better inheritance
+- Added copy() method to AIPortVirtualToolPermission with originalToolId support
+- Updated grantToolPermission method to support both regular and virtual permissions
+- Fixed endpoint path in queryToolPermissions from \"tool/virtual/query\" to \"tool/permission/query\"
+- Added a test method for permission copying functionality
+
 ## 2025-10-09
 
 **Summary:** Added tool permissions and tool agent management functionality.

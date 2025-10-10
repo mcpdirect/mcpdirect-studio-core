@@ -1,12 +1,7 @@
 package ai.mcpdirect.backend.dao.entity.aitool;
 
-public class AIPortVirtualToolPermission {
-    public long userId;
-    public long accessKeyId;
+public class AIPortVirtualToolPermission extends AIPortToolPermission{
     public long originalToolId;
-    public long toolId;
-    public long lastUpdated;
-    public short status;
 
     public AIPortVirtualToolPermission() {}
 
@@ -17,5 +12,18 @@ public class AIPortVirtualToolPermission {
         this.toolId = toolId;
         this.lastUpdated = lastUpdated;
         this.status = status;
+    }
+    public AIPortVirtualToolPermission copy (){
+        AIPortVirtualToolPermission p = new AIPortVirtualToolPermission();
+        p.userId=userId;
+        p.accessKeyId=accessKeyId;
+        p.toolId=toolId;
+        p.lastUpdated=lastUpdated;
+        p.status=status;
+        p.agentId=agentId;
+        p.makerId=makerId;
+        p.name=name;
+        p.originalToolId = originalToolId;
+        return p;
     }
 }

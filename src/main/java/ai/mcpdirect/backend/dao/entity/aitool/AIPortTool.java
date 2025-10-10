@@ -9,7 +9,7 @@ public class AIPortTool {
     public int hash;
     public String metaData;
     public String tags;
-
+    public long agentId;
     public AIPortTool() {}
 
     public AIPortTool(long id,long makerId, int status, long lastUpdated, String name, int hash, String metaData, String tags) {

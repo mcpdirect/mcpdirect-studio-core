@@ -1087,12 +1087,15 @@ public class MCPDirectStudio {
             }
         }
     }
-    public static void grantToolPermission(List<AIPortToolPermission> permissions) throws Exception{
+    public static void grantToolPermission(List<AIPortToolPermission> permissions,List<AIPortVirtualToolPermission> virtualPermissions) throws Exception{
         Service service = aitoolsManagementUSL
                 .appendPath("tool/permission/grant")
                 .createServiceClient()
                 .headers(authHeaders)
-                .content(JSON.toJson(Map.of("permissions",permissions)))
+                .content(JSON.toJson(Map.of(
+                        "permissions",permissions,
+                        "virtualPermissions",virtualPermissions
+                        )))
                 .request(serviceEngine);
         if(service.getErrorCode()==0) {
             SimpleServiceResponseMessage<List<AIPortToolPermission>> resp
@@ -1296,7 +1299,7 @@ public class MCPDirectStudio {
     }
     public static void queryToolPermissions(long accessKeyId, Callback<List<AIPortToolPermission>> callback) throws Exception{
         Service service = aitoolsManagementUSL
-                .appendPath("tool/virtual/query")
+                .appendPath("tool/permission/query")
                 .createServiceClient()
                 .headers(authHeaders)
                 .content(JSON.toJson(

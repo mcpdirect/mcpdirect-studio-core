@@ -14,6 +14,9 @@ public class AIPortToolAgent {
     public String tags;
 
     public AIPortToolAgent() {}
+    public AIPortToolAgent(String name) {
+        this.name = name;
+    }
 
     public AIPortToolAgent(long id, long userId, long engineId, long appId, long created,long deviceId, String device, String name, String tags) {
 //        this.id = ID.nextId();

@@ -1,5 +1,7 @@
 package ai.mcpdirect.studio;
 
+import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolPermission;
+import ai.mcpdirect.backend.dao.entity.aitool.AIPortVirtualToolPermission;
 import appnet.hstp.Service;
 import appnet.hstp.ServiceEngine;
 import appnet.hstp.ServiceEngineFactory;
@@ -136,5 +138,20 @@ public class MCPDirectStudioApplicationTest extends TestCase {
     public void testMapof(){
         HashMap<Object, Object> objectObjectHashMap = new HashMap<>();
         objectObjectHashMap.put("k",null);
+    }
+
+    public void testClone(){
+        AIPortVirtualToolPermission p = new AIPortVirtualToolPermission();
+        p.accessKeyId = 1L;
+        p.lastUpdated = 2L;
+        p.status = 3;
+        p.name = "a";
+        p.agentId = 4L;
+        p.toolId = 5L;
+        p.userId = 6L;
+        p.makerId = 7L;
+        p.originalToolId = 8L;
+
+
     }
 }
