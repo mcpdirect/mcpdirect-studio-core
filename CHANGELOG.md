@@ -1,3 +1,18 @@
+## 2025-10-11
+
+**Summary:** Added access key management and tool permission summaries.
+
+**Detail:**
+- Added AIPortToolPermissionMakerSummary entity with accessKeyId, makerId, and count fields
+- Added import for AIPortAnonymousCredential in MCPDirectStudio
+- Removed unused imports (Callback and BiFunction) from MCPDirectStudio
+- Updated return type from AIPortAccessKeyCredential to AIPortAnonymousCredential in register/anonymous call
+- Added generateAccessKey method to MCPDirectStudio for creating new access keys
+- Added queryAccessKeys method to MCPDirectStudio for retrieving all access keys
+- Added queryToolPermissionMakerSummaries method to MCPDirectStudio for permission summaries
+- Modified AIPortAnonymousCredential to remove password field and constructor
+- Improved callback handling in queryToolAgents method
+
 ## 2025-10-10
 
 **Summary:** Enhanced permission system with agentId support and tool inheritance.

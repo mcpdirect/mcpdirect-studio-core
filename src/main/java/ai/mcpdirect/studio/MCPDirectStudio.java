@@ -1,6 +1,7 @@
 package ai.mcpdirect.studio;
 
 
+import ai.mcpdirect.backend.dao.entity.account.AIPortAnonymousCredential;
 import ai.mcpdirect.backend.dao.entity.aitool.*;
 import ai.mcpdirect.backend.util.AIPortAccessKeyValidator;
 import ai.mcpdirect.studio.handler.*;
@@ -21,7 +22,6 @@ import ai.mcpdirect.studio.tool.AITool;
 import appnet.hstp.labs.util.http.HstpHttpClient;
 import appnet.util.crypto.SHA256;
 import com.fasterxml.jackson.core.type.TypeReference;
-import javassist.tools.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +35,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker.TYPE_MCP;
@@ -496,7 +495,7 @@ public class MCPDirectStudio {
         String countryCode = locale.getCountry();
 //            System.out.println("System Country Code (ISO 3166-1 alpha-2): " + countryCode);
         String language = languageCode+"-"+countryCode;
-        SimpleServiceResponseMessage<AIPortAccessKeyCredential> httpResp = HstpHttpClient.hstpRequest(
+        SimpleServiceResponseMessage<AIPortAnonymousCredential> httpResp = HstpHttpClient.hstpRequest(
                 hstpWebport,authenticationServiceAddress+"/register/anonymous",null,
                 Map.of("deviceId",Long.toString(machineId),"userInfo",Map.of("language",language)),
                 new TypeReference<>(){});
@@ -1345,11 +1344,63 @@ public class MCPDirectStudio {
         if(service.getErrorCode()==0) {
             SimpleServiceResponseMessage<List<AIPortToolAgent>> resp
                     = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
-            if(resp.code==0){
-                callback.onResult(resp.code,resp.message,resp.data);
-            }
+            callback.onResult(resp.code,resp.message,resp.data);
         }else{
             callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
         }
     }
+
+    public static void generateAccessKey(String name,Callback<AIPortAccessKeyCredential> callback) throws Exception {
+        Service service = hstpRequest(accountServiceUSL,"access_key/create",Map.of("name", name));
+        AIPortAccessKeyCredential key = null;
+        int code = service.getErrorCode();
+        String message = service.getErrorMessage();
+        if(code==Service.SERVICE_SUCCESSFUL){
+            SimpleServiceResponseMessage<AIPortAccessKeyCredential> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            code = resp.code;
+            message = resp.message;
+            key = resp.data;
+            if(code==Service.SERVICE_SUCCESSFUL&&key!=null){
+                saveAccessKey(key);
+            }
+        }
+        callback.onResult(code,message,key);
+    }
+
+    public static void queryAccessKeys(Callback<List<AIPortAccessKeyCredential>> callback) throws Exception {
+        Service service = hstpRequest(accountServiceUSL,"access_key/query",Map.of());
+        List<AIPortAccessKeyCredential> keys = null;
+        int code = service.getErrorCode();
+        String message = service.getErrorMessage();
+        if(code==Service.SERVICE_SUCCESSFUL){
+            SimpleServiceResponseMessage<List<AIPortAccessKeyCredential>> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            code = resp.code;
+            message = resp.message;
+            keys = resp.data;
+            if(code==Service.SERVICE_SUCCESSFUL&&keys!=null){
+                accessKeyCredentials.clear();
+                keys.forEach(key->{
+                    accessKeyCredentials.put(Long.toString(key.id),key);
+                });
+            }
+        }
+        callback.onResult(code,message,keys);
+    }
+    public static void queryToolPermissionMakerSummaries(Callback<List<AIPortToolPermissionMakerSummary>> callback) throws Exception {
+        Service service = hstpRequest(aitoolsManagementUSL,"tool/permission/maker/summary/query",Map.of());
+        List<AIPortToolPermissionMakerSummary> keys = null;
+        int code = service.getErrorCode();
+        String message = service.getErrorMessage();
+        if(code==Service.SERVICE_SUCCESSFUL){
+            SimpleServiceResponseMessage<List<AIPortToolPermissionMakerSummary>> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            code = resp.code;
+            message = resp.message;
+            keys = resp.data;
+        }
+        callback.onResult(code,message,keys);
+    }
+
 }
