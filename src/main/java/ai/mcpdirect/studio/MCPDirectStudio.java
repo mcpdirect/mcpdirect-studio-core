@@ -1,7 +1,7 @@
 package ai.mcpdirect.studio;
 
 
-import ai.mcpdirect.backend.dao.entity.account.AIPortAnonymousCredential;
+import ai.mcpdirect.backend.dao.entity.account.*;
 import ai.mcpdirect.backend.dao.entity.aitool.*;
 import ai.mcpdirect.backend.util.AIPortAccessKeyValidator;
 import ai.mcpdirect.studio.handler.*;
@@ -13,9 +13,6 @@ import appnet.hstp.engine.HstpServiceEngine;
 import appnet.hstp.engine.util.JSON;
 import appnet.hstp.exception.ServiceException;
 import appnet.hstp.exception.ServiceNotFoundException;
-import ai.mcpdirect.backend.dao.entity.account.AIPortAccessKeyCredential;
-import ai.mcpdirect.backend.dao.entity.account.AIPortOtp;
-import ai.mcpdirect.backend.dao.entity.account.AIPortUser;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.service.AIToolServiceHandler;
 import ai.mcpdirect.studio.tool.AITool;
@@ -1122,6 +1119,30 @@ public class MCPDirectStudio {
     public interface Callback<T>{
         void onResult(int code,String message,T data);
     }
+    public interface Convertor<T>{
+        SimpleServiceResponseMessage<T> convert(byte[] data) throws Exception;
+    }
+    public static <T> void hstpRequest( USL usl,String path,Map<String, Object> parameters,
+                                        Callback<T> callback,Convertor<T> convertor){
+        int code;
+        String message;
+        T data = null;
+        try {
+            Service service = hstpRequest(usl, path, parameters);
+            code = service.getErrorCode();
+            message = service.getErrorMessage();
+            if (code == Service.SERVICE_SUCCESSFUL) {
+                SimpleServiceResponseMessage<T> resp = convertor.convert(service.getResponseMessage());
+                code = resp.code;
+                message = resp.message;
+                data = resp.data;
+            }
+        }catch (Exception e){
+            code = -1;
+            message = e.getMessage();
+        }
+        callback.onResult(code,message,data);
+    }
     private static class RequestOfToolMaker{
         public Long id;
         public Long toolAgentId;
@@ -1402,5 +1423,96 @@ public class MCPDirectStudio {
         }
         callback.onResult(code,message,keys);
     }
+    public static void modifyAccessKey(long id,String name,Integer status,
+                                       Callback<AIPortAccessKeyCredential> callback
+    ) throws Exception {
+        if((name==null||(name=name.trim()).isEmpty())&& status==null){
+            callback.onResult(-1,"name and status are empty",null);
+            return;
+        }
 
+        Map<String,Object> parameters = new HashMap<>();
+        parameters.put("id",id);
+        if(name!=null){
+            parameters.put("name",name);
+        }
+        if(status!=null){
+            parameters.put("status",status);
+        }
+        Service service = hstpRequest(accountServiceUSL,"access_key/modify",parameters);
+        AIPortAccessKeyCredential key = null;
+        int code = service.getErrorCode();
+        String message = service.getErrorMessage();
+        if(code==Service.SERVICE_SUCCESSFUL){
+            SimpleServiceResponseMessage<AIPortAccessKeyCredential> resp =
+                    JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            code = resp.code;
+            message = resp.message;
+            key = resp.data;
+        }
+        callback.onResult(code,message,key);
+    }
+    public static void createTeam(String name, Callback<AIPortTeam> callback){
+        if(name==null){
+            callback.onResult(-1,"name is empty",null);
+            return;
+        }
+        hstpRequest(accountServiceUSL,"team/create",Map.of("name",name), callback,
+                (data)-> JSON.fromJson(data,
+                        new TypeReference<SimpleServiceResponseMessage<AIPortTeam>>() {}));
+    }
+    public static void queryTeams(Callback<List<AIPortTeam>> callback){
+        hstpRequest(accountServiceUSL,"team/query",Map.of(),callback,
+                (data)-> JSON.fromJson(data,
+                        new TypeReference<>() {}));
+    }
+    public static void modifyTeam(long teamId,String name,Integer status,Callback<AIPortTeam> callback){
+        if(teamId<1&&(name==null||(name=name.trim()).isEmpty())&& status==null){
+            callback.onResult(-1,"team id <1 or name and status are empty",null);
+            return;
+        }
+
+        String finalName = name;
+        Map<String,Object> parameters = new HashMap<>(){{
+            put("teamId",teamId);
+            put("name", finalName);
+            put("status",status);
+        }};
+        hstpRequest(accountServiceUSL,"team/modify",parameters,callback,
+                (data)-> JSON.fromJson(data,
+                        new TypeReference<SimpleServiceResponseMessage<AIPortTeam>>() {}));
+    }
+
+    public static void inviteTeamMember(long teamId,String account, Callback<AIPortTeamMember> callback){
+        if(teamId<1||account==null){
+            callback.onResult(-1,"invalid parameters",null);
+            return;
+        }
+        hstpRequest(accountServiceUSL,"team/member/invite",
+                Map.of("teamId",teamId, "account",account), callback,
+                (data)-> JSON.fromJson(data, new TypeReference<>() {}));
+    }
+    public static void queryTeamMembers(long teamId,Callback<List<AIPortTeamMember>> callback){
+        if(teamId<1){
+            callback.onResult(-1,"invalid parameters",null);
+            return;
+        }
+        hstpRequest(accountServiceUSL,"team/member/query",Map.of("teamId",teamId),callback,
+                (data)-> JSON.fromJson(data, new TypeReference<>() {}));
+    }
+    public static void modifyTeamMember(long teamId,long memberId,Integer status,Long expirationDate,Callback<AIPortTeamMember> callback){
+        if((teamId<1||memberId<1)&&status==null&&expirationDate==null){
+            callback.onResult(-1,"invalid parameters",null);
+            return;
+        }
+
+        Map<String,Object> parameters = new HashMap<>(){{
+            put("teamId",teamId);
+            put("memberId", memberId);
+            put("status",status);
+            put("expirationDate",expirationDate);
+        }};
+        hstpRequest(accountServiceUSL,"team/member/modify",parameters,callback,
+                (data)-> JSON.fromJson(data, new TypeReference<>() {}));
+    }
 }

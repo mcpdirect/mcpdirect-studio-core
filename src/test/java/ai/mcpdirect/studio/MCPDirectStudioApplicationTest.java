@@ -138,6 +138,7 @@ public class MCPDirectStudioApplicationTest extends TestCase {
     public void testMapof(){
         HashMap<Object, Object> objectObjectHashMap = new HashMap<>();
         objectObjectHashMap.put("k",null);
+        Map.of("k", null);
     }
 
     public void testClone(){

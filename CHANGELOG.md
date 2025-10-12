@@ -1,3 +1,22 @@
+## 2025-10-12
+
+**Summary:** Added team management functionality with team and team member entities.
+
+**Detail:**
+- Added AIPortTeam entity with builder pattern implementation
+- Added AIPortTeamMember entity with builder pattern implementation
+- Added AccountServiceErrors interface with user and team error codes
+- Added new import to include all account entities in MCPDirectStudio
+- Removed specific account entity imports (AIPortAccessKeyCredential, AIPortOtp, AIPortUser) from MCPDirectStudio
+- Added generic hstpRequest method with Convertor interface for flexible response handling
+- Implemented modifyAccessKey method for updating access key properties
+- Added team management methods: createTeam, queryTeams, modifyTeam
+- Added team member management methods: inviteTeamMember, queryTeamMembers, modifyTeamMember
+- Added userId field to AIPortToolMaker entity
+- Added lastUpdated field to AIPortTeam and AIPortTeamMember entities
+- Added name and account fields to AIPortTeamMember entity
+- Removed constructors from AIPortToolMaker, AIPortTeam, and AIPortTeamMember in favor of builder pattern
+
 ## 2025-10-11
 
 **Summary:** Added access key management and tool permission summaries.

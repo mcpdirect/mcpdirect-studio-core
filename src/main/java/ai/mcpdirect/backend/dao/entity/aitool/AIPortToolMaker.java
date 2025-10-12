@@ -17,19 +17,5 @@ public class AIPortToolMaker {
     public String name;
     public String tags;
     public long agentId;
-
-    public AIPortToolMaker() {}
-
-    public AIPortToolMaker(long id, long created, int status, long lastUpdated, long hash, String tools, int type, String name, String tags, long agentId) {
-        this.id = id;
-        this.created = created;
-        this.status = status;
-        this.lastUpdated = lastUpdated;
-        this.hash = hash;
-        this.tools = tools;
-        this.type = type;
-        this.name = name;
-        this.tags = tags;
-        this.agentId = agentId;
-    }
+    public long userId;
 }
