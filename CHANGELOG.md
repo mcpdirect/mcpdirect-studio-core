@@ -1,3 +1,14 @@
+## 2025-10-13
+
+**Summary:** Updated MCP version and enhanced team management features.
+
+**Detail:**
+- Updated mcp-version from 0.14.0 to 0.14.1 in pom.xml
+- Added ownerName and ownerAccount fields to AIPortTeam entity
+- Changed userDevice parameter in login method from serviceEngine.getEngineId() to machineId
+- Added error logging in hstpRequest method to print HSTP request errors
+- Added acceptTeamMember method to MCPDirectStudio for accepting team member invitations
+
 ## 2025-10-12
 
 **Summary:** Added team management functionality with team and team member entities.

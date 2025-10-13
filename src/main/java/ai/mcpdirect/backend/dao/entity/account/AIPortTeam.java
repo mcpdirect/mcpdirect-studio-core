@@ -7,6 +7,8 @@ public class AIPortTeam {
     public long ownerId;
     public Integer status;
     public long lastUpdated;
+    public String ownerName;
+    public String ownerAccount;
 
     public AIPortTeam id(long id) {
         this.id = id;

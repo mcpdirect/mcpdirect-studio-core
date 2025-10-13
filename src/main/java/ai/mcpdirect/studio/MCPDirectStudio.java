@@ -443,7 +443,7 @@ public class MCPDirectStudio {
         long milliseconds = System.currentTimeMillis();
         String hashedPassword = SHA256.digest(password);
 //        String userDevice = ServiceEngineFactory.getEngineId();
-        String userDevice = serviceEngine.getEngineId();
+        String userDevice = Long.toString(machineId);
         SimpleServiceResponseMessage<AccountDetails> httpResp = HstpHttpClient.hstpRequest(
                 hstpWebport,authenticationServiceAddress+"/login",userDevice,
                 Map.of("account",account,
@@ -1141,6 +1141,7 @@ public class MCPDirectStudio {
             code = -1;
             message = e.getMessage();
         }
+        if(code!=0) System.err.println("HSTP request error: code="+code+", message="+message);
         callback.onResult(code,message,data);
     }
     private static class RequestOfToolMaker{
@@ -1513,6 +1514,18 @@ public class MCPDirectStudio {
             put("expirationDate",expirationDate);
         }};
         hstpRequest(accountServiceUSL,"team/member/modify",parameters,callback,
+                (data)-> JSON.fromJson(data, new TypeReference<>() {}));
+    }
+    public static void acceptTeamMember(long teamId,long memberId,Callback<AIPortTeamMember> callback){
+        if((teamId<1||memberId<1)){
+            callback.onResult(-1,"invalid parameters",null);
+            return;
+        }
+        Map<String,Object> parameters = new HashMap<>(){{
+            put("teamId",teamId);
+            put("memberId", memberId);
+        }};
+        hstpRequest(accountServiceUSL,"team/member/accept",parameters,callback,
                 (data)-> JSON.fromJson(data, new TypeReference<>() {}));
     }
 }
