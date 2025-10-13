@@ -1128,7 +1128,13 @@ public class MCPDirectStudio {
         String message;
         T data = null;
         try {
-            Service service = hstpRequest(usl, path, parameters);
+//            Service service = hstpRequest(usl, path, parameters);
+            Service service = usl
+                    .appendPath(path)
+                    .createServiceClient()
+                    .headers(authHeaders)
+                    .content(JSON.toJson(parameters))
+                    .request(serviceEngine);
             code = service.getErrorCode();
             message = service.getErrorMessage();
             if (code == Service.SERVICE_SUCCESSFUL) {
@@ -1523,7 +1529,7 @@ public class MCPDirectStudio {
                 (data)-> JSON.fromJson(data, new TypeReference<>() {}));
     }
     public static void acceptTeamMember(long teamId,long memberId,Callback<AIPortTeamMember> callback){
-        if((teamId<1||memberId<1)){
+        if(teamId<1||memberId<1){
             callback.onResult(-1,"invalid parameters",null);
             return;
         }
@@ -1536,5 +1542,31 @@ public class MCPDirectStudio {
     }
     public static ToolAgentDetails getLocalToolAgentDetails(){
         return toolAgentDetails;
+    }
+    public static void modifyToolMakerTeams(AIPortTeam team,List<AIPortToolMakerTeam> toolMakerTeams,Callback<List<AIPortToolMakerTeam>> callback){
+        if(team==null||team.id<1||team.ownerId<1||toolMakerTeams==null||toolMakerTeams.isEmpty()){
+            callback.onResult(-1,"invalid parameters",null);
+            return;
+        }
+
+        Map<String,Object> parameters = new HashMap<>(){{
+            put("teamId",team.id);
+            put("teamOwnerId",team.ownerId);
+            put("toolMakerTeams", toolMakerTeams);
+        }};
+        hstpRequest(aitoolsManagementUSL,"tool_maker/team/modify",parameters,callback,
+                (data)-> JSON.fromJson(data, new TypeReference<>() {}));
+    }
+    public static void queryToolMakerTeams(long teamId,Callback<List<AIPortToolMakerTeam>> callback){
+        if(teamId<1){
+            callback.onResult(-1,"invalid parameters",null);
+            return;
+        }
+
+        Map<String,Object> parameters = new HashMap<>(){{
+            put("teamId",teamId);
+        }};
+        hstpRequest(aitoolsManagementUSL,"tool_maker/team/modify",parameters,callback,
+                (data)-> JSON.fromJson(data, new TypeReference<>() {}));
     }
 }

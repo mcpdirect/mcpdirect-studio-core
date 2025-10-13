@@ -1,3 +1,17 @@
+## 2025-10-15
+
+**Summary:** Added tool maker team management functionality and refined HSTP requests.
+
+**Detail:**
+- Added AIPortToolMakerTeam entity to manage relationships between tool makers and teams
+- Changed status field type from short to Integer in AIPortToolMakerTeam
+- Added copy() method to AIPortToolMakerTeam for creating copies of instances
+- Modified hstpRequest method to use a more explicit HSTP service call approach
+- Added modifyToolMakerTeams method to manage tool maker team associations
+- Added queryToolMakerTeams method to retrieve tool maker team associations
+- Simplified parameter validation in acceptTeamMember method
+- Added builder pattern methods for AIPortToolMakerTeam entity
+
 ## 2025-10-14
 
 **Summary:** Enhanced tool maker queries and added tool agent details access.
