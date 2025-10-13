@@ -17,5 +17,9 @@ public class AIPortToolMaker {
     public String name;
     public String tags;
     public long agentId;
+    public int agentStatus;
+    public String agentName;
     public long userId;
+    public String userName;
+    public String userAccount;
 }

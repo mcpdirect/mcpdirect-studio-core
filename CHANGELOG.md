@@ -1,3 +1,13 @@
+## 2025-10-14
+
+**Summary:** Enhanced tool maker queries and added tool agent details access.
+
+**Detail:**
+- Modified queryToolMakers method to use the new hstpRequest method with Convertor interface
+- Commented out the old queryToolMakers implementation
+- Added getLocalToolAgentDetails method to MCPDirectStudio for accessing tool agent details
+- Added agentStatus, agentName, userName, and userAccount fields to AIPortToolMaker entity
+
 ## 2025-10-13
 
 **Summary:** Updated MCP version and enhanced team management features.

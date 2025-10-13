@@ -1162,24 +1162,30 @@ public class MCPDirectStudio {
         }
     }
     public static void queryToolMakers(Integer type,String name, Long toolAgentId,Callback<List<AIPortToolMaker>> callback) throws Exception{
-
-        Service service = aitoolsManagementUSL
-                .appendPath("tool_maker/query")
-                .createServiceClient()
-                .headers(authHeaders)
-                .content(JSON.toJson(
-                        new RequestOfToolMaker(null,toolAgentId,type,name,null,null)
-                ))
-                .request(serviceEngine);
-        if(service.getErrorCode()==0) {
-            SimpleServiceResponseMessage<List<AIPortToolMaker>> resp
-                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
-            if(resp.code==0){
-                callback.onResult(resp.code,resp.message,resp.data);
-            }
-        }else{
-            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
-        }
+        Map<String,Object> parameters = new HashMap<>(){{
+            put("type",type);
+            put("name", name);
+            put("toolAgentId", toolAgentId);
+        }};
+        hstpRequest(aitoolsManagementUSL,"tool_maker/query",parameters,callback,
+                (data)-> JSON.fromJson(data, new TypeReference<>() {}));
+//        Service service = aitoolsManagementUSL
+//                .appendPath("tool_maker/query")
+//                .createServiceClient()
+//                .headers(authHeaders)
+//                .content(JSON.toJson(
+//                        new RequestOfToolMaker(null,toolAgentId,type,name,null,null)
+//                ))
+//                .request(serviceEngine);
+//        if(service.getErrorCode()==0) {
+//            SimpleServiceResponseMessage<List<AIPortToolMaker>> resp
+//                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+//            if(resp.code==0){
+//                callback.onResult(resp.code,resp.message,resp.data);
+//            }
+//        }else{
+//            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+//        }
     }
 
     public static void createToolMaker(int type,String name, String tags, Callback<AIPortToolMaker> callback) throws Exception{
@@ -1527,5 +1533,8 @@ public class MCPDirectStudio {
         }};
         hstpRequest(accountServiceUSL,"team/member/accept",parameters,callback,
                 (data)-> JSON.fromJson(data, new TypeReference<>() {}));
+    }
+    public static ToolAgentDetails getLocalToolAgentDetails(){
+        return toolAgentDetails;
     }
 }
