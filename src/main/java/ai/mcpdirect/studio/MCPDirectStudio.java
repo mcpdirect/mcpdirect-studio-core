@@ -1167,11 +1167,12 @@ public class MCPDirectStudio {
             this.status = status;
         }
     }
-    public static void queryToolMakers(Integer type,String name, Long toolAgentId,Callback<List<AIPortToolMaker>> callback) throws Exception{
+    public static void queryToolMakers(Integer type,String name, Long toolAgentId,Long teamId,Callback<List<AIPortToolMaker>> callback) throws Exception{
         Map<String,Object> parameters = new HashMap<>(){{
             put("type",type);
             put("name", name);
             put("toolAgentId", toolAgentId);
+            put("teamId", teamId);
         }};
         hstpRequest(aitoolsManagementUSL,"tool_maker/query",parameters,callback,
                 (data)-> JSON.fromJson(data, new TypeReference<>() {}));
@@ -1247,36 +1248,53 @@ public class MCPDirectStudio {
     }
 
     public static class RequestOfQueryTools{
-        public Long toolId;
+        public Long userId;
         public String name;
         public Long agentId;
         public Long makerId;
         public Integer status;
 
-        public RequestOfQueryTools(Long toolId,String name, Long agentId, Long makerId, Integer status) {
-            this.toolId = toolId;
+        public RequestOfQueryTools(Long userId,String name, Long agentId, Long makerId, Integer status) {
+            this.userId = userId;
             this.name = name;
             this.agentId = agentId;
             this.makerId = makerId;
             this.status = status;
         }
     }
-    public static void queryTools(Long toolId,Integer status,Long agentId,Long makerId,String name,Callback<List<AIPortTool>> callback) throws Exception{
+    public static void queryTools(Long userId,Integer status,Long agentId,Long makerId,String name,Callback<List<AIPortTool>> callback) throws Exception{
 
         Service service = aitoolsManagementUSL
                 .appendPath("tool/query")
                 .createServiceClient()
                 .headers(authHeaders)
                 .content(JSON.toJson(
-                        new RequestOfQueryTools(toolId,name,agentId,makerId,status)
+                        new RequestOfQueryTools(userId,name,agentId,makerId,status)
                 ))
                 .request(serviceEngine);
         if(service.getErrorCode()==0) {
             SimpleServiceResponseMessage<List<AIPortTool>> resp
                     = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
-            if(resp.code==0){
-                callback.onResult(resp.code,resp.message,resp.data);
-            }
+            callback.onResult(resp.code,resp.message,resp.data);
+        }else{
+            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+        }
+    }
+
+    public static void getTool(long toolId,Callback<AIPortTool> callback) throws Exception{
+
+        Service service = aitoolsManagementUSL
+                .appendPath("tool/get")
+                .createServiceClient()
+                .headers(authHeaders)
+                .content(JSON.toJson(
+                        Map.of("toolId",toolId)
+                ))
+                .request(serviceEngine);
+        if(service.getErrorCode()==0) {
+            SimpleServiceResponseMessage<AIPortTool> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            callback.onResult(resp.code,resp.message,resp.data);
         }else{
             callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
         }
@@ -1303,9 +1321,7 @@ public class MCPDirectStudio {
         if(service.getErrorCode()==0) {
             SimpleServiceResponseMessage<List<AIPortVirtualTool>> resp
                     = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
-            if(resp.code==0){
-                callback.onResult(resp.code,resp.message,resp.data);
-            }
+            callback.onResult(resp.code,resp.message,resp.data);
         }else{
             callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
         }
@@ -1323,9 +1339,7 @@ public class MCPDirectStudio {
         if(service.getErrorCode()==0) {
             SimpleServiceResponseMessage<List<AIPortVirtualTool>> resp
                     = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
-            if(resp.code==0){
-                callback.onResult(resp.code,resp.message,resp.data);
-            }
+            callback.onResult(resp.code,resp.message,resp.data);
         }else{
             callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
         }
@@ -1342,9 +1356,7 @@ public class MCPDirectStudio {
         if(service.getErrorCode()==0) {
             SimpleServiceResponseMessage<List<AIPortToolPermission>> resp
                     = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
-            if(resp.code==0){
-                callback.onResult(resp.code,resp.message,resp.data);
-            }
+            callback.onResult(resp.code,resp.message,resp.data);
         }else{
             callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
         }
@@ -1361,9 +1373,7 @@ public class MCPDirectStudio {
         if(service.getErrorCode()==0) {
             SimpleServiceResponseMessage<List<AIPortVirtualToolPermission>> resp
                     = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
-            if(resp.code==0){
-                callback.onResult(resp.code,resp.message,resp.data);
-            }
+            callback.onResult(resp.code,resp.message,resp.data);
         }else{
             callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
         }
@@ -1543,8 +1553,8 @@ public class MCPDirectStudio {
     public static ToolAgentDetails getLocalToolAgentDetails(){
         return toolAgentDetails;
     }
-    public static void modifyToolMakerTeams(AIPortTeam team,List<AIPortToolMakerTeam> toolMakerTeams,Callback<List<AIPortToolMakerTeam>> callback){
-        if(team==null||team.id<1||team.ownerId<1||toolMakerTeams==null||toolMakerTeams.isEmpty()){
+    public static void modifyTeamToolMakers(AIPortTeam team, List<AIPortTeamToolMaker> teamToolMakers, Callback<List<AIPortTeamToolMaker>> callback){
+        if(team==null||team.id<1||team.ownerId<1||teamToolMakers==null||teamToolMakers.isEmpty()){
             callback.onResult(-1,"invalid parameters",null);
             return;
         }
@@ -1552,21 +1562,22 @@ public class MCPDirectStudio {
         Map<String,Object> parameters = new HashMap<>(){{
             put("teamId",team.id);
             put("teamOwnerId",team.ownerId);
-            put("toolMakerTeams", toolMakerTeams);
+            put("teamToolMakers", teamToolMakers);
         }};
         hstpRequest(aitoolsManagementUSL,"tool_maker/team/modify",parameters,callback,
                 (data)-> JSON.fromJson(data, new TypeReference<>() {}));
     }
-    public static void queryToolMakerTeams(long teamId,Callback<List<AIPortToolMakerTeam>> callback){
-        if(teamId<1){
+    public static void queryTeamToolMakers(AIPortTeam team, Callback<List<AIPortTeamToolMaker>> callback){
+        if(team==null||team.id<1||team.ownerId<1){
             callback.onResult(-1,"invalid parameters",null);
             return;
         }
 
         Map<String,Object> parameters = new HashMap<>(){{
-            put("teamId",teamId);
+            put("teamId",team.id);
+            put("teamOwnerId",team.ownerId);
         }};
-        hstpRequest(aitoolsManagementUSL,"tool_maker/team/modify",parameters,callback,
+        hstpRequest(aitoolsManagementUSL,"tool_maker/team/query",parameters,callback,
                 (data)-> JSON.fromJson(data, new TypeReference<>() {}));
     }
 }

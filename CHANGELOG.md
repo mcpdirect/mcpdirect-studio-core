@@ -1,3 +1,21 @@
+## 2025-10-16
+
+**Summary:** Renamed tool maker team entity and enhanced tool querying capabilities.
+
+**Detail:**
+- Renamed AIPortToolMakerTeam to AIPortTeamToolMaker for better naming consistency
+- Added teamId field to AIPortToolMaker entity and removed userName/userAccount fields
+- Changed agentId and makerId types from Long to long in AIPortToolPermission
+- Modified queryToolMakers method to accept teamId parameter
+- Modified queryTools method to accept userId instead of toolId
+- Added getTool method to retrieve a single tool by ID
+- Simplified callback handling in query methods by removing redundant checks
+- Renamed modifyToolMakerTeams to modifyTeamToolMakers method
+- Renamed queryToolMakerTeams to queryTeamToolMakers method
+- Updated modifyTeamToolMakers and queryTeamToolMakers to accept team parameter instead of just teamId
+- Changed endpoint from \"tool_maker/team/modify\" to \"tool_maker/team/query\" for queryTeamToolMakers
+- Updated parameter handling in team and tool maker management methods
+
 ## 2025-10-15
 
 **Summary:** Added tool maker team management functionality and refined HSTP requests.
@@ -91,7 +109,7 @@
 - Added AIPortToolPermission entity for tool permission management
 - Enhanced MCPDirectStudio with queryToolPermissions and queryVirtualToolPermissions methods
 - Added queryToolAgents method to MCPDirectStudio for tool agent management
-- Modified RequestOfToolMaker to include toolAgentId field
+- Modified RequestOfQueryTools to include userId field
 - Updated queryToolMakers method to accept toolAgentId parameter
 - Fixed constructor parameter order in RequestOfToolMaker
 - Added new API endpoints for permission and agent queries

@@ -20,6 +20,5 @@ public class AIPortToolMaker {
     public int agentStatus;
     public String agentName;
     public long userId;
-    public String userName;
-    public String userAccount;
+    public long teamId;
 }
