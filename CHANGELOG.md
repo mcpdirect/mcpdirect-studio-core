@@ -1,3 +1,10 @@
+## 2025-10-17
+
+**Summary:** Removed hash and tools fields from AIPortToolMaker entity.
+
+**Detail:**
+- Removed hash and tools fields from AIPortToolMaker entity
+
 ## 2025-10-16
 
 **Summary:** Renamed tool maker team entity and enhanced tool querying capabilities.

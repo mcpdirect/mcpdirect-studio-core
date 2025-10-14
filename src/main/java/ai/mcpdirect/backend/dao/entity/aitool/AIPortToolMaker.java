@@ -5,9 +5,6 @@ public class AIPortToolMaker {
     public long created;
     public int status;
     public long lastUpdated;
-    public long hash;
-    public String tools;
-
     public static final int TYPE_VIRTUAL = 0;
     public static final int TYPE_MCP = 1000;
     /**
