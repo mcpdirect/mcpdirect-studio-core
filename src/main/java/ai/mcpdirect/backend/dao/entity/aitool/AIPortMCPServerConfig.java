@@ -4,7 +4,7 @@ package ai.mcpdirect.backend.dao.entity.aitool;
 
 public class AIPortMCPServerConfig {
     public long id;
-    
+    public int type;
     public long created;
     public String url;
     public String command;

@@ -6,6 +6,7 @@ import ai.mcpdirect.studio.tool.MCPTool;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
+import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.client.transport.ServerParameters;
 import io.modelcontextprotocol.client.transport.StdioClientTransport;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -26,8 +27,10 @@ public class MCPToolProvider extends MCPServer{
     private final String sseEndpoint;
     private final McpSchema.Implementation clientInfo;
 
-    public MCPToolProvider(String clientName, String clientVersion, String baseUrl, String sseEndpoint, String command, List<String> args, Map<String, String> env, String serverName) {
-        super(baseUrl+sseEndpoint, command, args, env, serverName);
+    public MCPToolProvider(String clientName, String clientVersion,
+                           int type,String baseUrl, String sseEndpoint, String command,
+                           List<String> args, Map<String, String> env, String serverName) {
+        super(type,baseUrl+sseEndpoint, command, args, env, serverName);
         this.baseUrl = baseUrl;
         this.sseEndpoint = sseEndpoint;
         clientInfo = new McpSchema.Implementation(clientName,clientVersion);
@@ -44,8 +47,11 @@ public class MCPToolProvider extends MCPServer{
             if(env!=null) for (Map.Entry<String, String> entry : env.entrySet()) {
                 builder.header(entry.getKey(),entry.getValue());
             }
-
-            transport = HttpClientSseClientTransport
+            if(type==2) transport = HttpClientStreamableHttpTransport
+                        .builder(baseUrl).endpoint(sseEndpoint)
+                        .requestBuilder(builder)
+                        .build();
+            else transport = HttpClientSseClientTransport
                     .builder(baseUrl).sseEndpoint(sseEndpoint)
                     .requestBuilder(builder)
                     .build();

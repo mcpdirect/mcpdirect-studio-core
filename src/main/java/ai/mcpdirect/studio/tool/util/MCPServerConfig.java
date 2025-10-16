@@ -33,6 +33,8 @@ import java.util.Map;
  */
 public class MCPServerConfig {
 
+    @JsonProperty
+    public int type;
 	@JsonProperty
 	public String url;
 	@JsonProperty
@@ -42,7 +44,8 @@ public class MCPServerConfig {
 	@JsonProperty
 	public Map<String, String> env ;
 	public MCPServerConfig(){}
-	public MCPServerConfig(String url, String command, List<String> args, Map<String, String> env) {
+	public MCPServerConfig(int type,String url, String command, List<String> args, Map<String, String> env) {
+        this.type = type;
 		this.url = url;
 		this.command = command;
 		this.args = args;

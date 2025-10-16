@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MCPServer extends MCPServerConfig {
 	public long id;
-	public final String name;
+	public String name;
 //	public boolean updatable;
 	protected final Map<String, MCPTool> tools = new ConcurrentHashMap<>();
 	public static int STATUS_ON = 1;
@@ -43,8 +43,9 @@ public class MCPServer extends MCPServerConfig {
 	public static int STATUS_ERROR = -1;
 	protected int status;
     protected String statusMessage;
-	public MCPServer(String url, String command, List<String> args, Map<String, String> env, String serverName) {
-		super(url, command, args, env);
+    public String tags;
+	public MCPServer(int type,String url, String command, List<String> args, Map<String, String> env, String serverName) {
+		super(type,url, command, args, env);
 		this.name = serverName;
 	}
 

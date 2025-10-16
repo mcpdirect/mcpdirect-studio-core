@@ -212,8 +212,12 @@ public class MCPDirectStudio {
             mid = System.getProperty("user.name")+","+System.getProperty("user.home")+",0";
         }
 
+        env = System.getenv("MCPDIRECT_STUDIO_TEST_ID");
+        if(env!=null){
+            mid+=env;
+        }
+
         machineId = AIPortAccessKeyValidator.hashCode(mid);
-//        ServiceEngineFactory.setServiceEngineIdSeed("ai.mcpdirect.studio."+machineId);
         if(machineName==null){
             machineName = System.getProperty("os.name");
         }
@@ -605,28 +609,31 @@ public class MCPDirectStudio {
             mcpServerHandler.onLocalMCPServersNotification(servers);
         }
     }
-    public static List<MCPServer> addMCPServer(String json) throws Exception {
-        List<MCPServer> mcpServers = AIToolServiceHandler.addMCPServer(json);
-        for (MCPServer mcpServer : mcpServers) {
-            String name = mcpServer.name;
-            if(name==null||(name=name.trim()).isEmpty()||name.length()>32){
-                throw new Exception("The name must not be empty and the max length is 32");
-            }
-        }
-        for (MCPServer mcpServer : mcpServers) {
-            mcpServerConfigs.put(mcpServer.name,new MCPServerConfig(mcpServer.url,mcpServer.command,mcpServer.args,mcpServer.env));
-        }
-        notifyMCPServer(mcpServers);
-        writeMCPServerConfigs();
-        return mcpServers;
-    }
-    public static MCPServer addMCPServer(String serverName, String url,String command,
+//    public static List<MCPServer> addMCPServer(String json) throws Exception {
+//        List<MCPServer> mcpServers = AIToolServiceHandler.addMCPServer(json);
+//        for (MCPServer mcpServer : mcpServers) {
+//            String name = mcpServer.name;
+//            if(name==null||(name=name.trim()).isEmpty()||name.length()>32){
+//                throw new Exception("The name must not be empty and the max length is 32");
+//            }
+//        }
+//        for (MCPServer mcpServer : mcpServers) {
+//            mcpServerConfigs.put(mcpServer.name,new MCPServerConfig(mcpServer.url,mcpServer.command,mcpServer.args,mcpServer.env));
+//        }
+//        notifyMCPServer(mcpServers);
+//        writeMCPServerConfigs();
+//        return mcpServers;
+//    }
+    public static MCPServer addMCPServer(String serverName, int serverType,String url,String command,
                                     List<String> args,Map<String,String> env) throws Exception {
         if(serverName==null||(serverName=serverName.trim()).isEmpty()||serverName.length()>32){
             throw new Exception("The name must not be empty and the max length is 32");
         }
-        MCPServer mcpServer = AIToolServiceHandler.addMCPServer(serverName, url, command, args, env);
-        mcpServerConfigs.put(serverName,new MCPServerConfig(mcpServer.url,mcpServer.command,mcpServer.args,mcpServer.env));
+        MCPServer mcpServer = AIToolServiceHandler.addMCPServer(serverName,serverType, url, command, args, env);
+        mcpServerConfigs.put(serverName,new MCPServerConfig(
+                "stdio".equals(serverType)?0:("sse".equals(serverType)?1:2),
+                mcpServer.url,mcpServer.command,mcpServer.args,mcpServer.env
+        ));
         notifyMCPServer(List.of(mcpServer));
         writeMCPServerConfigs();
         return mcpServer;
@@ -671,7 +678,7 @@ public class MCPDirectStudio {
                 map.forEach((n,c)->{
                     if(!mcpServerConfigs.containsKey(n)) try {
                         MCPServer mcpServer
-                                = AIToolServiceHandler.addMCPServer(n, c.url, c.command, c.args, c.env);
+                                = AIToolServiceHandler.addMCPServer(n,c.type, c.url, c.command, c.args, c.env);
                         if (mcpServer.id == 0) mcpServers.add(mcpServer);
                         mcpServerConfigs.put(n,c);
                     } catch (Exception ignore) {}
@@ -689,7 +696,7 @@ public class MCPDirectStudio {
         mcpServerConfigs.forEach((n,c)->{
             try {
                 MCPServer mcpServer
-                        = AIToolServiceHandler.addMCPServer(n, c.url, c.command, c.args, c.env);
+                        = AIToolServiceHandler.addMCPServer(n,c.type, c.url, c.command, c.args, c.env);
                 if (mcpServer.id == 0) mcpServers.add(mcpServer);
             } catch (Exception ignore) {}
         });
@@ -730,10 +737,11 @@ public class MCPDirectStudio {
                                 for (AIPortMCPServerConfig c : toolAgentDetails.mcpServerConfigs) {
                                     AIPortToolMaker maker = collect.get(c.id);
                                     MCPServer mcpServer = AIToolServiceHandler.addMCPServer(
-                                            maker.name, c.url, c.command,
+                                            maker.name,c.type, c.url, c.command,
                                             JSON.fromJson(c.args, new TypeReference<>() {}),
                                             JSON.fromJson(c.env, new TypeReference<>() {}));
                                     mcpServer.id = c.id;
+                                    mcpServer.tags = maker.tags;
 //                                    if(mcpServer.status()==STATUS_ON){
 //                                        Map<String, AIPortTool> toolCollect = getAIPortTools(mcpServer).stream()
 //                                                .collect(Collectors.toMap(t -> t.name, t -> {
@@ -759,8 +767,9 @@ public class MCPDirectStudio {
 //
 //                                        }catch (Exception ignore){}
 //                                    }
-                                    mcpServerConfigs.put(maker.name, new MCPServerConfig(mcpServer.url, mcpServer.command, mcpServer.args, mcpServer.env));
-                                    mcpServers.add(mcpServer);                                }
+                                    mcpServerConfigs.put(maker.name, new MCPServerConfig(mcpServer.type,mcpServer.url, mcpServer.command, mcpServer.args, mcpServer.env));
+                                    mcpServers.add(mcpServer);
+                                }
                                 notifyMCPServer(mcpServers);
                                 writeMCPServerConfigs();
                             }
@@ -905,6 +914,7 @@ public class MCPDirectStudio {
         req.maker.agentId = toolAgentDetails.toolAgent.id;
 //        req.maker.tools = getToolsString(mcpServer);
         req.maker.tags="";
+        req.mcpServerConfig.type = mcpServer.type;
         req.mcpServerConfig.url = mcpServer.url;
         req.mcpServerConfig.command = mcpServer.command;
         req.mcpServerConfig.args = mcpServer.args!=null?JSON.toJson(mcpServer.args):"[]";
@@ -1217,35 +1227,35 @@ public class MCPDirectStudio {
         }
     }
 
-    private static void modifyToolMaker(String field,long id,String name, String tags,Integer status, Callback<AIPortToolMaker> callback) throws Exception{
-        Service service = aitoolsManagementUSL
-                .appendPath("tool_maker/"+field+"/modify")
-                .createServiceClient()
-                .headers(authHeaders)
-                .content(JSON.toJson(
-                        new RequestOfToolMaker(id,null,null,name,tags,status)
-                ))
-                .request(serviceEngine);
-        if(service.getErrorCode()==0) {
-            SimpleServiceResponseMessage<AIPortToolMaker> resp
-                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
-            if(resp.code==0){
-                callback.onResult(resp.code,resp.message,resp.data);
-            }
-        }else{
-            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
-        }
-    }
-
-    public static void modifyToolMakerName(long id,String name,Callback<AIPortToolMaker> callback) throws Exception{
-        modifyToolMaker("name",id,name,null,null,callback);
-    }
-    public static void modifyToolMakerTags(long id,String tags,Callback<AIPortToolMaker> callback) throws Exception{
-        modifyToolMaker("tags",id,null,tags,null,callback);
-    }
-    public static void modifyToolMakerStatus(long id,Integer status, Callback<AIPortToolMaker> callback) throws Exception{
-        modifyToolMaker("status",id,null,null,status,callback);
-    }
+//    private static void modifyToolMaker(String field,long id,String name, String tags,Integer status, Callback<AIPortToolMaker> callback) throws Exception{
+//        Service service = aitoolsManagementUSL
+//                .appendPath("tool_maker/"+field+"/modify")
+//                .createServiceClient()
+//                .headers(authHeaders)
+//                .content(JSON.toJson(
+//                        new RequestOfToolMaker(id,null,null,name,tags,status)
+//                ))
+//                .request(serviceEngine);
+//        if(service.getErrorCode()==0) {
+//            SimpleServiceResponseMessage<AIPortToolMaker> resp
+//                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+//            if(resp.code==0){
+//                callback.onResult(resp.code,resp.message,resp.data);
+//            }
+//        }else{
+//            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+//        }
+//    }
+//
+//    public static void modifyToolMakerName(long id,String name,Callback<AIPortToolMaker> callback) throws Exception{
+//        modifyToolMaker("name",id,name,null,null,callback);
+//    }
+//    public static void modifyToolMakerTags(long id,String tags,Callback<AIPortToolMaker> callback) throws Exception{
+//        modifyToolMaker("tags",id,null,tags,null,callback);
+//    }
+//    public static void modifyToolMakerStatus(long id,Integer status, Callback<AIPortToolMaker> callback) throws Exception{
+//        modifyToolMaker("status",id,null,null,status,callback);
+//    }
 
     public static class RequestOfQueryTools{
         public Long userId;
@@ -1580,4 +1590,50 @@ public class MCPDirectStudio {
         hstpRequest(aitoolsManagementUSL,"tool_maker/team/query",parameters,callback,
                 (data)-> JSON.fromJson(data, new TypeReference<>() {}));
     }
+    public static void modifyToolAgent(long toolAgentId,String name,String tags,Integer status, Callback<List<AIPortToolAgent>> callback){
+        if(toolAgentId<1){
+            callback.onResult(-1,"invalid parameters",null);
+            return;
+        }
+
+        Map<String,Object> parameters = new HashMap<>(){{
+            put("agentId",toolAgentId);
+            put("name",name);
+            put("tags",tags);
+            put("status",status);
+        }};
+        hstpRequest(aitoolsManagementUSL,"tool_agent/modify",parameters,callback,
+                (data)-> JSON.fromJson(data, new TypeReference<>() {}));
+    }
+
+    public static void modifyToolMaker(long toolMakerId,String name,String tags,Integer status, Callback<AIPortToolMaker> callback){
+        if(toolMakerId<1){
+            callback.onResult(-1,"invalid parameters",null);
+            return;
+        }
+
+        Map<String,Object> parameters = new HashMap<>(){{
+            put("makerId",toolMakerId);
+            put("name",name);
+            put("tags",tags);
+            put("status",status);
+        }};
+        hstpRequest(aitoolsManagementUSL,"tool_maker/modify",parameters,callback,
+                (data)-> JSON.fromJson(data, new TypeReference<>() {}));
+    }
+
+    public static long accountId(){
+        if(accountDetails!=null){
+            return accountDetails.userInfo.id;
+        }
+        return 0;
+    }
+
+    public static long studioId(){
+        if(toolAgentDetails!=null){
+            return toolAgentDetails.toolAgent.id;
+        }
+        return 0;
+    }
+
 }

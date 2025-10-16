@@ -1,3 +1,20 @@
+## 2025-10-18
+
+**Summary:** Enhanced MCP server configuration with type support and added new API methods.
+
+**Detail:**
+- Added type field to AIPortMCPServerConfig entity to support different server types
+- Added type field to MCPServerConfig and MCPToolProvider classes with corresponding constructors
+- Modified addMCPServer methods to accept serverType parameter
+- Added new modifyToolAgent and modifyToolMaker methods for updating entities
+- Added accountId() and studioId() utility methods
+- Changed name field in MCPServer from final to mutable
+- Added tags field to MCPServer entity
+- Integrated type parameter in MCPToolProvider for different transport mechanisms
+- Added support for HttpClientStreamableHttpTransport for type 2 servers
+- Modified query methods to pass type parameter when adding MCP servers
+- Added environment variable for test ID during machine ID generation
+
 ## 2025-10-17
 
 **Summary:** Removed hash and tools fields from AIPortToolMaker entity.

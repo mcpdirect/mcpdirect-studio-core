@@ -35,22 +35,22 @@ public class AIToolServiceHandler {
     public static MCPServer getMCPServer(String serverName){
         return mcpToolsProviders.get(serverName);
     }
-    public static List<MCPServer> addMCPServer(String json) throws Exception {
-        List<MCPServer> list = new ArrayList<>();
-        Map<String,Map<String, MCPServerConfig>> config = JSON.fromJson(json, new TypeReference<>() {
-        });
-        Map<String, MCPServerConfig> mcpServerConfigs = config.get("mcpServers");
-        if(mcpServerConfigs!=null) for (Map.Entry<String, MCPServerConfig> entry
-                : mcpServerConfigs.entrySet()) {
-            String serverName = entry.getKey();
-            MCPServerConfig value = entry.getValue();
-            try {
-                list.add(addMCPServer(serverName, value.url, value.command, value.args, value.env));
-            }catch (Exception ignore){}
-        }
-        return list;
-    }
-    public static synchronized MCPServer addMCPServer(String serverName, String url,String command,
+//    public static List<MCPServer> addMCPServer(String json) throws Exception {
+//        List<MCPServer> list = new ArrayList<>();
+//        Map<String,Map<String, MCPServerConfig>> config = JSON.fromJson(json, new TypeReference<>() {
+//        });
+//        Map<String, MCPServerConfig> mcpServerConfigs = config.get("mcpServers");
+//        if(mcpServerConfigs!=null) for (Map.Entry<String, MCPServerConfig> entry
+//                : mcpServerConfigs.entrySet()) {
+//            String serverName = entry.getKey();
+//            MCPServerConfig value = entry.getValue();
+//            try {
+//                list.add(addMCPServer(serverName, value.url, value.command, value.args, value.env));
+//            }catch (Exception ignore){}
+//        }
+//        return list;
+//    }
+    public static synchronized MCPServer addMCPServer(String serverName,int serverType,String url,String command,
                                     List<String> args, Map<String, String> env)
             throws MCPServerException, MalformedURLException {
         if(serverName==null||(serverName=serverName.trim()).isEmpty()){
@@ -66,29 +66,30 @@ public class AIToolServiceHandler {
         if(command!=null&&!command.isEmpty()) {
             provider = new MCPToolProvider(
                     "MCPDirectStudio#"+serviceEngine.getEngineId(),"1.0.0",
-                    null,null,command,args,env,serverName
+                    0,null,null,command,args,env,serverName
             );
         }else{
             String baseUrl;
             String sseEndpoint;
+
             java.net.URL parsedUrl = new java.net.URL(url);
             baseUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost()
                     + (parsedUrl.getPort() == -1 ? "" : ":" + parsedUrl.getPort());
 
-            String path = parsedUrl.getPath();
-            if (path == null || !path.endsWith("/sse")) {
-                throw new IllegalArgumentException(
-                        "URL path must end with /sse, current path: " + path + " for server: " + serverName);
-            }
+//            String path = parsedUrl.getPath();
+//            if (path == null || !path.endsWith("/sse")) {
+//                throw new IllegalArgumentException(
+//                        "URL path must end with /sse, current path: " + path + " for server: " + serverName);
+//            }
 
-            sseEndpoint = path;
+            sseEndpoint = parsedUrl.getPath();
 
             if (sseEndpoint.startsWith("/")) {
                 sseEndpoint = sseEndpoint.substring(1);
             }
             provider = new MCPToolProvider(
                     "MCPDirectStudio#"+serviceEngine.getEngineId(),"1.0.0",
-                    baseUrl,sseEndpoint,null,null,env,serverName
+                    serverType,baseUrl,sseEndpoint,null,null,env,serverName
             );
             HttpRequest.Builder builder = HttpRequest.newBuilder();
             builder.header("Content-Type", "application/json");
