@@ -15,7 +15,10 @@
  */
 package ai.mcpdirect.studio.tool.util;
 
+import ai.mcpdirect.backend.dao.entity.aitool.AIPortMCPServerConfig;
+import appnet.hstp.engine.util.JSON;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.util.List;
 import java.util.Map;
@@ -34,7 +37,7 @@ import java.util.Map;
 public class MCPServerConfig {
 
     @JsonProperty
-    public int type;
+    public int transport;
 	@JsonProperty
 	public String url;
 	@JsonProperty
@@ -44,11 +47,18 @@ public class MCPServerConfig {
 	@JsonProperty
 	public Map<String, String> env ;
 	public MCPServerConfig(){}
-	public MCPServerConfig(int type,String url, String command, List<String> args, Map<String, String> env) {
-        this.type = type;
+	public MCPServerConfig(int transport,String url, String command, List<String> args, Map<String, String> env) {
+        this.transport = transport;
 		this.url = url;
 		this.command = command;
 		this.args = args;
 		this.env = env;
 	}
+    public MCPServerConfig(AIPortMCPServerConfig c) throws Exception {
+        transport = c.transport;
+        url = c.url;
+        command = c.command;
+        args = JSON.fromJson(c.args, new TypeReference<>() {});
+        env = JSON.fromJson(c.env, new TypeReference<>() {});
+    }
 }

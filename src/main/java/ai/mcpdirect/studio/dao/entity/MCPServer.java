@@ -15,9 +15,12 @@
  */
 package ai.mcpdirect.studio.dao.entity;
 
+import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
 import ai.mcpdirect.studio.tool.AITool;
 import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,22 +36,39 @@ import java.util.concurrent.ConcurrentHashMap;
  * { "mcpServers": { "server-name": { "command": "python", "args": ["mcp-server.py"],
  * "env": { "API_KEY": "value" } } } }
  */
-public class MCPServer extends MCPServerConfig {
-	public long id;
-	public String name;
-//	public boolean updatable;
+public class MCPServer extends AIPortToolMaker {
+    @JsonIgnore
 	protected final Map<String, MCPTool> tools = new ConcurrentHashMap<>();
 	public static int STATUS_ON = 1;
 	public static int STATUS_OFF = 0;
 	public static int STATUS_ERROR = -1;
-	protected int status;
     protected String statusMessage;
-    public String tags;
-	public MCPServer(int type,String url, String command, List<String> args, Map<String, String> env, String serverName) {
-		super(type,url, command, args, env);
-		this.name = serverName;
-	}
-
+    public int transport;
+    public String url;
+    public String command;
+    public List<String> args;
+    public Map<String, String> env ;
+//	public MCPServer(int transport,String url, String command, List<String> args, Map<String, String> env, String serverName) {
+//
+//		this.name = serverName;
+//	}
+    public MCPServer(MCPServerConfig config){
+        transport = config.transport;
+        url = config.url;
+        command = config.command;
+        args = config.args;
+        env = config.env;
+    }
+    public void merge(AIPortToolMaker maker){
+        id  = maker.id;
+        name = maker.name;
+        type = maker.type;
+        agentId = maker.agentId;
+        tags = maker.tags;
+        status = maker.status;
+        lastUpdated = maker.lastUpdated;
+        created = maker.created;
+    }
 	public int status(){
 		return status;
 	}

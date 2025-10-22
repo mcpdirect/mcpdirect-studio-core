@@ -1,5 +1,7 @@
 package ai.mcpdirect.studio.service;
 
+import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
+import ai.mcpdirect.studio.tool.util.MCPServerConfig;
 import appnet.hstp.ServiceEngine;
 import appnet.hstp.ServiceRequest;
 import appnet.hstp.annotation.*;
@@ -8,18 +10,13 @@ import ai.mcpdirect.studio.MCPDirectStudio;
 import ai.mcpdirect.studio.exception.MCPServerException;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.tool.AITool;
-import ai.mcpdirect.studio.tool.util.MCPServerConfig;
 import ai.mcpdirect.studio.tool.util.MCPToolProvider;
-import appnet.hstp.engine.util.JSON;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.http.HttpRequest;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,8 +29,8 @@ public class AIToolServiceHandler {
     public static Collection<? extends MCPServer> getMCPServers(){
         return mcpToolsProviders.values();
     }
-    public static MCPServer getMCPServer(String serverName){
-        return mcpToolsProviders.get(serverName);
+    public static MCPServer getMCPServer(long serverId){
+        return mcpToolsProviders.get(Long.toString(serverId,Character.MAX_RADIX));
     }
 //    public static List<MCPServer> addMCPServer(String json) throws Exception {
 //        List<MCPServer> list = new ArrayList<>();
@@ -42,44 +39,47 @@ public class AIToolServiceHandler {
 //        Map<String, MCPServerConfig> mcpServerConfigs = config.get("mcpServers");
 //        if(mcpServerConfigs!=null) for (Map.Entry<String, MCPServerConfig> entry
 //                : mcpServerConfigs.entrySet()) {
-//            String serverName = entry.getKey();
+//            String serverId = entry.getKey();
 //            MCPServerConfig value = entry.getValue();
 //            try {
-//                list.add(addMCPServer(serverName, value.url, value.command, value.args, value.env));
+//                list.add(addMCPServer(serverId, value.url, value.command, value.args, value.env));
 //            }catch (Exception ignore){}
 //        }
 //        return list;
 //    }
-    public static synchronized MCPServer addMCPServer(String serverName,int serverType,String url,String command,
-                                    List<String> args, Map<String, String> env)
+//    public static synchronized MCPServer addMCPServer(String serverId,int serverType,String url,String command,
+//                                    List<String> args, Map<String, String> env)
+    public static synchronized MCPServer connectMCPServer(long serverId, String serverName, MCPServerConfig conf)
             throws MCPServerException, MalformedURLException {
-        if(serverName==null||(serverName=serverName.trim()).isEmpty()){
-            throw new MCPServerException("Server Name must not be empty");
-        }
-        if((url==null||(url=url.trim()).isEmpty())&&(command==null||(command=command.trim()).isEmpty())){
+//        if(serverId==null||(serverId=serverId.trim()).isEmpty()){
+//            throw new MCPServerException("Server Name must not be empty");
+//        }
+        if((conf.url==null||(conf.url=conf.url.trim()).isEmpty())
+                &&(conf.command==null||(conf.command=conf.command.trim()).isEmpty())){
             throw new MCPServerException("Server URL and command must not be empty both");
         }
-        MCPToolProvider provider = mcpToolsProviders.get(serverName);
+        String serverKey = Long.toString(serverId,Character.MAX_RADIX);
+        MCPToolProvider provider = mcpToolsProviders.get(serverKey);
         if(provider!=null){
             return provider;
         }
-        if(command!=null&&!command.isEmpty()) {
+        if(conf.command!=null&&!conf.command.isEmpty()) {
             provider = new MCPToolProvider(
                     "MCPDirectStudio#"+serviceEngine.getEngineId(),"1.0.0",
-                    0,null,null,command,args,env,serverName
+                    null,null,conf
             );
         }else{
             String baseUrl;
             String sseEndpoint;
 
-            java.net.URL parsedUrl = new java.net.URL(url);
+            java.net.URL parsedUrl = new java.net.URL(conf.url);
             baseUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost()
                     + (parsedUrl.getPort() == -1 ? "" : ":" + parsedUrl.getPort());
 
 //            String path = parsedUrl.getPath();
 //            if (path == null || !path.endsWith("/sse")) {
 //                throw new IllegalArgumentException(
-//                        "URL path must end with /sse, current path: " + path + " for server: " + serverName);
+//                        "URL path must end with /sse, current path: " + path + " for server: " + serverId);
 //            }
 
             sseEndpoint = parsedUrl.getPath();
@@ -89,20 +89,28 @@ public class AIToolServiceHandler {
             }
             provider = new MCPToolProvider(
                     "MCPDirectStudio#"+serviceEngine.getEngineId(),"1.0.0",
-                    serverType,baseUrl,sseEndpoint,null,null,env,serverName
+                    baseUrl,sseEndpoint,conf
             );
             HttpRequest.Builder builder = HttpRequest.newBuilder();
             builder.header("Content-Type", "application/json");
-            if(env!=null) for (Map.Entry<String, String> entry : env.entrySet()) {
+            if(conf.env!=null) for (Map.Entry<String, String> entry : conf.env.entrySet()) {
                 builder.header(entry.getKey(),entry.getValue());
             }
         }
+        provider.id = serverId;
+        provider.name = serverName;
         provider.refreshTools();
-        mcpToolsProviders.put(provider.name,provider);
+        mcpToolsProviders.put(serverKey, provider);
         return provider;
     }
-    public static MCPServer remoteMCPServer(String name){
-        return mcpToolsProviders.remove(name);
+    public static MCPServer removeMCPServer(long serverId){
+        return mcpToolsProviders.remove(Long.toString(serverId,Character.MAX_RADIX));
+    }
+    public static void reassignMCPServer(long makerId){
+        MCPToolProvider maker = mcpToolsProviders.remove(Long.toString(makerId,Character.MAX_RADIX));
+        if(maker!=null){
+            mcpToolsProviders.put(Long.toString(maker.id,Character.MAX_RADIX),maker);
+        }
     }
     private static ServiceEngine serviceEngine;
 
@@ -175,6 +183,4 @@ public class AIToolServiceHandler {
             }).start();
         }
     }
-
-
 }

@@ -1,12 +1,13 @@
 package ai.mcpdirect.studio.tool;
 
+import ai.mcpdirect.backend.dao.entity.aitool.AIPortTool;
 import ai.mcpdirect.studio.tool.util.MCPToolProvider;
 import appnet.hstp.engine.util.JSON;
 import io.modelcontextprotocol.spec.McpSchema;
 
 import java.util.Map;
 
-public class MCPTool implements AITool{
+public class MCPTool extends AIPortTool implements AITool{
     private final MCPToolProvider provider;
     private final McpSchema.Tool tool;
     private final String inputSchema;

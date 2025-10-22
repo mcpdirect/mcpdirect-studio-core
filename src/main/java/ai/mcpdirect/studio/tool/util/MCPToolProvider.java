@@ -1,14 +1,16 @@
 package ai.mcpdirect.studio.tool.util;
 
+import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
+import ai.mcpdirect.backend.util.MCPDirectStdioClientTransport;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.tool.AITool;
 import ai.mcpdirect.studio.tool.MCPTool;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.client.transport.ServerParameters;
-import io.modelcontextprotocol.client.transport.StdioClientTransport;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -23,14 +25,22 @@ import java.util.Map;
 public class MCPToolProvider extends MCPServer{
     private static final Logger LOG = LoggerFactory.getLogger(MCPToolProvider.class);
     public static final McpJsonMapper JSON_MAPPER = McpJsonMapper.getDefault();
+    @JsonIgnore
     private final String baseUrl;
+    @JsonIgnore
     private final String sseEndpoint;
+    @JsonIgnore
     private final McpSchema.Implementation clientInfo;
 
+//    public MCPToolProvider(String clientName, String clientVersion,
+//                           int type,String baseUrl, String sseEndpoint, String command,
+//                           List<String> args, Map<String, String> env, String serverName) {
+//        super(type,baseUrl==null?sseEndpoint:(baseUrl+(sseEndpoint==null?"":sseEndpoint)),
+//                command, args, env, serverName);
     public MCPToolProvider(String clientName, String clientVersion,
-                           int type,String baseUrl, String sseEndpoint, String command,
-                           List<String> args, Map<String, String> env, String serverName) {
-        super(type,baseUrl+sseEndpoint, command, args, env, serverName);
+                           String baseUrl, String sseEndpoint,MCPServerConfig config) {
+        super(config);
+        this.url = baseUrl==null?sseEndpoint:(baseUrl+(sseEndpoint==null?"":sseEndpoint));
         this.baseUrl = baseUrl;
         this.sseEndpoint = sseEndpoint;
         clientInfo = new McpSchema.Implementation(clientName,clientVersion);
@@ -40,14 +50,19 @@ public class MCPToolProvider extends MCPServer{
         McpClientTransport transport;
         if(command!=null&&!command.isEmpty()) {
             ServerParameters parameters = ServerParameters.builder(command).args(args).env(env).build();
-            transport = new StdioClientTransport(parameters,JSON_MAPPER);
+            transport = new MCPDirectStdioClientTransport(parameters,JSON_MAPPER){
+                @Override
+                public void onException(Throwable throwable) {
+                    statusMessage = throwable.getMessage();
+                }
+            };
         }else{
             HttpRequest.Builder builder = HttpRequest.newBuilder();
             builder.header("Content-Type", "application/json");
             if(env!=null) for (Map.Entry<String, String> entry : env.entrySet()) {
                 builder.header(entry.getKey(),entry.getValue());
             }
-            if(type==2) transport = HttpClientStreamableHttpTransport
+            if(this.transport ==2) transport = HttpClientStreamableHttpTransport
                         .builder(baseUrl).endpoint(sseEndpoint)
                         .requestBuilder(builder)
                         .build();
@@ -58,8 +73,8 @@ public class MCPToolProvider extends MCPServer{
         }
         McpClient.SyncSpec builder = McpClient.sync(transport)
                 .clientInfo(clientInfo)
-                .requestTimeout(Duration.ofSeconds(14))
-                .initializationTimeout(Duration.ofSeconds(2))
+                .requestTimeout(Duration.ofSeconds(15))
+                .initializationTimeout(Duration.ofSeconds(15))
                 .capabilities(McpSchema.ClientCapabilities.builder()
                         .roots(true)
                         .sampling()
@@ -76,9 +91,8 @@ public class MCPToolProvider extends MCPServer{
                 LOG.info("refreshTools({},{},{})",tool.name(),tool.description(),tool.inputSchema());
                 this.tools.put(tool.name(),new MCPTool(this,tool));
             }
-        }catch (Exception e){
+        }catch (Throwable e){
             status = STATUS_ERROR;
-            statusMessage = e.getMessage();
         }
     }
 

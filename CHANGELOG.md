@@ -1,3 +1,26 @@
+## 2025-10-19
+
+**Summary:** Added MCPDirectStdioClientTransport and StudioConsoleServiceHandler with enhanced server management.
+
+**Detail:**
+- Added new MCPDirectStdioClientTransport class extending existing StdioClientTransport
+- Added new StudioConsoleServiceHandler for managing console operations
+- Renamed type field to transport in several entities (AIPortMCPServerConfig, MCPServerConfig)
+- Modified MCPServer to extend AIPortToolMaker instead of MCPServerConfig
+- Added connectMCPServer method in AIToolServiceHandler to connect to MCP servers
+- Changed getMCPServer to use serverId instead of serverName as parameter
+- Added removeMCPServer and reassignMCPServer methods in AIToolServiceHandler
+- Modified publishTools in MCPDirectStudio to be asynchronous with callback
+- Added login and logout methods with Callback functionality
+- Replaced addMCPServer with connectMCPServer in MCPDirectStudio
+- Added localMCPServerId method to generate unique IDs for local servers
+- Added event listener system with fireEvent mechanism
+- Added utility methods for studio engine ID and tool agent ID
+- Modified AIPortTool to include a constructor with name parameter
+- Added merge method to MCPServer to incorporate AIPortToolMaker properties
+- Implemented configMCPServerConfig functionality to modify server configurations
+- Added HstpResponseHandler interface for HSTP response handling
+
 ## 2025-10-18
 
 **Summary:** Enhanced MCP server configuration with type support and added new API methods.
