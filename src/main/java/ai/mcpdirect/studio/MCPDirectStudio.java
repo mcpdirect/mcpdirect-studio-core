@@ -5,6 +5,7 @@ import ai.mcpdirect.backend.dao.entity.account.*;
 import ai.mcpdirect.backend.dao.entity.aitool.*;
 import ai.mcpdirect.backend.util.AIPortAccessKeyValidator;
 import ai.mcpdirect.studio.handler.*;
+import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
 import appnet.communicator.ssl.SSLContextGenerator;
 import appnet.hstp.*;
@@ -37,6 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker.TYPE_MCP;
+import static ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker.TYPE_VIRTUAL;
 
 @ServiceScan
 public class MCPDirectStudio {
@@ -805,7 +807,7 @@ public class MCPDirectStudio {
                                     AIPortToolMaker maker = collect.get(c.id);
                                     MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(
                                             maker.id, maker.name, new MCPServerConfig(c));
-                                    mcpServer.merge(maker);
+                                    mcpServer.merge(maker,toolAgentDetails.tools);
                                     mcpServer.id = c.id;
                                     mcpServer.tags = maker.tags;
 //                                    if(mcpServer.status()==STATUS_ON){
@@ -852,41 +854,47 @@ public class MCPDirectStudio {
     }
 
     public static List<AIPortTool> getAIPortTools(MCPServer mcpServer){
-        Map<String, AIPortTool> collect;
-        if(mcpServer.id>0&&toolAgentDetails.tools!=null) {
-            collect = toolAgentDetails.tools.stream()
-                    .filter(t -> t.makerId == mcpServer.id)
-                    .collect(Collectors.toMap(t->t.name,t-> {
-                        t = t.duplicate();
-                        t.lastUpdated = -1;
-                        return t;
-                    }));
-        }else{
-            collect = new HashMap<>();
+        List<AIPortTool> tools = new ArrayList<>();
+        for (MCPTool tool : mcpServer.getTools()) {
+            tools.add(new AIPortTool(tool.id,tool.makerId,tool.status,tool.lastUpdated,
+                    tool.name, tool.hash,null,tool.tags));
         }
-        for (AITool tool : mcpServer.getTools()) try {
-            String metaData = JSON.toJson(new ServiceDescription("aitools",
-                    "call/" + Long.toString(mcpServer.id,Character.MAX_RADIX) + "/" + tool.name(),
-                    tool.description(), tool.inputSchema(), "{}"));
-            int hash = metaData.hashCode();
-            AIPortTool aiPortTool = collect.get(tool.name());
-            if(aiPortTool==null) {
-                aiPortTool = new AIPortTool(
-                        0, mcpServer.id, 1, 1, tool.name(), hash, null, ""
-                );
-//                toolAgentDetails.tools.add(aiPortTool);
-                collect.put(aiPortTool.name,aiPortTool);
-            }else if(aiPortTool.hash==hash){
-                aiPortTool.lastUpdated = 0;
-//                aiPortTool.metaData = tool.description();
-            }else{
-                aiPortTool.hash = hash;
-                aiPortTool.lastUpdated = System.currentTimeMillis();
-//                aiPortTool.metaData = tool.description();
-            }
-
-        }catch (Exception ignore){}
-        return collect.values().stream().toList();
+        return tools;
+//        Map<String, AIPortTool> collect;
+//        if(mcpServer.id>0&&toolAgentDetails.tools!=null) {
+//            collect = toolAgentDetails.tools.stream()
+//                    .filter(t -> t.makerId == mcpServer.id)
+//                    .collect(Collectors.toMap(t->t.name,t-> {
+//                        t = t.duplicate();
+//                        t.lastUpdated = -1;
+//                        return t;
+//                    }));
+//        }else{
+//            collect = new HashMap<>();
+//        }
+//        for (AITool tool : mcpServer.getTools()) try {
+//            String metaData = JSON.toJson(new ServiceDescription("aitools",
+//                    "call/" + Long.toString(mcpServer.id,Character.MAX_RADIX) + "/" + tool.name(),
+//                    tool.description(), tool.inputSchema(), "{}"));
+//            int hash = metaData.hashCode();
+//            AIPortTool aiPortTool = collect.get(tool.name());
+//            if(aiPortTool==null) {
+//                aiPortTool = new AIPortTool(
+//                        0, mcpServer.id, 1, 1, tool.name(), hash, null, ""
+//                );
+////                toolAgentDetails.tools.add(aiPortTool);
+//                collect.put(aiPortTool.name,aiPortTool);
+//            }else if(aiPortTool.hash==hash){
+//                aiPortTool.lastUpdated = 0;
+////                aiPortTool.metaData = tool.description();
+//            }else{
+//                aiPortTool.hash = hash;
+//                aiPortTool.lastUpdated = System.currentTimeMillis();
+////                aiPortTool.metaData = tool.description();
+//            }
+//
+//        }catch (Exception ignore){}
+//        return collect.values().stream().toList();
     }
     public static ToolAgentDetails getToolAgentDetails() throws Exception {
         Service service = aitoolsManagementUSL.appendPath("tool_agent/details/get")
@@ -902,49 +910,54 @@ public class MCPDirectStudio {
         return toolAgentDetails;
     }
 
-    private static String getToolMetadata(MCPServer mcpServer) throws Exception {
-        List<ServiceDescription> list = new ArrayList<>();
-        for (AITool tool : mcpServer.getTools()) {
-            list.add(new ServiceDescription("aitools","call/"+mcpServer.name+"/"+tool.name(),
-                    tool.description(),tool.inputSchema(),"{}"));
-        }
-        return JSON.toJson(list);
-    }
+//    private static String getToolMetadata(MCPServer mcpServer) throws Exception {
+//        List<ServiceDescription> list = new ArrayList<>();
+//        for (AITool tool : mcpServer.getTools()) {
+//            list.add(new ServiceDescription("aitools","call/"+mcpServer.name+"/"+tool.name(),
+//                    tool.description(),tool.inputSchema(),"{}"));
+//        }
+//        return JSON.toJson(list);
+//    }
 
     private static List<AIPortTool> createPublishingTools(MCPServer mcpServer){
-        Map<String, AIPortTool> collect;
-        if(mcpServer.id>0&&toolAgentDetails.tools!=null){
-            collect = toolAgentDetails.tools.stream()
-                    .filter(t->t.makerId==mcpServer.id)
-                    .collect(Collectors.toMap(t -> t.name, t -> {
-                        t = t.duplicate();
-                        t.status = -1;
-                        return t;
-                    }));
-        }else{
-            collect = new HashMap<>();
+        List<AIPortTool> tools = new ArrayList<>();
+        for (MCPTool tool : mcpServer.getTools()) if(tool.lastUpdated!=0){
+            tools.add(tool);
         }
-        for (AITool tool : mcpServer.getTools()) try {
-            String metaData = JSON.toJson(new ServiceDescription("aitools",
-                    "call/" + Long.toString(mcpServer.id,Character.MAX_RADIX)+ "/" + tool.name(),
-                    tool.description(), tool.inputSchema(), "{}"));
-            int hash = metaData.hashCode();
-            AIPortTool aiPortTool = collect.get(tool.name());
-            if(aiPortTool==null) {
-                aiPortTool = new AIPortTool(
-                        0, mcpServer.id, 1, 0, tool.name(), hash, metaData, ""
-                );
-                collect.put(aiPortTool.name,aiPortTool);
-            }else if(aiPortTool.hash==hash){
-                collect.remove(tool.name());
-            }else{
-                aiPortTool.hash = hash;
-                aiPortTool.metaData = metaData;
-                aiPortTool.lastUpdated = System.currentTimeMillis();
-            }
-
-        }catch (Exception ignore){}
-        return collect.values().stream().toList();
+        return tools;
+//        Map<String, AIPortTool> collect;
+//        if(mcpServer.id>0&&toolAgentDetails.tools!=null){
+//            collect = toolAgentDetails.tools.stream()
+//                    .filter(t->t.makerId==mcpServer.id)
+//                    .collect(Collectors.toMap(t -> t.name, t -> {
+//                        t = t.duplicate();
+//                        t.status = -1;
+//                        return t;
+//                    }));
+//        }else{
+//            collect = new HashMap<>();
+//        }
+//        for (AITool tool : mcpServer.getTools()) try {
+//            String metaData = JSON.toJson(new ServiceDescription("aitools",
+//                    "call/" + Long.toString(mcpServer.id,Character.MAX_RADIX)+ "/" + tool.name(),
+//                    tool.description(), tool.inputSchema(), "{}"));
+//            int hash = metaData.hashCode();
+//            AIPortTool aiPortTool = collect.get(tool.name());
+//            if(aiPortTool==null) {
+//                aiPortTool = new AIPortTool(
+//                        0, mcpServer.id, 1, 0, tool.name(), hash, metaData, ""
+//                );
+//                collect.put(aiPortTool.name,aiPortTool);
+//            }else if(aiPortTool.hash==hash){
+//                collect.remove(tool.name());
+//            }else{
+//                aiPortTool.hash = hash;
+//                aiPortTool.metaData = metaData;
+//                aiPortTool.lastUpdated = System.currentTimeMillis();
+//            }
+//
+//        }catch (Exception ignore){}
+//        return collect.values().stream().toList();
     }
 
     public static class RequestOfPublishTools{
@@ -972,22 +985,29 @@ public class MCPDirectStudio {
         return null;
     }
     public static void publishTools(MCPServer mcpServer,Callback<MCPServer> callback) throws Exception {
+        long oldMCPServerId = mcpServer.id;
         String name = mcpServer.name;
         if(name==null||(name=name.trim()).isEmpty()||name.length()>32){
             throw new Exception("The name must not be empty and the max length is 32");
         }
         AtomicInteger code = new AtomicInteger();
         AtomicReference<String> message = new AtomicReference<>();
-        if(mcpServer.id<0) createToolMaker(TYPE_MCP,name,"",
+        if(mcpServer.id<0) createToolMaker(name,"",mcpServer,
                 (c,m,d)->{
             code.set(c);
             message.set(m);
             if(c==0){
-                mcpServer.merge(d);
-                AIToolServiceHandler.reassignMCPServer(mcpServer.id);
+                mcpServer.merge(d,null);
+                AIToolServiceHandler.reassignMCPServer(oldMCPServerId);
             }
         });
+
         if(code.get()==0){
+            List<AIPortTool> tools = createPublishingTools(mcpServer);
+            if(tools.isEmpty()){
+                callback.onResult(0,"no tools updated",mcpServer);
+                return;
+            }
             RequestOfPublishTools req = new RequestOfPublishTools();
             req.maker.id = mcpServer.id;
             req.maker.name = name;
@@ -1000,7 +1020,7 @@ public class MCPDirectStudio {
             req.mcpServerConfig.command = mcpServer.command;
             req.mcpServerConfig.args = mcpServer.args!=null?JSON.toJson(mcpServer.args):"[]";
             req.mcpServerConfig.env = mcpServer.args!=null?JSON.toJson(mcpServer.env):"{}";
-            req.tools = createPublishingTools(mcpServer);
+            req.tools = tools;
             Service service = aitoolsManagementUSL
                     .appendPath("tool_agent/tools/publish")
                     .createServiceClient()
@@ -1016,6 +1036,10 @@ public class MCPDirectStudio {
                 message.set(resp.message);
                 if(resp.code==0){
                     mcpServer.id = resp.data;
+                    for (AIPortTool tool : req.tools) {
+                        tool.makerId = mcpServer.id;
+                        tool.lastUpdated = 0;
+                    }
                 }
             }
         }
@@ -1314,16 +1338,45 @@ public class MCPDirectStudio {
 //            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
 //        }
     }
-
-    public static void createToolMaker(int type,String name, String tags, Callback<AIPortToolMaker> callback) throws Exception{
+    public static void createVirtualToolMaker(String name, String tags,
+                                              Callback<AIPortToolMaker> callback) throws Exception{
         Service service = aitoolsManagementUSL
                 .appendPath("tool_maker/create")
                 .createServiceClient()
                 .headers(authHeaders)
                 .content(JSON.toJson(Map.of(
                         "name",name,
-                        "type",type,
+                        "type", TYPE_VIRTUAL,
                         "tags",tags
+                )))
+                .request(serviceEngine);
+        if(service.getErrorCode()==0) {
+            SimpleServiceResponseMessage<AIPortToolMaker> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            if(resp.code==0){
+                callback.onResult(resp.code,resp.message,resp.data);
+            }
+        }else{
+            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+        }
+    }
+    public static void createToolMaker(String name, String tags,MCPServer server,
+                                       Callback<AIPortToolMaker> callback) throws Exception{
+        Service service = aitoolsManagementUSL
+                .appendPath("tool_maker/create")
+                .createServiceClient()
+                .headers(authHeaders)
+                .content(JSON.toJson(Map.of(
+                        "name",name,
+                        "type", TYPE_MCP,
+                        "tags",tags,
+                        "mcpServerConfig", new AIPortMCPServerConfig(){{
+                            transport = server.transport;
+                            url = server.url;
+                            command = server.command;
+                            args = JSON.toJson(server.args);
+                            env = JSON.toJson(server.env);
+                        }}
                 )))
                 .request(serviceEngine);
         if(service.getErrorCode()==0) {

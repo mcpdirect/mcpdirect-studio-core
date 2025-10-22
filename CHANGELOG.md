@@ -1,3 +1,23 @@
+## 2025-10-22
+
+**Summary:** Refactored tool handling with MCPTool and enhanced tool publishing.
+
+**Detail:**
+- Added MCPToolSchema class with commented out implementation
+- Modified AITool interface to remove inputSchema method
+- Refactored MCPServer to use MCPTool instead of AITool in getTools() method
+- Added merge method in MCPServer to merge AIPortToolMaker with tools list
+- Enhanced MCPTool with provider and tool properties with proper JSON ignore annotations
+- Implemented setMCPToolProvider method in MCPTool for initializing tool properties
+- Added merge method in MCPTool to update properties from AIPortTool
+- Modified MCPToolProvider to reuse existing MCPTool instances instead of creating new ones
+- Updated MCPDirectStudio to use MCPTool in getAIPortTools and createPublishingTools methods
+- Modified publishTools method to handle empty tool lists and update tool properties
+- Added createVirtualToolMaker method for creating virtual tool makers
+- Added createToolMaker method with MCPServer parameter for creating MCP tool makers
+- Modified publishTools to pass the MCPServer object to createToolMaker
+- Added import for MCPTool in MCPDirectStudio
+
 ## 2025-10-19
 
 **Summary:** Added MCPDirectStdioClientTransport and StudioConsoleServiceHandler with enhanced server management.

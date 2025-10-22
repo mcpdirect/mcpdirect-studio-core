@@ -89,7 +89,13 @@ public class MCPToolProvider extends MCPServer{
             McpSchema.ListToolsResult tools = mcpClient.listTools();
             for (McpSchema.Tool tool : tools.tools()) {
                 LOG.info("refreshTools({},{},{})",tool.name(),tool.description(),tool.inputSchema());
-                this.tools.put(tool.name(),new MCPTool(this,tool));
+                MCPTool mcpTool = this.tools.get(tool.name());
+                if(mcpTool==null){
+                    mcpTool = new MCPTool();
+                    this.tools.put(tool.name(),mcpTool);
+                }
+                mcpTool.setMCPToolProvider(this,tool);
+//                this.tools.put(tool.name(),new MCPTool(this,tool));
             }
         }catch (Throwable e){
             status = STATUS_ERROR;

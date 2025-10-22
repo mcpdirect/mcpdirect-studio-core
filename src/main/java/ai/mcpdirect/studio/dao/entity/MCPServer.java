@@ -15,6 +15,7 @@
  */
 package ai.mcpdirect.studio.dao.entity;
 
+import ai.mcpdirect.backend.dao.entity.aitool.AIPortTool;
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
 import ai.mcpdirect.studio.tool.AITool;
 import ai.mcpdirect.studio.tool.MCPTool;
@@ -59,7 +60,7 @@ public class MCPServer extends AIPortToolMaker {
         args = config.args;
         env = config.env;
     }
-    public void merge(AIPortToolMaker maker){
+    public void merge(AIPortToolMaker maker, List<AIPortTool> tools){
         id  = maker.id;
         name = maker.name;
         type = maker.type;
@@ -68,6 +69,14 @@ public class MCPServer extends AIPortToolMaker {
         status = maker.status;
         lastUpdated = maker.lastUpdated;
         created = maker.created;
+        if(tools!=null) for (AIPortTool tool : tools) if(tool.makerId==id){
+            MCPTool mcpTool = this.tools.get(tool.name);
+            if(mcpTool==null){
+                mcpTool = new MCPTool();
+                this.tools.put(mcpTool.name,mcpTool);
+            }
+            mcpTool.merge(tool);
+        }
     }
 	public int status(){
 		return status;
@@ -76,11 +85,11 @@ public class MCPServer extends AIPortToolMaker {
         return statusMessage;
     }
 
-	public Collection<? extends AITool> getTools(){
+	public Collection<? extends MCPTool> getTools(){
 		return tools.values();
 	}
 
-	public AITool getTool(String name) {
+	public MCPTool getTool(String name) {
 		return tools.get(name);
 	}
 
