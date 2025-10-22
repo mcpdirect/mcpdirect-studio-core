@@ -1,3 +1,22 @@
+## 2025-10-23
+
+**Summary:** Added NotificationHandler interface and enhanced server management.
+
+**Detail:**
+- Added NotificationHandler interface for handling MCP server notifications
+- Changed MCPDirectStudio logout method to return Boolean instead of String
+- Replaced notifyMCPServer calls with notificationHandler.onMCPServerNotification
+- Added connectLocalMCPServers and loadLocalMCPServerConfigs methods
+- Renamed reassignMCPServer to remapMCPServer in AIToolServiceHandler
+- Modified StudioConsoleServiceHandler to use mcpServerId instead of mcpServiceId
+- Added metaData() method to MCPTool for generating metadata
+- Updated tool publishing logic to properly handle tool metadata and hashes
+- Modified getAIPortTools to return tool duplicates instead of new instances
+- Added setNotificationHandler method in MCPDirectStudio
+- Removed unused AITool import from MCPDirectStudio
+- Commented out several deprecated or replaced methods and sections
+- Added proper initialization handling in StudioConsoleServiceHandler
+
 ## 2025-10-22
 
 **Summary:** Refactored tool handling with MCPTool and enhanced tool publishing.

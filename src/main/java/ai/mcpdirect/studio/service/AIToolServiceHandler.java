@@ -1,6 +1,5 @@
 package ai.mcpdirect.studio.service;
 
-import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
 import appnet.hstp.ServiceEngine;
 import appnet.hstp.ServiceRequest;
@@ -106,7 +105,7 @@ public class AIToolServiceHandler {
     public static MCPServer removeMCPServer(long serverId){
         return mcpToolsProviders.remove(Long.toString(serverId,Character.MAX_RADIX));
     }
-    public static void reassignMCPServer(long makerId){
+    public static void remapMCPServer(long makerId){
         MCPToolProvider maker = mcpToolsProviders.remove(Long.toString(makerId,Character.MAX_RADIX));
         if(maker!=null){
             mcpToolsProviders.put(Long.toString(maker.id,Character.MAX_RADIX),maker);

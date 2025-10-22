@@ -22,20 +22,10 @@ public class MCPTool extends AIPortTool implements AITool{
         this.provider = provider;
         this.makerId = provider.id;
         this.tool = tool;
-        String inputSchema;
-        try {
-            inputSchema = JSON.toJson(tool.inputSchema());
-        }catch (Exception e){
-            inputSchema = "{}";
-        }
         this.name = tool.name();
-        try {
-            metaData = JSON.toJson(new ServiceDescription("aitools",
-                    "call/" + Long.toString(provider.id, Character.MAX_RADIX) + "/" + tool.name(),
-                    tool.description(), inputSchema, "{}"));
-        }catch (Exception ignore){}
+        String metadata = metaData();
+        int hash = metadata.hashCode();
         if(id>0) {
-            int hash = metaData.hashCode();
             if (hash == this.hash) {
                 lastUpdated = 0;
             } else {
@@ -44,8 +34,23 @@ public class MCPTool extends AIPortTool implements AITool{
         }else{
             this.status = 1;
         }
+        this.hash = hash;
     }
-
+    public String metaData(){
+        String metadata = "{}";
+        String inputSchema;
+        try {
+            inputSchema = JSON.toJson(tool.inputSchema());
+        }catch (Exception e){
+            inputSchema = "{}";
+        }
+        try {
+            metadata = JSON.toJson(new ServiceDescription("aitools",
+                    "call/" + Long.toString(provider.id, Character.MAX_RADIX) + "/" + tool.name(),
+                    tool.description(), inputSchema, "{}"));
+        }catch (Exception ignore){}
+        return metadata;
+    }
     public void merge(AIPortTool tool){
         id=tool.id;
         makerId=tool.makerId;

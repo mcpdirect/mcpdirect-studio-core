@@ -5,10 +5,7 @@ import ai.mcpdirect.studio.MCPDirectStudio;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
 import appnet.hstp.SimpleServiceResponseMessage;
-import appnet.hstp.annotation.ServiceName;
-import appnet.hstp.annotation.ServiceRequestMapping;
-import appnet.hstp.annotation.ServiceRequestMessage;
-import appnet.hstp.annotation.ServiceResponseMessage;
+import appnet.hstp.annotation.*;
 import appnet.hstp.engine.util.JSON;
 
 import java.util.ArrayList;
@@ -19,16 +16,13 @@ import java.util.Map;
 @ServiceName("studio.console")
 @ServiceRequestMapping("/")
 public class StudioConsoleServiceHandler {
-
-    public static class RequestOfAddMCPServer{
-        public List<MCPServerConfig> servers;
+    private StudioConsoleServiceHandler INSTANCE;
+    public StudioConsoleServiceHandler getInstance(){
+        return INSTANCE;
     }
-    @ServiceRequestMapping("mcp_server/add")
-    public void addMCPServer(
-            @ServiceRequestMessage RequestOfAddMCPServer req,
-            @ServiceResponseMessage SimpleServiceResponseMessage<List<MCPServer>> resp
-            ){
-
+    @ServiceRequestInit
+    public void init(){
+        INSTANCE = this;
     }
     @ServiceRequestMapping("mcp_server/query")
     public void queryMCPServers(
@@ -63,7 +57,7 @@ public class StudioConsoleServiceHandler {
         }
     }
     public static class RequestOfModifyMCPServer{
-        public long mcpServiceId;
+        public long mcpServerId;
         public MCPServerConfig mcpServerConfig;
     }
     @ServiceRequestMapping("mcp_server/config")
@@ -72,9 +66,9 @@ public class StudioConsoleServiceHandler {
             @ServiceResponseMessage SimpleServiceResponseMessage<MCPServer> resp
     ) throws Exception {
         MCPServerConfig conf;
-        if(req.mcpServiceId!=0&&(conf=req.mcpServerConfig)!=null) {
+        if(req.mcpServerId !=0&&(conf=req.mcpServerConfig)!=null) {
             MCPDirectStudio.configMCPServerConfig(
-                    req.mcpServiceId,conf, (code,message,data)->{
+                    req.mcpServerId,conf, (code, message, data)->{
                         resp.code = code;
                         resp.message = message;
                         resp.data = data;
