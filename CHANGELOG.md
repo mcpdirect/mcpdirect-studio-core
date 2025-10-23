@@ -1,3 +1,16 @@
+## 2025-10-24
+
+**Summary:** Optimized tool agent initialization and local server connection process.
+
+**Detail:**
+- Modified initToolAgent to asynchronously connect to MCP servers and send notifications
+- Changed connectLocalMCPServers to accept a configuration map as parameter
+- Added status code Integer.MIN_VALUE for new server notifications
+- Implemented threading for connecting to servers asynchronously
+- Added maker validation check before creating server configurations
+- Removed unnecessary writeMCPServerConfigs calls in loop
+- Improved notification handling during tool agent initialization
+
 ## 2025-10-23
 
 **Summary:** Added NotificationHandler interface and enhanced server management.

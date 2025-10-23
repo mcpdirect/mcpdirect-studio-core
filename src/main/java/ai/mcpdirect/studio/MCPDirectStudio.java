@@ -776,63 +776,72 @@ public class MCPDirectStudio {
 //        notifyLocalMCPServer(mcpServers);
     }
 
-    public static void initToolAgent(){
-//        Map<String, MCPServerConfig> localMCPServerConfigs = loadLocalMCPServerConfigs();
-        new Thread(()->{
-            try {
-                for (int i = 0; i < 15; i++) {
-                    Service service = null;
-                    int code;
-                    SimpleServiceResponseMessage<ToolAgentDetails> resp;
-                    try {
-                        Thread.sleep(1000);
-                        service = aitoolsManagementUSL.appendPath("tool_agent/init")
-                                .createServiceClient()
-                                .headers(authHeaders)
-                                .content(Map.of("deviceId",machineId,
-                                        "device", machineName))
-                                .request(serviceEngine);
+    public static void initToolAgent(){new Thread(()->{
+        Map<String, MCPServerConfig> localMCPServerConfigs = loadLocalMCPServerConfigs();
+        try {
+            for (int i = 0; i < 15; i++) {
+                Service service = null;
+                int code;
+                SimpleServiceResponseMessage<ToolAgentDetails> resp;
+                try {
+                    Thread.sleep(1000);
+                    service = aitoolsManagementUSL.appendPath("tool_agent/init")
+                            .createServiceClient()
+                            .headers(authHeaders)
+                            .content(Map.of("deviceId",machineId,
+                                    "device", machineName))
+                            .request(serviceEngine);
 
-                        code = service.getErrorCode();
-                    } catch (ServiceNotFoundException e) {
-                        code = Service.SERVICE_NOT_FOUND;
-                    }
-                    if (code == Service.SERVICE_NOT_FOUND) {
-                        continue;
-                    }
-                    if (code == 0 && (resp = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {})).code == 0) {
-                        toolAgentDetails = resp.data;
-                        if (toolAgentDetails.makers != null) {
-                            if(toolAgentDetails.tools==null) toolAgentDetails.tools = new ArrayList<>();
-                            Map<Long, AIPortToolMaker> collect = resp.data.makers.stream().collect(
-                                    Collectors.toMap(v -> v.id, v -> v));
-                            if (toolAgentDetails.mcpServerConfigs != null) {
-                                for (AIPortMCPServerConfig c : toolAgentDetails.mcpServerConfigs) {
-                                    AIPortToolMaker maker = collect.get(c.id);
-                                    MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(
-                                            maker.id, maker.name, new MCPServerConfig(c));
-                                    mcpServer.merge(maker,toolAgentDetails.tools);
-                                    mcpServer.id = c.id;
-                                    mcpServer.tags = maker.tags;
-                                    mcpServerConfigs.put(maker.name, new MCPServerConfig(mcpServer.transport,mcpServer.url, mcpServer.command, mcpServer.args, mcpServer.env));
-//                                    new Thread(()->{
-                                        notificationHandler.onMCPServerNotification(mcpServer);
-                                        System.err.println("notificationHandler.onMCPServerNotification.completed");
-//                                    }).start();
+                    code = service.getErrorCode();
+                } catch (ServiceNotFoundException e) {
+                    code = Service.SERVICE_NOT_FOUND;
+                }
+                if (code == Service.SERVICE_NOT_FOUND) {
+                    continue;
+                }
+                if (code == 0 && (resp = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {})).code == 0) {
+                    toolAgentDetails = resp.data;
+                    if (toolAgentDetails.makers != null) {
+                        if(toolAgentDetails.tools==null) toolAgentDetails.tools = new ArrayList<>();
+                        Map<Long, AIPortToolMaker> collect = resp.data.makers.stream().collect(
+                                Collectors.toMap(v -> v.id, v -> v));
+                        if (toolAgentDetails.mcpServerConfigs != null) {
+                            for (AIPortMCPServerConfig c : toolAgentDetails.mcpServerConfigs) {
+                                AIPortToolMaker maker = collect.get(c.id);
+                                if(maker!=null) {
+                                    MCPServerConfig mcpServerConfig = new MCPServerConfig(c);
+                                    mcpServerConfigs.put(maker.name, mcpServerConfig);
+                                    notificationHandler.onMCPServerNotification(new MCPServer(mcpServerConfig) {{
+                                        id = c.id;
+                                        name = maker.name;
+                                        status = Integer.MIN_VALUE;
+                                    }});
+                                    new Thread(() -> {
+                                        try {
+                                            MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(
+                                                    maker.id, maker.name, mcpServerConfig);
+                                            mcpServer.merge(maker, toolAgentDetails.tools);
+                                            mcpServer.id = c.id;
+                                            mcpServer.tags = maker.tags;
+                                            notificationHandler.onMCPServerNotification(mcpServer);
+                                        } catch (Exception e) {
+                                            throw new RuntimeException(e);
+                                        }
+                                    }).start();
                                 }
                             }
                         }
                     }
-                    break;
                 }
-                queryAccessKeys();
-            }catch (Exception e){
-                e.printStackTrace();
+                break;
             }
-            connectLocalMCPServers();
-            writeMCPServerConfigs();
-        }).start();
-    }
+            queryAccessKeys();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        connectLocalMCPServers(localMCPServerConfigs);
+        writeMCPServerConfigs();
+    }).start();}
 
     private static Map<String, MCPServerConfig> loadLocalMCPServerConfigs(){
         Map<String, MCPServerConfig> map = new HashMap<>();
@@ -849,27 +858,25 @@ public class MCPDirectStudio {
         }catch (Exception ignore){}
         return map;
     }
-    private static void connectLocalMCPServers(){
-        String userHome = System.getProperty("user.home");
-        File file = new File(userHome, ".mcpdirect/studio/"+Long.toString(accountDetails.userInfo.id,36));
-        if(!file.exists()){
-            file.mkdirs();
-        }
-        if(file.exists()) try{
-            mcpServerConfigFile = new File(file,"mcpservers");
-            if(file.exists()) try(FileInputStream in = new FileInputStream(mcpServerConfigFile)) {
-                Map<String, MCPServerConfig> map = new HashMap<>(JSON.fromJson(in.readAllBytes(),
-                        new TypeReference<>() {}));
-                map.forEach((n,c)->{
-                    if(!mcpServerConfigs.containsKey(n)) try {
-                        MCPServer mcpServer
-                                = AIToolServiceHandler.connectMCPServer(localMCPServerId(n),n ,c);
-                        notificationHandler.onMCPServerNotification(mcpServer);
-                        mcpServerConfigs.put(n,c);
-                    } catch (Exception ignore) {}
-                });
+    private static void connectLocalMCPServers(Map<String, MCPServerConfig> configs){
+        configs.forEach((n,c)->{
+            if(!mcpServerConfigs.containsKey(n)) {
+                mcpServerConfigs.put(n,c);
+                long mcpServerId = localMCPServerId(n);
+                notificationHandler.onMCPServerNotification(new MCPServer(c){{
+                    id = mcpServerId;
+                    name = n;
+                    status = Integer.MIN_VALUE;
+                }});
+                new Thread(()-> {try {
+                    MCPServer mcpServer
+                            = AIToolServiceHandler.connectMCPServer(mcpServerId, n, c);
+                    notificationHandler.onMCPServerNotification(mcpServer);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }}).start();
             }
-        }catch (Exception ignore){}
+        });
     }
 
     public static List<AIPortTool> getAIPortTools(MCPServer mcpServer){
