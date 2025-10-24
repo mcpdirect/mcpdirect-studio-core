@@ -27,7 +27,7 @@ public class HstpHttpClient {
     }
 
     public static String doPost(String url, Map<String, String> headers, Map<String, String> params,Object body) throws Exception {
-        String bodyString = JSON.toJson(body);
+        String bodyString = body instanceof String?body.toString():JSON.toJson(body);
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setRequestProperty("user-agent","Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0");
         conn.setRequestMethod("POST");

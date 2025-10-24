@@ -1278,6 +1278,7 @@ public class MCPDirectStudio {
     public interface Convertor<T>{
         SimpleServiceResponseMessage<T> convert(byte[] data) throws Exception;
     }
+
     public static <T> void hstpRequest( USL usl,String path,Map<String, Object> parameters,
                                         Callback<T> callback,Convertor<T> convertor){
         int code;
@@ -1329,6 +1330,17 @@ public class MCPDirectStudio {
             handler.onResponse(JSON.toJson(code,e.getMessage()));
         }
 
+    }
+    public static void httpRequest(String usl,String parameters,
+                                   HstpResponseHandler handler){
+        try {
+            handler.onResponse(HstpHttpClient.doPost(hstpWebport, Map.of(
+                    "hstp-usl", usl,
+                    "hstp-auth", accountDetails.accessToken
+            ), null, parameters));
+        } catch (Exception e) {
+            handler.onResponse(JSON.toJson(-1,e.getMessage()));
+        }
     }
     private static class RequestOfToolMaker{
         public Long id;

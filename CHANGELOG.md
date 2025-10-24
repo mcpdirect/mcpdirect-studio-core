@@ -1,3 +1,12 @@
+## 2025-10-25
+
+**Summary:** Added HTTP request method and enhanced HSTP client handling.
+
+**Detail:**
+- Added httpRequest method in MCPDirectStudio for making HTTP requests with HSTP authentication
+- Modified HstpHttpClient.doPost to handle both String and object bodies properly
+- Added a blank line for better code formatting in the Convertor interface
+
 ## 2025-10-24
 
 **Summary:** Optimized tool agent initialization and local server connection process.
