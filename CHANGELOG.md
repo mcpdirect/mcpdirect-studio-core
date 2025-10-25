@@ -1,3 +1,10 @@
+## 2025-10-26
+
+**Summary:** Added null check for account details in HTTP request method.
+
+**Detail:**
+- Added null check for accountDetails before accessing accessToken in httpRequest method
+
 ## 2025-10-25
 
 **Summary:** Added HTTP request method and enhanced HSTP client handling.

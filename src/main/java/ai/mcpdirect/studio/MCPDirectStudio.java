@@ -1336,7 +1336,7 @@ public class MCPDirectStudio {
         try {
             handler.onResponse(HstpHttpClient.doPost(hstpWebport, Map.of(
                     "hstp-usl", usl,
-                    "hstp-auth", accountDetails.accessToken
+                    "hstp-auth", accountDetails!=null?accountDetails.accessToken:""
             ), null, parameters));
         } catch (Exception e) {
             handler.onResponse(JSON.toJson(-1,e.getMessage()));
