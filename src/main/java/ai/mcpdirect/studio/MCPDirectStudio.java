@@ -582,6 +582,8 @@ public class MCPDirectStudio {
             accountDetails = null;
             authHeaders = null;
             toolAgentDetails = null;
+            eventListeners.clear();
+            accessKeyCredentials.clear();
             mcpServerConfigs.clear();
         }else{
             throw new ServiceException("Service request failed. Error="+service.getErrorCode());
@@ -1894,19 +1896,19 @@ public class MCPDirectStudio {
         void onEvent(int event);
     }
 
-    private static final HashSet<EventListener> listeners = new HashSet<>();
+    private static final HashSet<EventListener> eventListeners = new HashSet<>();
     public static void addEventListener(EventListener listener){
         if(listener!=null){
-            listeners.add(listener);
+            eventListeners.add(listener);
         }
     }
     public static void removeMEventListener(EventListener listener){
         if(listener!=null){
-            listeners.remove(listener);
+            eventListeners.remove(listener);
         }
     }
     public static void fireEvent(int event){
-        for (EventListener listener : listeners) {
+        for (EventListener listener : eventListeners) {
             listener.onEvent(event);
         }
     }

@@ -141,7 +141,7 @@ public class AIToolServiceHandler {
     @ServiceRequestMapping("call/**")
     public void callTool(
             ServiceRequest sreq,
-            @ServiceRequestAuthentication AIPortAccessKeyCredential key,
+//            @ServiceRequestAuthentication AIPortAccessKeyCredential key,
             @ServiceRequestHeader("X-MCP-Client-Name") String clientName,
             @ServiceRequestMessage Map<String,Object> parameters,
             @ServiceResponseMessage ResponseOfAIService<String> resp
@@ -176,10 +176,10 @@ public class AIToolServiceHandler {
                 result = "The tool was abandoned. Please tell user to check.";
             }
             resp.success(result);
-            String finalResult = result;
-            new Thread(()->{
-                MCPDirectStudio.logTool(key,clientName!=null?clientName:key.name,providerName,toolName,parameters, finalResult);
-            }).start();
+//            String finalResult = result;
+//            new Thread(()->{
+//                MCPDirectStudio.logTool(key,clientName!=null?clientName:key.name,providerName,toolName,parameters, finalResult);
+//            }).start();
         }
     }
 }

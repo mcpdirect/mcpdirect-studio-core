@@ -1,3 +1,14 @@
+## 2025-10-27
+
+**Summary:** Added event listeners cleanup and modified virtual tool structure.
+
+**Detail:**
+- Added eventListeners and accessKeyCredentials cleanup during logout in MCPDirectStudio
+- Renamed listeners variable to eventListeners in MCPDirectStudio for better clarity
+- Changed AIPortVirtualTool to have originalToolId field instead of toolId and tags
+- Commented out authentication requirement in AIToolServiceHandler callTool method
+- Commented out tool logging in AIToolServiceHandler callTool method
+
 ## 2025-10-26
 
 **Summary:** Added null check for account details in HTTP request method.
