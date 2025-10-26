@@ -1097,7 +1097,13 @@ public class MCPDirectStudio {
     }
 
     public static String createMCPConfigFromKey(AIPortAccessKeyCredential credential){
-        return "{\"mcpServers\":{\""+credential.name+"\":{\"url\":\"https://connect.mcpdirect.ai/"+credential.secretKey.substring(4)+"/sse\"}}}";
+        String host = System.getenv("AI_MCPDIRECT_GATEWAY_HOST");
+        if(host==null){
+            host = "https://connect.mcpdirect.ai/";
+        }
+        return "{\"mcpServers\":{\""+credential.name
+                +"\":{\"url\":\"https://connect.mcpdirect.ai/sse\",\"env\":{\"X-MCPdirect-Key\":"
+                + credential.secretKey+"}}}}";
     }
 
     public static AIPortAccessKeyCredential modifyAccessKey(long id,String name,Integer status) throws Exception {

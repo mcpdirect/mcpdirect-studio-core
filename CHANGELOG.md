@@ -1,3 +1,12 @@
+## 2025-10-28
+
+**Summary:** Modified virtual tool structure and updated MCP config creation.
+
+**Detail:**
+- Changed AIPortVirtualTool back to have toolId field instead of originalToolId
+- Modified createMCPConfigFromKey to use environment variable for gateway host
+- Updated createMCPConfigFromKey to use X-MCPdirect-Key header in environment
+
 ## 2025-10-27
 
 **Summary:** Added event listeners cleanup and modified virtual tool structure.
