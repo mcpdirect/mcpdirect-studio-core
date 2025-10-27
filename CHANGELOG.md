@@ -1,3 +1,12 @@
+## 2025-10-29
+
+**Summary:** Added new MCPServer constructor and enhanced notification handling.
+
+**Detail:**
+- Added new MCPServer constructor that accepts an ID parameter
+- Added calls to notificationHandler for server notifications after tool publishing
+- Added notificationHandler getter method in MCPDirectStudio
+
 ## 2025-10-28
 
 **Summary:** Modified virtual tool structure and updated MCP config creation.

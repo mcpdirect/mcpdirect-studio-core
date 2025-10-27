@@ -1078,6 +1078,8 @@ public class MCPDirectStudio {
                         tool.makerId = mcpServer.id;
                         tool.lastUpdated = 0;
                     }
+                    MCPDirectStudio.notificationHandler().onMCPServerNotification(new MCPServer(oldMCPServerId));
+                    MCPDirectStudio.notificationHandler().onMCPServerNotification(mcpServer);
                 }
             }
         }
@@ -1922,5 +1924,8 @@ public class MCPDirectStudio {
     private static NotificationHandler notificationHandler = new NotificationHandler(){};
     public static void setNotificationHandler(NotificationHandler handler){
         notificationHandler = handler!=null?handler:new NotificationHandler() {};
+    }
+    public static NotificationHandler notificationHandler(){
+        return notificationHandler;
     }
 }

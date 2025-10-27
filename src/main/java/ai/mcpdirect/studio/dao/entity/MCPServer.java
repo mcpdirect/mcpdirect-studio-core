@@ -49,10 +49,10 @@ public class MCPServer extends AIPortToolMaker {
     public String command;
     public List<String> args;
     public Map<String, String> env ;
-//	public MCPServer(int transport,String url, String command, List<String> args, Map<String, String> env, String serverName) {
-//
-//		this.name = serverName;
-//	}
+	public MCPServer(long id) {
+        this.id = id;
+        status = -1;
+	}
     public MCPServer(MCPServerConfig config){
         transport = config.transport;
         url = config.url;
