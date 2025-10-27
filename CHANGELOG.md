@@ -1,3 +1,12 @@
+## 2025-10-30
+
+**Summary:** Enhanced tool call result handling in MCPToolProvider.
+
+**Detail:**
+- Added JSON import to MCPToolProvider
+- Modified callTool method to return JSON serialized result instead of toString
+- Added exception handling for JSON serialization in callTool method
+
 ## 2025-10-29
 
 **Summary:** Added new MCPServer constructor and enhanced notification handling.

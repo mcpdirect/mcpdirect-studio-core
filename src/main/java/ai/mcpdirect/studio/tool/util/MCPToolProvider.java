@@ -5,6 +5,7 @@ import ai.mcpdirect.backend.util.MCPDirectStdioClientTransport;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.tool.AITool;
 import ai.mcpdirect.studio.tool.MCPTool;
+import appnet.hstp.engine.util.JSON;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
@@ -110,7 +111,11 @@ public class MCPToolProvider extends MCPServer{
             McpSchema.CallToolResult result = mcpClient.callTool(
                     new McpSchema.CallToolRequest(tool.name(), parameters)
             );
-            return result.toString();
+            try {
+                return JSON.toJson(result);
+            }catch (Exception e){
+                return "{}";
+            }
         }
         return "The tool of '"+name+"' not available";
     }
