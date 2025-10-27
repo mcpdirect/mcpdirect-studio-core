@@ -1,3 +1,11 @@
+## 2025-10-31
+
+**Summary:** Added usage field to AIPortAccessKey and AIPortTool entities.
+
+**Detail:**
+- Changed field name from usageAmount to usage in AIPortAccessKey entity
+- Added usage field to AIPortTool entity
+
 ## 2025-10-30
 
 **Summary:** Enhanced tool call result handling in MCPToolProvider.

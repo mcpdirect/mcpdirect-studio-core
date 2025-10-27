@@ -12,7 +12,7 @@ public class AIPortAccessKey {
     public long created;
     public int status;
     public String name;
-    public int usageAmount;
+    public int usage;
 
     public AIPortAccessKey(){}
     public AIPortAccessKey(long id, long userId, int userRoles, String name, String secretKey, int status, long effectiveDate, long expirationDate, long created) {

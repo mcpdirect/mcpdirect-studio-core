@@ -10,6 +10,7 @@ public class AIPortTool {
     public String metaData;
     public String tags;
     public long agentId;
+    public int usage;
     public AIPortTool() {}
     public AIPortTool(String name) {
         this.name = name;
