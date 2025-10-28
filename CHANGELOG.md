@@ -1,3 +1,12 @@
+## 2025-11-01
+
+**Summary:** Updated gateway host configuration and property handling.
+
+**Detail:**
+- Removed redundant webport property check from system properties
+- Changed gateway host configuration to use system property and environment variable
+- Updated gateway host configuration to use ai.mcpdirect.gateway.endpoint property and AI_MCPDIRECT_GATEWAY_ENDPOINT environment variable
+
 ## 2025-10-31
 
 **Summary:** Added usage field to AIPortAccessKey and AIPortTool entities.

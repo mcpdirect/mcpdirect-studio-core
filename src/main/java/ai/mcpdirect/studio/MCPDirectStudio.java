@@ -66,9 +66,6 @@ public class MCPDirectStudio {
         }catch (Exception ignore){}
         String webportURL = props.getProperty("ai.mcpdirect.hstp.webport");
         String serviceGateway = props.getProperty("ai.mcpdirect.hstp.service.gateway");
-        if(webportURL==null||webportURL.isEmpty()){
-            webportURL = System.getProperty("ai.mcpdirect.hstp.webport");
-        }
         if(serviceGateway==null||serviceGateway.isEmpty()){
             serviceGateway = System.getProperty("ai.mcpdirect.hstp.service.gateway");
         }
@@ -1099,9 +1096,9 @@ public class MCPDirectStudio {
     }
 
     public static String createMCPConfigFromKey(AIPortAccessKeyCredential credential){
-        String host = System.getenv("AI_MCPDIRECT_GATEWAY_HOST");
-        if(host==null){
-            host = "https://connect.mcpdirect.ai/";
+        String host = System.getProperty("ai.mcpdirect.gateway.endpoint");
+        if(host==null||host.trim().isEmpty()) {
+            host = System.getenv("AI_MCPDIRECT_GATEWAY_ENDPOINT");
         }
         return "{\"mcpServers\":{\""+credential.name
                 +"\":{\"url\":\"https://connect.mcpdirect.ai/sse\",\"env\":{\"X-MCPdirect-Key\":"
