@@ -1,3 +1,12 @@
+## 2025-11-02
+
+**Summary:** Enhanced configuration property handling and gateway URL construction.
+
+**Detail:**
+- Added support for environment variable AI_MCPDIRECT_HSTP_WEBPORT for webport configuration
+- Restored service gateway property handling from properties, system properties, and environment variables
+- Updated createMCPConfigFromKey to use dynamic host in URL construction instead of hardcoded connect.mcpdirect.ai
+
 ## 2025-11-01
 
 **Summary:** Updated gateway host configuration and property handling.

@@ -64,22 +64,29 @@ public class MCPDirectStudio {
         try(InputStream resourceAsStream = MCPDirectStudio.class.getResourceAsStream("/mcpdirect-studio.properties")){
             props.load(resourceAsStream);
         }catch (Exception ignore){}
+
         String webportURL = props.getProperty("ai.mcpdirect.hstp.webport");
-        String serviceGateway = props.getProperty("ai.mcpdirect.hstp.service.gateway");
-        if(serviceGateway==null||serviceGateway.isEmpty()){
-            serviceGateway = System.getProperty("ai.mcpdirect.hstp.service.gateway");
+        if(webportURL==null||webportURL.trim().isEmpty()){
+            webportURL = System.getProperty("ai.mcpdirect.hstp.webport");
         }
-        if(webportURL==null||webportURL.isEmpty()){
+        if(webportURL==null||webportURL.trim().isEmpty()){
             webportURL = System.getenv("AI_MCPDIRECT_HSTP_WEBPORT");
-        }
-        if(serviceGateway==null||serviceGateway.isEmpty()){
-            serviceGateway = System.getenv("AI_MCPDIRECT_HSTP_SERVICE_GATEWAY");
         }
         if(webportURL==null||(webportURL=webportURL.trim()).isEmpty()){
             throw new RuntimeException("Please set 'ai.mcpdirect.hstp.webport' properties in mcpdirect-studio.properties\n" +
                     "or set environment variable 'AI_MCPDIRECT_HSTP_WEBPORT'");
         }
         hstpWebport = webportURL;
+
+        String serviceGateway = props.getProperty("ai.mcpdirect.hstp.service.gateway");
+        if(serviceGateway==null||serviceGateway.isEmpty()){
+            serviceGateway = System.getProperty("ai.mcpdirect.hstp.service.gateway");
+        }
+
+        if(serviceGateway==null||serviceGateway.isEmpty()){
+            serviceGateway = System.getenv("AI_MCPDIRECT_HSTP_SERVICE_GATEWAY");
+        }
+
         if(serviceGateway==null||(serviceGateway=serviceGateway.trim()).isEmpty()){
             serviceGateway = URI.create(webportURL).getHost()+":53100";
         }
@@ -1101,7 +1108,7 @@ public class MCPDirectStudio {
             host = System.getenv("AI_MCPDIRECT_GATEWAY_ENDPOINT");
         }
         return "{\"mcpServers\":{\""+credential.name
-                +"\":{\"url\":\"https://connect.mcpdirect.ai/sse\",\"env\":{\"X-MCPdirect-Key\":"
+                +"\":{\"url\":\""+host+"/sse\",\"env\":{\"X-MCPdirect-Key\":"
                 + credential.secretKey+"}}}}";
     }
 
