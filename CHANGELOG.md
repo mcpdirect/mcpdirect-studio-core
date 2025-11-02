@@ -1,3 +1,15 @@
+## 2025-11-03
+
+**Summary:** Updated project version and enhanced server configuration with inputs.
+
+**Detail:**
+- Updated project version from 1.2.0-SNAPSHOT to 2.1.0-SNAPSHOT in pom.xml
+- Updated logback-classic dependency from version 1.5.18 to 1.5.20
+- Added inputs field to AIPortMCPServerConfig entity
+- Added fillInputs method to MCPServerConfig to process inputs in server configurations
+- Modified MCPServerConfig constructor to use fillInputs for url, command, args and env fields
+- Added JSON and TypeReference imports to AIPortMCPServerConfig
+
 ## 2025-11-02
 
 **Summary:** Enhanced configuration property handling and gateway URL construction.

@@ -47,18 +47,28 @@ public class MCPServerConfig {
 	@JsonProperty
 	public Map<String, String> env ;
 	public MCPServerConfig(){}
-	public MCPServerConfig(int transport,String url, String command, List<String> args, Map<String, String> env) {
-        this.transport = transport;
-		this.url = url;
-		this.command = command;
-		this.args = args;
-		this.env = env;
-	}
+//	public MCPServerConfig(int transport,String url, String command, List<String> args, Map<String, String> env) {
+//        this.transport = transport;
+//		this.url = url;
+//		this.command = command;
+//		this.args = args;
+//		this.env = env;
+//	}
     public MCPServerConfig(AIPortMCPServerConfig c) throws Exception {
         transport = c.transport;
-        url = c.url;
-        command = c.command;
-        args = JSON.fromJson(c.args, new TypeReference<>() {});
-        env = JSON.fromJson(c.env, new TypeReference<>() {});
+        url = fillInputs(c.url,c.inputs);
+        command = fillInputs(c.command,c.inputs);
+        args = JSON.fromJson(fillInputs(c.args,c.inputs), new TypeReference<>() {});
+        env = JSON.fromJson(fillInputs(c.env,c.inputs), new TypeReference<>() {});
+    }
+
+    private static String fillInputs(String text,String inputs) throws Exception {
+        Map<String,String> inputMap;
+        if(text!=null&&inputs!=null&&!(inputs=inputs.trim()).isEmpty()
+                && !(inputMap = JSON.fromJson(inputs, new TypeReference<>() {
+        })).isEmpty()) for (Map.Entry<String, String> entry : inputMap.entrySet()) {
+            text = text.replace(entry.getKey(), entry.getValue());
+        }
+        return text;
     }
 }
