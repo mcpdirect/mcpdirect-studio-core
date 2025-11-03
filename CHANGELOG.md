@@ -1,3 +1,17 @@
+## 2025-11-04
+
+**Summary:** Added tool maker connection functionality and enhanced server configuration.
+
+**Detail:**
+- Renamed StudioConsoleServiceHandler to ConsoleServiceHandler
+- Added connectToolMaker method and endpoint to connect to tool makers
+- Added ToolMakerDetails class to hold tool maker connection details
+- Added connectMCPServer method to handle tool maker server connections
+- Modified variable names in MCPDirectStudio for better readability
+- Changed placeholder replacement pattern in MCPServerConfig.fillInputs to use ${key} format
+- Added ExecutionException import to MCPDirectStudio
+- Added AIPortToolMaker and AIPortMCPServerConfig imports to ConsoleServiceHandler
+
 ## 2025-11-03
 
 **Summary:** Updated project version and enhanced server configuration with inputs.

@@ -1,6 +1,8 @@
 package ai.mcpdirect.studio.service;
 
+import ai.mcpdirect.backend.dao.entity.aitool.AIPortMCPServerConfig;
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortTool;
+import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
 import ai.mcpdirect.studio.MCPDirectStudio;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
@@ -15,9 +17,9 @@ import java.util.Map;
 
 @ServiceName("studio.console")
 @ServiceRequestMapping("/")
-public class StudioConsoleServiceHandler {
-    private StudioConsoleServiceHandler INSTANCE;
-    public StudioConsoleServiceHandler getInstance(){
+public class ConsoleServiceHandler {
+    private ConsoleServiceHandler INSTANCE;
+    public ConsoleServiceHandler getInstance(){
         return INSTANCE;
     }
     @ServiceRequestInit
@@ -103,6 +105,23 @@ public class StudioConsoleServiceHandler {
                resp.message = message;
                resp.data = data;
             });
+        }
+    }
+
+    public static class RequestOfConnectToolMaker{
+        public long makerId;
+        public long agentId;
+    }
+    @ServiceRequestMapping("tool_maker/connect")
+    public void connectToolMaker(
+            @ServiceRequestMessage RequestOfConnectToolMaker req,
+            @ServiceResponseMessage SimpleServiceResponseMessage<Boolean> resp
+    ) throws Exception {
+        if(req.makerId>0&&req.agentId==MCPDirectStudio.studioToolAgentId()){
+            new Thread(()->{
+                MCPDirectStudio.connectToolMaker(req.makerId);
+            }).start();
+            resp.success(true);
         }
     }
 }

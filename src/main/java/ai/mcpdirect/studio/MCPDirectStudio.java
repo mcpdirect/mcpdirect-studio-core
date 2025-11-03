@@ -32,6 +32,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -812,13 +813,13 @@ public class MCPDirectStudio {
                         Map<Long, AIPortToolMaker> collect = resp.data.makers.stream().collect(
                                 Collectors.toMap(v -> v.id, v -> v));
                         if (toolAgentDetails.mcpServerConfigs != null) {
-                            for (AIPortMCPServerConfig c : toolAgentDetails.mcpServerConfigs) {
-                                AIPortToolMaker maker = collect.get(c.id);
+                            for (AIPortMCPServerConfig config : toolAgentDetails.mcpServerConfigs) {
+                                AIPortToolMaker maker = collect.get(config.id);
                                 if(maker!=null) {
-                                    MCPServerConfig mcpServerConfig = new MCPServerConfig(c);
+                                    MCPServerConfig mcpServerConfig = new MCPServerConfig(config);
                                     mcpServerConfigs.put(maker.name, mcpServerConfig);
                                     notificationHandler.onMCPServerNotification(new MCPServer(mcpServerConfig) {{
-                                        id = c.id;
+                                        id = config.id;
                                         name = maker.name;
                                         status = Integer.MIN_VALUE;
                                     }});
@@ -827,7 +828,7 @@ public class MCPDirectStudio {
                                             MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(
                                                     maker.id, maker.name, mcpServerConfig);
                                             mcpServer.merge(maker, toolAgentDetails.tools);
-                                            mcpServer.id = c.id;
+                                            mcpServer.id = config.id;
                                             mcpServer.tags = maker.tags;
                                             notificationHandler.onMCPServerNotification(mcpServer);
                                         } catch (Exception e) {
@@ -1037,16 +1038,16 @@ public class MCPDirectStudio {
         });
 
         if(code.get()==0){
-            List<AIPortTool> publicTools = new ArrayList<>();
+            List<AIPortTool> publishingTools = new ArrayList<>();
             List<AIPortTool> tools = new ArrayList<>();
             for (MCPTool tool : mcpServer.getTools()) if(tool.lastUpdated!=0){
                 AIPortTool duplicate = tool.duplicate();
                 duplicate.metaData = tool.metaData();
                 duplicate.hash = duplicate.metaData.hashCode();
-                publicTools.add(duplicate);
+                publishingTools.add(duplicate);
                 tools.add(tool);
             }
-            if(publicTools.isEmpty()){
+            if(publishingTools.isEmpty()){
                 callback.onResult(0,"no tools updated",mcpServer);
                 return;
             }
@@ -1062,7 +1063,7 @@ public class MCPDirectStudio {
             req.mcpServerConfig.command = mcpServer.command;
             req.mcpServerConfig.args = mcpServer.args!=null?JSON.toJson(mcpServer.args):"[]";
             req.mcpServerConfig.env = mcpServer.args!=null?JSON.toJson(mcpServer.env):"{}";
-            req.tools = publicTools;
+            req.tools = publishingTools;
             Service service = aitoolsManagementUSL
                     .appendPath("tool_agent/tools/publish")
                     .createServiceClient()
@@ -1931,5 +1932,71 @@ public class MCPDirectStudio {
     }
     public static NotificationHandler notificationHandler(){
         return notificationHandler;
+    }
+    public static class ToolMakerDetails{
+        public AIPortToolMaker maker;
+        public AIPortMCPServerConfig config;
+        public List<AIPortTool> tools;
+    }
+    public static void connectToolMaker(long makerId){
+        hstpRequest(aitoolsManagementUSL, "tool_maker/details/get", Map.of(
+                "makerId", makerId
+        ), new Callback<ToolMakerDetails>() {
+            @Override
+            public void onResult(int code, String message, ToolMakerDetails data) {
+                if(code==0) new Thread(() -> {
+                    try {
+                        connectMCPServer(data);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }).start();
+            }
+        }, (data) -> JSON.fromJson(data, new TypeReference<>() {}));
+    }
+    public static void connectMCPServer(ToolMakerDetails details) throws Exception {
+        AIPortToolMaker maker;
+        AIPortMCPServerConfig config;
+        if(details!=null&&(maker=details.maker)!=null &&(config=details.config)!=null) {
+            MCPServerConfig mcpServerConfig = new MCPServerConfig(config);
+            mcpServerConfigs.put(maker.name, mcpServerConfig);
+            notificationHandler.onMCPServerNotification(new MCPServer(mcpServerConfig) {{
+                id = config.id;
+                name = maker.name;
+                status = Integer.MIN_VALUE;
+            }});
+            MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(
+                    maker.id, maker.name, mcpServerConfig);
+            mcpServer.merge(maker, details.tools);
+            mcpServer.id = config.id;
+            mcpServer.tags = maker.tags;
+            notificationHandler.onMCPServerNotification(mcpServer);
+
+            List<AIPortTool> publishingTools = new ArrayList<>();
+            List<AIPortTool> oldTools = new ArrayList<>();
+            for (MCPTool tool : mcpServer.getTools())
+                if (tool.lastUpdated != 0) {
+                    AIPortTool duplicate = tool.duplicate();
+                    duplicate.metaData = tool.metaData();
+                    duplicate.hash = duplicate.metaData.hashCode();
+                    publishingTools.add(duplicate);
+                    oldTools.add(tool);
+                }
+            if (!publishingTools.isEmpty()) hstpRequest(
+                    aitoolsManagementUSL, "tool_agent/tools/publish",
+                    Map.of("maker", maker, "tools", publishingTools),
+                    new Callback<Long>() {
+                        @Override
+                        public void onResult(int code, String message, Long data) {
+                            if(code==0){
+                                for (AIPortTool tool : oldTools) {
+                                    tool.makerId = mcpServer.id;
+                                    tool.lastUpdated = 0;
+                                }
+                            }
+                        }
+                    }, (data) -> JSON.fromJson(data, new TypeReference<>() {
+                    }));
+        }
     }
 }

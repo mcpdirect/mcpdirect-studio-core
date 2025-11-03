@@ -67,7 +67,7 @@ public class MCPServerConfig {
         if(text!=null&&inputs!=null&&!(inputs=inputs.trim()).isEmpty()
                 && !(inputMap = JSON.fromJson(inputs, new TypeReference<>() {
         })).isEmpty()) for (Map.Entry<String, String> entry : inputMap.entrySet()) {
-            text = text.replace(entry.getKey(), entry.getValue());
+            text = text.replace("${"+entry.getKey()+"}", entry.getValue());
         }
         return text;
     }
