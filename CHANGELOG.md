@@ -1,3 +1,15 @@
+## 2025-11-05
+
+**Summary:** Enhanced tool maker connection with callback support.
+
+**Detail:**
+- Modified connectToolMaker method in MCPDirectStudio to accept a callback parameter
+- Modified connectMCPServer method in MCPDirectStudio to accept a callback parameter
+- Updated connectToolMaker endpoint in ConsoleServiceHandler to return MCPServer instead of Boolean
+- Removed threading from connectToolMaker in ConsoleServiceHandler
+- Added proper callback handling in connectToolMaker and connectMCPServer methods
+- Added callback invocation when publishing tools is complete or skipped
+
 ## 2025-11-04
 
 **Summary:** Added tool maker connection functionality and enhanced server configuration.

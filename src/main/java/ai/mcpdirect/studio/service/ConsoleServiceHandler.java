@@ -115,13 +115,14 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("tool_maker/connect")
     public void connectToolMaker(
             @ServiceRequestMessage RequestOfConnectToolMaker req,
-            @ServiceResponseMessage SimpleServiceResponseMessage<Boolean> resp
+            @ServiceResponseMessage SimpleServiceResponseMessage<MCPServer> resp
     ) throws Exception {
         if(req.makerId>0&&req.agentId==MCPDirectStudio.studioToolAgentId()){
-            new Thread(()->{
-                MCPDirectStudio.connectToolMaker(req.makerId);
-            }).start();
-            resp.success(true);
+            MCPDirectStudio.connectToolMaker(req.makerId,(code,message,mcpServer)->{
+                resp.code = code;
+                resp.message = message;
+                resp.data = mcpServer;
+            });
         }
     }
 }

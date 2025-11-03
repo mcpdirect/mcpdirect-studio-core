@@ -1938,23 +1938,21 @@ public class MCPDirectStudio {
         public AIPortMCPServerConfig config;
         public List<AIPortTool> tools;
     }
-    public static void connectToolMaker(long makerId){
+    public static void connectToolMaker(long makerId,Callback<MCPServer> callback){
         hstpRequest(aitoolsManagementUSL, "tool_maker/details/get", Map.of(
                 "makerId", makerId
         ), new Callback<ToolMakerDetails>() {
             @Override
             public void onResult(int code, String message, ToolMakerDetails data) {
-                if(code==0) new Thread(() -> {
-                    try {
-                        connectMCPServer(data);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }).start();
+                if(code==0) try {
+                    connectMCPServer(data,callback);
+                } catch (Exception e) {
+                    callback.onResult(255,e.getMessage(),null);
+                } else callback.onResult(code,message,null);
             }
         }, (data) -> JSON.fromJson(data, new TypeReference<>() {}));
     }
-    public static void connectMCPServer(ToolMakerDetails details) throws Exception {
+    public static void connectMCPServer(ToolMakerDetails details,Callback<MCPServer> callback) throws Exception {
         AIPortToolMaker maker;
         AIPortMCPServerConfig config;
         if(details!=null&&(maker=details.maker)!=null &&(config=details.config)!=null) {
@@ -1994,9 +1992,11 @@ public class MCPDirectStudio {
                                     tool.lastUpdated = 0;
                                 }
                             }
+                            callback.onResult(code,message,null);
                         }
                     }, (data) -> JSON.fromJson(data, new TypeReference<>() {
                     }));
+            else callback.onResult(0,null,mcpServer);
         }
     }
 }
