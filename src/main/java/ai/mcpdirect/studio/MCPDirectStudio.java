@@ -817,7 +817,7 @@ public class MCPDirectStudio {
                                 AIPortToolMaker maker = collect.get(config.id);
                                 if(maker!=null) {
                                     MCPServerConfig mcpServerConfig = new MCPServerConfig(config);
-                                    mcpServerConfigs.put(maker.name, mcpServerConfig);
+                                    if(maker.userId==accountId()) mcpServerConfigs.put(maker.name, mcpServerConfig);
                                     notificationHandler.onMCPServerNotification(new MCPServer(mcpServerConfig) {{
                                         id = config.id;
                                         name = maker.name;
@@ -878,6 +878,7 @@ public class MCPDirectStudio {
                 new Thread(()-> {try {
                     MCPServer mcpServer
                             = AIToolServiceHandler.connectMCPServer(mcpServerId, n, c);
+                    mcpServer.agentId = studioToolAgentId();
                     notificationHandler.onMCPServerNotification(mcpServer);
                 } catch (Exception e) {
                     throw new RuntimeException(e);

@@ -1,3 +1,13 @@
+## 2025-11-07
+
+**Summary:** Enhanced security checks and error message handling.
+
+**Detail:**
+- Added user ID check in MCPDirectStudio to only store server configs for the current user
+- Added agent ID assignment in MCPDirectStudio when connecting to servers
+- Initialized statusMessage with empty string in MCPServer class
+- Simplified error message accumulation in MCPToolProvider.onException method
+
 ## 2025-11-06
 
 **Summary:** Enhanced server connection handling and error reporting.

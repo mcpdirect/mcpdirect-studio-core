@@ -43,7 +43,7 @@ public class MCPServer extends AIPortToolMaker {
 	public static int STATUS_ON = 1;
 	public static int STATUS_OFF = 0;
 	public static int STATUS_ERROR = -1;
-    protected String statusMessage;
+    protected String statusMessage="";
     public int transport;
     public String url;
     public String command;

@@ -54,9 +54,7 @@ public class MCPToolProvider extends MCPServer{
             transport = new MCPDirectStdioClientTransport(parameters,JSON_MAPPER){
                 @Override
                 public void onException(Throwable throwable) {
-                    String message = throwable.getMessage();
-                    if(statusMessage==null) statusMessage = message;
-                    else statusMessage+=("\n"+message);
+                    statusMessage+=(throwable.getMessage()+"\n");
                 }
             };
         }else{
