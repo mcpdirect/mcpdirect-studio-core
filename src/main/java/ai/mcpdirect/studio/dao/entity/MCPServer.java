@@ -73,7 +73,7 @@ public class MCPServer extends AIPortToolMaker {
             MCPTool mcpTool = this.tools.get(tool.name);
             if(mcpTool==null){
                 mcpTool = new MCPTool();
-                this.tools.put(mcpTool.name,mcpTool);
+                this.tools.put(tool.name,mcpTool);
             }
             mcpTool.merge(tool);
         }

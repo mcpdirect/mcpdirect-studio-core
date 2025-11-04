@@ -1,3 +1,15 @@
+## 2025-11-06
+
+**Summary:** Enhanced server connection handling and error reporting.
+
+**Detail:**
+- Added status check in connectMCPServer method to handle server errors
+- Modified connectMCPServer to return proper callback responses
+- Fixed tool mapping in MCPServer.merge method
+- Enhanced error handling in MCPDirectStdioClientTransport to capture STDERR messages
+- Modified MCPToolProvider to accumulate error messages
+- Added refreshTools call in AIToolServiceHandler when updating MCPServer configurations
+
 ## 2025-11-05
 
 **Summary:** Enhanced tool maker connection with callback support.

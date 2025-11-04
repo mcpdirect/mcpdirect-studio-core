@@ -64,7 +64,8 @@ public class MCPDirectStdioClientTransport implements McpClientTransport {
 	private volatile boolean isClosing = false;
 
 	// visible for tests
-	private Consumer<String> stdErrorHandler = error -> logger.info("STDERR Message received: {}", error);
+//	private Consumer<String> stdErrorHandler = error -> logger.info("STDERR Message received: {}", error);
+    private Consumer<String> stdErrorHandler = error -> onException(new Exception("STDERR Message received: "+error));
 
 	/**
 	 * Creates a new MCPDirectStdioClientTransport with the specified parameters and JsonMapper.

@@ -54,7 +54,9 @@ public class MCPToolProvider extends MCPServer{
             transport = new MCPDirectStdioClientTransport(parameters,JSON_MAPPER){
                 @Override
                 public void onException(Throwable throwable) {
-                    statusMessage = throwable.getMessage();
+                    String message = throwable.getMessage();
+                    if(statusMessage==null) statusMessage = message;
+                    else statusMessage+=("\n"+message);
                 }
             };
         }else{
@@ -86,10 +88,10 @@ public class MCPToolProvider extends MCPServer{
         try(McpSyncClient mcpClient = createMcpSyncClient()) {
             mcpClient.initialize();
             status = STATUS_ON;
-            statusMessage = "successful";
+//            statusMessage = "successful";
             McpSchema.ListToolsResult tools = mcpClient.listTools();
             for (McpSchema.Tool tool : tools.tools()) {
-                LOG.info("refreshTools({},{},{})",tool.name(),tool.description(),tool.inputSchema());
+                LOG.info("refreshTools({},{})",tool.name(),tool.description());
                 MCPTool mcpTool = this.tools.get(tool.name());
                 if(mcpTool==null){
                     mcpTool = new MCPTool();

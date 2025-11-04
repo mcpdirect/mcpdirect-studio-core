@@ -1965,6 +1965,11 @@ public class MCPDirectStudio {
             }});
             MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(
                     maker.id, maker.name, mcpServerConfig);
+            if(mcpServer.status<0){
+                callback.onResult(255,mcpServer.statusMessage(),null);
+                notificationHandler.onMCPServerNotification(mcpServer);
+                return;
+            }
             mcpServer.merge(maker, details.tools);
             mcpServer.id = config.id;
             mcpServer.tags = maker.tags;
@@ -1991,8 +1996,10 @@ public class MCPDirectStudio {
                                     tool.makerId = mcpServer.id;
                                     tool.lastUpdated = 0;
                                 }
+                                callback.onResult(code, message, mcpServer);
+                            }else {
+                                callback.onResult(code, message, null);
                             }
-                            callback.onResult(code,message,null);
                         }
                     }, (data) -> JSON.fromJson(data, new TypeReference<>() {
                     }));
