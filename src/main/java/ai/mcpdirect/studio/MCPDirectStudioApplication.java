@@ -7,12 +7,33 @@ import appnet.hstp.annotation.ServiceScan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ServiceScan("appnet.hstp.labs")
+import java.io.Console;
+import java.util.Scanner;
+
+//@ServiceScan("appnet.hstp.labs")
 public class MCPDirectStudioApplication {
     private static final Logger LOG = LoggerFactory.getLogger(MCPDirectStudioApplication.class);
     public static void main(String[] args) throws Exception {
+        String account;
+        String password="";
+        Console console = System.console();
+        if (console != null) {
+            account = console.readLine("Enter MCPDirect Account: ");
+            password = new String(console.readPassword("Enter password: "));
+        }else {
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("Enter MCPDirect Account: ");
+            account = scanner.nextLine();
+            System.out.println("Enter password: ");
+            password = scanner.nextLine();
+        }
+
+        if(!MCPDirectStudio.login(account,password)){
+            System.err.println("Sign in failed");
+        }
+
 //        System.setProperty(HttpServerProviderFactory.PROVIDER_PROPERTY_KEY, JettyServer.class.getName());
-        ServiceEngine serviceEngine = ServiceEngineFactory.getServiceEngine();
+//        ServiceEngine serviceEngine = ServiceEngineFactory.getServiceEngine();
         // Check if the system supports the system tray
 //        if (!SystemTray.isSupported()) {
 //            System.err.println("SystemTray is not supported on this OS!");
@@ -74,6 +95,6 @@ public class MCPDirectStudioApplication {
 //        } catch (AWTException e) {
 //            System.err.println("Failed to add tray icon: " + e.getMessage());
 //        }
-        LOG.info("ServiceEngine {} started", serviceEngine);
+//        LOG.info("ServiceEngine {} started", serviceEngine);
     }
 }

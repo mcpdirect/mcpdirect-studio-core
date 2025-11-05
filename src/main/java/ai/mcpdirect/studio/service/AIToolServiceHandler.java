@@ -104,6 +104,7 @@ public class AIToolServiceHandler {
         }
         provider.id = serverId;
         provider.name = serverName;
+        provider.agentId = MCPDirectStudio.studioToolAgentId();
         provider.refreshTools();
         mcpToolsProviders.put(serverKey, provider);
         return provider;

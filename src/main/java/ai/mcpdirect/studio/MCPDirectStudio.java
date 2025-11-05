@@ -1026,7 +1026,7 @@ public class MCPDirectStudio {
         if(name==null||(name=name.trim()).isEmpty()||name.length()>32){
             throw new Exception("The name must not be empty and the max length is 32");
         }
-        AtomicInteger code = new AtomicInteger();
+        AtomicInteger code = new AtomicInteger(255);
         AtomicReference<String> message = new AtomicReference<>();
         if(mcpServer.id<0) createToolMaker(name,"",mcpServer,
                 (c,m,d)->{
@@ -1036,7 +1036,7 @@ public class MCPDirectStudio {
                 mcpServer.merge(d,null);
                 AIToolServiceHandler.remapMCPServer(oldMCPServerId);
             }
-        });
+        }); else code.set(0);
 
         if(code.get()==0){
             List<AIPortTool> publishingTools = new ArrayList<>();
@@ -1446,9 +1446,7 @@ public class MCPDirectStudio {
         if(service.getErrorCode()==0) {
             SimpleServiceResponseMessage<AIPortToolMaker> resp
                     = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
-            if(resp.code==0){
-                callback.onResult(resp.code,resp.message,resp.data);
-            }
+            callback.onResult(resp.code,resp.message,resp.data);
         }else{
             callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
         }
@@ -1962,6 +1960,7 @@ public class MCPDirectStudio {
             notificationHandler.onMCPServerNotification(new MCPServer(mcpServerConfig) {{
                 id = config.id;
                 name = maker.name;
+                agentId = maker.agentId;
                 status = Integer.MIN_VALUE;
             }});
             MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(
