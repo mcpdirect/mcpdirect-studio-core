@@ -14,18 +14,23 @@ import java.util.Scanner;
 public class MCPDirectStudioApplication {
     private static final Logger LOG = LoggerFactory.getLogger(MCPDirectStudioApplication.class);
     public static void main(String[] args) throws Exception {
-        String account;
-        String password="";
-        Console console = System.console();
-        if (console != null) {
-            account = console.readLine("Enter MCPDirect Account: ");
-            password = new String(console.readPassword("Enter password: "));
-        }else {
-            Scanner scanner = new Scanner(System.in);
-            System.out.println("Enter MCPDirect Account: ");
-            account = scanner.nextLine();
-            System.out.println("Enter password: ");
-            password = scanner.nextLine();
+        String account = System.getenv("AI_MCPDIRECT_STUDIO_ACCOUNT");
+        account = account==null?"":account.trim();
+        String password= System.getenv("AI_MCPDIRECT_STUDIO_PASSWORD");
+        password = password==null?"":password.trim();
+        if(account.isEmpty() || password.isEmpty()) {
+            Console console = System.console();
+            if (console != null) {
+                if(account.isEmpty()) account = console.readLine("Enter MCPDirect Account: ");
+                else System.out.println("MCPDirect Account: "+account);
+                password = new String(console.readPassword("Enter password: "));
+            } else {
+                Scanner scanner = new Scanner(System.in);
+                System.out.println("Enter MCPDirect Account: ");
+                account = scanner.nextLine();
+                System.out.println("Enter password: ");
+                password = scanner.nextLine();
+            }
         }
 
         if(!MCPDirectStudio.login(account,password)){
