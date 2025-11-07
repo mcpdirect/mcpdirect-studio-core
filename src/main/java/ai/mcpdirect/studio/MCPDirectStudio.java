@@ -134,7 +134,7 @@ public class MCPDirectStudio {
                     if (line.trim().startsWith("MachineGuid")) {
                         String[] parts = line.trim().split("\\s+");
                         if (parts.length >= 3) {
-                            mid = parts[3];
+                            mid = parts[2];
                             break;
                         }
                     }
