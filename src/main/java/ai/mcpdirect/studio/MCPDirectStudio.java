@@ -1884,6 +1884,11 @@ public class MCPDirectStudio {
                 server = AIToolServiceHandler.connectMCPServer(
                         serverId,serverName,conf
                 );
+                if(server.status<0){
+                    callback.onResult(255,server.statusMessage(),null);
+                    notificationHandler.onMCPServerNotification(server);
+                    return;
+                }
             }else{
                 conf = mcpServerConfigs.remove(server.name);
                 if(serverId<Integer.MAX_VALUE){
@@ -1894,11 +1899,12 @@ public class MCPDirectStudio {
                     server.name = serverName;
                 }
             }
-            if(server.userId==accountId()&&conf!=null) {
+            if(server.userId==0||server.userId==accountId()&&conf!=null) {
                 mcpServerConfigs.put(serverName, conf);
                 writeMCPServerConfigs();
             }
             callback.onResult(0,null,server);
+            notificationHandler.onMCPServerNotification(server);
         } catch (Exception e) {
             callback.onResult(255,e.getMessage(),null);
         } else {
