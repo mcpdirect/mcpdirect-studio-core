@@ -1381,7 +1381,8 @@ public class MCPDirectStudio {
                 hstpRequest(uslStr,parameters,handler);
             }else handler.onResponse(HstpHttpClient.doPost(hstpWebport, Map.of(
                     "hstp-usl", uslStr,
-                    "hstp-auth", accountDetails!=null?accountDetails.accessToken:""
+                    "hstp-auth", accountDetails!=null?accountDetails.accessToken:"",
+                    "mcpdirect-device",Long.toString(machineId)
             ), null, parameters));
         } catch (Exception e) {
             handler.onResponse(JSON.toJson(-1,e.getMessage()));
