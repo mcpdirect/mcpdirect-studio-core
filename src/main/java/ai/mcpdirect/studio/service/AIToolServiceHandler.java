@@ -61,6 +61,7 @@ public class AIToolServiceHandler {
         String serverKey = Long.toString(serverId,Character.MAX_RADIX);
         MCPToolProvider provider = mcpToolsProviders.get(serverKey);
         if(provider!=null){
+            provider.name = serverName;
             provider.transport = conf.transport;
             provider.url = conf.url;
             provider.command = conf.command;

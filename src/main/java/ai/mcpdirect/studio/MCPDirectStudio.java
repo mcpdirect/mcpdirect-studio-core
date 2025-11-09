@@ -862,22 +862,23 @@ public class MCPDirectStudio {
         return map;
     }
     private static void connectLocalMCPServers(Map<String, MCPServerConfig> configs){
-        configs.forEach((name,config)->{
-            if(!mcpServerConfigs.containsKey(name)) {
-                mcpServerConfigs.put(name,config);
-                long mcpServerId = localMCPServerId(name);
+        configs.forEach((serverName,config)->{
+            if(!mcpServerConfigs.containsKey(serverName)) {
+                mcpServerConfigs.put(serverName,config);
+                long mcpServerId = localMCPServerId(serverName);
                 notificationHandler.onMCPServerNotification(new MCPServer(config){{
                     id = mcpServerId;
-                    name = name;
+                    name = serverName;
                     status = Integer.MIN_VALUE;
                 }});
                 new Thread(()-> {try {
                     MCPServer mcpServer
-                            = AIToolServiceHandler.connectMCPServer(mcpServerId, name, config);
+                            = AIToolServiceHandler.connectMCPServer(mcpServerId, serverName, config);
                     mcpServer.agentId = studioToolAgentId();
                     notificationHandler.onMCPServerNotification(mcpServer);
                 } catch (Exception e) {
                     MCPServer mcpServer = new MCPServer(mcpServerId){{
+                        name = serverName;
                         status = -1;
                         statusMessage = e.getMessage();
                         agentId = studioToolAgentId();
@@ -1372,11 +1373,14 @@ public class MCPDirectStudio {
         }
 
     }
-    public static void httpRequest(String usl,String parameters,
+    public static void httpRequest(String uslStr,String parameters,
                                    HstpResponseHandler handler){
         try {
-            handler.onResponse(HstpHttpClient.doPost(hstpWebport, Map.of(
-                    "hstp-usl", usl,
+            USL usl = USL.create(uslStr);
+            if(usl.getDomainName().equals(studioEngineId())){
+                hstpRequest(uslStr,parameters,handler);
+            }else handler.onResponse(HstpHttpClient.doPost(hstpWebport, Map.of(
+                    "hstp-usl", uslStr,
                     "hstp-auth", accountDetails!=null?accountDetails.accessToken:""
             ), null, parameters));
         } catch (Exception e) {
@@ -1880,7 +1884,6 @@ public class MCPDirectStudio {
         if(server!=null) try{
             if(serverName==null) serverName = server.name;
             if(conf!=null){
-                AIToolServiceHandler.removeMCPServer(serverId);
                 server = AIToolServiceHandler.connectMCPServer(
                         serverId,serverName,conf
                 );
