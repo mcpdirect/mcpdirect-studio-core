@@ -1886,12 +1886,18 @@ public class MCPDirectStudio {
                 );
             }else{
                 conf = mcpServerConfigs.remove(server.name);
-                server.id = localMCPServerId(serverName);
-                server.name = serverName;
-                AIToolServiceHandler.remapMCPServer(serverId);
+                if(serverId<Integer.MAX_VALUE){
+                    server.id = localMCPServerId(serverName);
+                    server.name = serverName;
+                    AIToolServiceHandler.remapMCPServer(serverId);
+                }else{
+                    server.name = serverName;
+                }
             }
-            mcpServerConfigs.put(serverName,conf);
-            writeMCPServerConfigs();
+            if(server.userId==accountId()&&conf!=null) {
+                mcpServerConfigs.put(serverName, conf);
+                writeMCPServerConfigs();
+            }
             callback.onResult(0,null,server);
         } catch (Exception e) {
             callback.onResult(255,e.getMessage(),null);
