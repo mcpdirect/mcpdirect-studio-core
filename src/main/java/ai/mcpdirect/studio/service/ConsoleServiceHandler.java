@@ -1,8 +1,6 @@
 package ai.mcpdirect.studio.service;
 
-import ai.mcpdirect.backend.dao.entity.aitool.AIPortMCPServerConfig;
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortTool;
-import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
 import ai.mcpdirect.studio.MCPDirectStudio;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
@@ -48,7 +46,10 @@ public class ConsoleServiceHandler {
                 String name = entry.getKey();
                 MCPServerConfig conf = entry.getValue();
                 try {
-                    servers.add(MCPDirectStudio.connectMCPServer(name, conf));
+                    MCPServer server = MCPDirectStudio.connectLocalMCPServer(name, conf);
+                    if(server!=null) servers.add(server);
+                    else errors.put(name,"MCP server exists");
+//                    servers.add(MCPDirectStudio.connectMCPServer(name, conf));
 
                 }catch (Exception e){
                     errors.put(name,e.getMessage());
@@ -60,22 +61,37 @@ public class ConsoleServiceHandler {
     }
     public static class RequestOfModifyMCPServer{
         public long mcpServerId;
+        public String mcpServerName;
         public MCPServerConfig mcpServerConfig;
     }
-    @ServiceRequestMapping("mcp_server/config")
+    @ServiceRequestMapping("mcp_server/modify")
     public void configMCPServer(
             @ServiceRequestMessage RequestOfModifyMCPServer req,
             @ServiceResponseMessage SimpleServiceResponseMessage<MCPServer> resp
     ) throws Exception {
-        MCPServerConfig conf;
-        if(req.mcpServerId !=0&&(conf=req.mcpServerConfig)!=null) {
-            MCPDirectStudio.configMCPServerConfig(
-                    req.mcpServerId,conf, (code, message, data)->{
+        if(req.mcpServerId !=0) {
+            MCPDirectStudio.modifyMCPServerConfig(
+                    req.mcpServerId,req.mcpServerName,req.mcpServerConfig,
+                    (code, message, data)->{
                         resp.code = code;
                         resp.message = message;
                         resp.data = data;
                     }
             );
+        }
+    }
+    @ServiceRequestMapping("mcp_server/remove")
+    public void removeMCPServer(
+            @ServiceRequestMessage RequestOfModifyMCPServer req,
+            @ServiceResponseMessage SimpleServiceResponseMessage<MCPServer> resp
+    ) throws Exception {
+        if(req.mcpServerId !=0) {
+            MCPDirectStudio.removeLocalMCPServer(req.mcpServerId,
+                    (code,message,server)->{
+                        resp.code = code;
+                        resp.message = message;
+                        resp.data = server;
+                    });
         }
     }
     public static class RequestOfQueryMCPTools{

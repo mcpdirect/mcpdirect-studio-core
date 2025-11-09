@@ -48,7 +48,8 @@ public class AIToolServiceHandler {
 //    }
 //    public static synchronized MCPServer addMCPServer(String serverId,int serverType,String url,String command,
 //                                    List<String> args, Map<String, String> env)
-    public static synchronized MCPServer connectMCPServer(long serverId, String serverName, MCPServerConfig conf)
+    public static synchronized MCPServer connectMCPServer(long serverId, String serverName,
+                                                          MCPServerConfig conf)
             throws MCPServerException, MalformedURLException {
 //        if(serverId==null||(serverId=serverId.trim()).isEmpty()){
 //            throw new MCPServerException("Server Name must not be empty");

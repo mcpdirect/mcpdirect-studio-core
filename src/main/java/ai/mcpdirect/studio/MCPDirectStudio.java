@@ -32,7 +32,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -767,20 +766,17 @@ public class MCPDirectStudio {
 //            }
 //        }catch (Exception ignore){}
 //    }
-    public static void removeLocalMCPServer(MCPServer server){
-        mcpServerConfigs.remove(server.name);
-        writeMCPServerConfigs();
-        AIToolServiceHandler.removeMCPServer(server.id);
-//        List<MCPServer> mcpServers = new ArrayList<>();
-        mcpServerConfigs.forEach((n,c)->{
-            try {
-                MCPServer mcpServer
-                        = AIToolServiceHandler.connectMCPServer(localMCPServerId(n),n,c);
-//                if (mcpServer.id == 0) mcpServers.add(mcpServer);
-                if (mcpServer.id < 0) notificationHandler.onMCPServerNotification(mcpServer);
-            } catch (Exception ignore) {}
-        });
-//        notifyLocalMCPServer(mcpServers);
+    public static void removeLocalMCPServer(long serverId,Callback<MCPServer> callback){
+        MCPServer server = AIToolServiceHandler.removeMCPServer(serverId);
+        if(server!=null) {
+            mcpServerConfigs.remove(server.name);
+            writeMCPServerConfigs();
+            notificationHandler.onMCPServerNotification(server);
+            callback.onResult(0,null,server);
+        }else{
+            callback.onResult(255,null,null);
+        }
+
     }
 
     public static void initToolAgent(){new Thread(()->{
@@ -866,25 +862,54 @@ public class MCPDirectStudio {
         return map;
     }
     private static void connectLocalMCPServers(Map<String, MCPServerConfig> configs){
-        configs.forEach((n,c)->{
-            if(!mcpServerConfigs.containsKey(n)) {
-                mcpServerConfigs.put(n,c);
-                long mcpServerId = localMCPServerId(n);
-                notificationHandler.onMCPServerNotification(new MCPServer(c){{
+        configs.forEach((name,config)->{
+            if(!mcpServerConfigs.containsKey(name)) {
+                mcpServerConfigs.put(name,config);
+                long mcpServerId = localMCPServerId(name);
+                notificationHandler.onMCPServerNotification(new MCPServer(config){{
                     id = mcpServerId;
-                    name = n;
+                    name = name;
                     status = Integer.MIN_VALUE;
                 }});
                 new Thread(()-> {try {
                     MCPServer mcpServer
-                            = AIToolServiceHandler.connectMCPServer(mcpServerId, n, c);
+                            = AIToolServiceHandler.connectMCPServer(mcpServerId, name, config);
                     mcpServer.agentId = studioToolAgentId();
                     notificationHandler.onMCPServerNotification(mcpServer);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    MCPServer mcpServer = new MCPServer(mcpServerId){{
+                        status = -1;
+                        statusMessage = e.getMessage();
+                        agentId = studioToolAgentId();
+                    }};
+                    notificationHandler.onMCPServerNotification(mcpServer);
                 }}).start();
             }
         });
+    }
+
+    public static MCPServer connectLocalMCPServer(String name, MCPServerConfig config){
+        long mcpServerId = localMCPServerId(name);
+        MCPServer mcpServer = null;
+        if(!mcpServerConfigs.containsKey(name)) try{
+            mcpServerConfigs.put(name,config);
+            notificationHandler.onMCPServerNotification(new MCPServer(config){{
+                id = mcpServerId;
+                name = name;
+                status = Integer.MIN_VALUE;
+            }});
+            mcpServer = AIToolServiceHandler.connectMCPServer(mcpServerId, name, config);
+            mcpServer.agentId = studioToolAgentId();
+            notificationHandler.onMCPServerNotification(mcpServer);
+        }catch (Exception e) {
+            mcpServer = new MCPServer(mcpServerId){{
+                status = -1;
+                statusMessage = e.getMessage();
+                agentId = studioToolAgentId();
+            }};
+            notificationHandler.onMCPServerNotification(mcpServer);
+        }
+        return mcpServer;
     }
 
     public static List<AIPortTool> getAIPortTools(MCPServer mcpServer){
@@ -1848,30 +1873,26 @@ public class MCPDirectStudio {
                 }));
     }
 
-    public static void configMCPServerConfig(long serverId, MCPServerConfig conf,
+    public static void modifyMCPServerConfig(long serverId,String serverName,
+                                             MCPServerConfig conf,
                                              Callback<MCPServer> callback){
-        MCPServer server = AIToolServiceHandler.removeMCPServer(serverId);
+        MCPServer server = AIToolServiceHandler.getMCPServer(serverId);
         if(server!=null) try{
-            server = AIToolServiceHandler.connectMCPServer(
-                    serverId,server.name,conf
-            );
-            mcpServerConfigs.put(server.name,conf);
+            if(serverName==null) serverName = server.name;
+            if(conf!=null){
+                AIToolServiceHandler.removeMCPServer(serverId);
+                server = AIToolServiceHandler.connectMCPServer(
+                        serverId,serverName,conf
+                );
+            }else{
+                conf = mcpServerConfigs.remove(server.name);
+                server.id = localMCPServerId(serverName);
+                server.name = serverName;
+                AIToolServiceHandler.remapMCPServer(serverId);
+            }
+            mcpServerConfigs.put(serverName,conf);
             writeMCPServerConfigs();
-            callback.onResult(255,null,server);
-//            if (toolMakerId > 0) {
-//                Map<String, Object> parameters = new HashMap<>() {{
-//                    put("makerId", toolMakerId);
-//                    put("name", name);
-//                    put("tags", tags);
-//                    put("status", status);
-//                }};
-//                MCPServer finalServer = server;
-//                hstpRequest(aitoolsManagementUSL, "tool_maker/modify", parameters,
-//                        (code,message,data)-> {
-//                            callback.onResult(code, message, finalServer);
-//                        },
-//                        (data) -> JSON.fromJson(data, new TypeReference<>() {}));
-//            }
+            callback.onResult(0,null,server);
         } catch (Exception e) {
             callback.onResult(255,e.getMessage(),null);
         } else {
