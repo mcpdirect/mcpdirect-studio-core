@@ -889,21 +889,22 @@ public class MCPDirectStudio {
         });
     }
 
-    public static MCPServer connectLocalMCPServer(String name, MCPServerConfig config){
-        long mcpServerId = localMCPServerId(name);
+    public static MCPServer connectLocalMCPServer(String serverName, MCPServerConfig config){
+        long mcpServerId = localMCPServerId(serverName);
         MCPServer mcpServer = null;
-        if(!mcpServerConfigs.containsKey(name)) try{
-            mcpServerConfigs.put(name,config);
+        if(!mcpServerConfigs.containsKey(serverName)) try{
+            mcpServerConfigs.put(serverName,config);
             notificationHandler.onMCPServerNotification(new MCPServer(config){{
                 id = mcpServerId;
-                name = name;
+                name = serverName;
                 status = Integer.MIN_VALUE;
             }});
-            mcpServer = AIToolServiceHandler.connectMCPServer(mcpServerId, name, config);
+            mcpServer = AIToolServiceHandler.connectMCPServer(mcpServerId, serverName, config);
             mcpServer.agentId = studioToolAgentId();
             notificationHandler.onMCPServerNotification(mcpServer);
         }catch (Exception e) {
             mcpServer = new MCPServer(mcpServerId){{
+                name = serverName;
                 status = -1;
                 statusMessage = e.getMessage();
                 agentId = studioToolAgentId();
