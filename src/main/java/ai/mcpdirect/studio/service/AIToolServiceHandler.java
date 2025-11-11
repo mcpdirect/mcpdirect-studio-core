@@ -67,12 +67,13 @@ public class AIToolServiceHandler {
             provider.command = conf.command;
             provider.args = conf.args;
             provider.env = conf.env;
+            provider.createMcpSyncClient();
             provider.refreshTools();
             return provider;
         }
         if(conf.command!=null&&!conf.command.isEmpty()) {
             provider = new MCPToolProvider(
-                    "MCPDirectStudio#"+serviceEngine.getEngineId(),"1.0.0",
+                    "MCPDirectStudio","1.0.0",
                     null,null,conf
             );
         }else{
@@ -83,19 +84,13 @@ public class AIToolServiceHandler {
             baseUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost()
                     + (parsedUrl.getPort() == -1 ? "" : ":" + parsedUrl.getPort());
 
-//            String path = parsedUrl.getPath();
-//            if (path == null || !path.endsWith("/sse")) {
-//                throw new IllegalArgumentException(
-//                        "URL path must end with /sse, current path: " + path + " for server: " + serverId);
-//            }
-
             sseEndpoint = parsedUrl.getPath();
 
             if (sseEndpoint.startsWith("/")) {
                 sseEndpoint = sseEndpoint.substring(1);
             }
             provider = new MCPToolProvider(
-                    "MCPDirectStudio#"+serviceEngine.getEngineId(),"1.0.0",
+                    "MCPDirectStudio","1.0.0",
                     baseUrl,sseEndpoint,conf
             );
             HttpRequest.Builder builder = HttpRequest.newBuilder();
@@ -112,7 +107,9 @@ public class AIToolServiceHandler {
         return provider;
     }
     public static MCPServer removeMCPServer(long serverId){
-        return mcpToolsProviders.remove(Long.toString(serverId,Character.MAX_RADIX));
+        MCPToolProvider server =  mcpToolsProviders.remove(Long.toString(serverId,Character.MAX_RADIX));
+        server.close();
+        return server;
     }
     public static void remapMCPServer(long makerId){
         MCPToolProvider maker = mcpToolsProviders.remove(Long.toString(makerId,Character.MAX_RADIX));

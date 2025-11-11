@@ -1,6 +1,5 @@
 package ai.mcpdirect.studio.tool.util;
 
-import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
 import ai.mcpdirect.backend.util.MCPDirectStdioClientTransport;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.tool.AITool;
@@ -20,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.http.HttpRequest;
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 
 public class MCPToolProvider extends MCPServer{
@@ -32,6 +30,8 @@ public class MCPToolProvider extends MCPServer{
     private final String sseEndpoint;
     @JsonIgnore
     private final McpSchema.Implementation clientInfo;
+    @JsonIgnore
+    private McpSyncClient client;
 
 //    public MCPToolProvider(String clientName, String clientVersion,
 //                           int type,String baseUrl, String sseEndpoint, String command,
@@ -45,9 +45,13 @@ public class MCPToolProvider extends MCPServer{
         this.baseUrl = baseUrl;
         this.sseEndpoint = sseEndpoint;
         clientInfo = new McpSchema.Implementation(clientName,clientVersion);
+        createMcpSyncClient();
     }
 
-    private McpSyncClient createMcpSyncClient(){
+    public void createMcpSyncClient(){
+        if(client!=null){
+            client.close();
+        }
         McpClientTransport transport;
         if(command!=null&&!command.isEmpty()) {
             ServerParameters parameters = ServerParameters.builder(command).args(args).env(env).build();
@@ -63,7 +67,8 @@ public class MCPToolProvider extends MCPServer{
             if(env!=null) for (Map.Entry<String, String> entry : env.entrySet()) {
                 builder.header(entry.getKey(),entry.getValue());
             }
-            if(this.transport ==2) transport = HttpClientStreamableHttpTransport
+            if(this.transport ==2)
+                transport = HttpClientStreamableHttpTransport
                         .builder(baseUrl).endpoint(sseEndpoint)
                         .requestBuilder(builder)
                         .build();
@@ -80,14 +85,43 @@ public class MCPToolProvider extends MCPServer{
                         .roots(true)
                         .sampling()
                         .build());
-        return builder.build();
-    }
-    public void refreshTools(){
-        try(McpSyncClient mcpClient = createMcpSyncClient()) {
-            mcpClient.initialize();
+        client = builder.build();
+        try {
+            client.initialize();
             status = STATUS_ON;
-//            statusMessage = "successful";
-            McpSchema.ListToolsResult tools = mcpClient.listTools();
+        } catch (Throwable e) {
+            status = STATUS_ERROR;
+        }
+    }
+    public void close(){
+        client.close();
+    }
+//    public void refreshTools(){
+//        try(McpSyncClient mcpClient = createMcpSyncClient()) {
+//            mcpClient.initialize();
+//            status = STATUS_ON;
+////            statusMessage = "successful";
+//            McpSchema.ListToolsResult tools = mcpClient.listTools();
+//            for (McpSchema.Tool tool : tools.tools()) {
+//                LOG.info("refreshTools({},{})",tool.name(),tool.description());
+//                MCPTool mcpTool = this.tools.get(tool.name());
+//                if(mcpTool==null){
+//                    mcpTool = new MCPTool();
+//                    this.tools.put(tool.name(),mcpTool);
+//                }
+//                mcpTool.setMCPToolProvider(this,tool);
+////                this.tools.put(tool.name(),new MCPTool(this,tool));
+//            }
+//        }catch (Throwable e){
+//            status = STATUS_ERROR;
+//        }
+//    }
+
+    @Override
+    public void refreshTools(){
+        try{
+            status = STATUS_ON;
+            McpSchema.ListToolsResult tools = client.listTools();
             for (McpSchema.Tool tool : tools.tools()) {
                 LOG.info("refreshTools({},{})",tool.name(),tool.description());
                 MCPTool mcpTool = this.tools.get(tool.name());
@@ -96,26 +130,38 @@ public class MCPToolProvider extends MCPServer{
                     this.tools.put(tool.name(),mcpTool);
                 }
                 mcpTool.setMCPToolProvider(this,tool);
-//                this.tools.put(tool.name(),new MCPTool(this,tool));
             }
         }catch (Throwable e){
             status = STATUS_ERROR;
         }
     }
 
+//    @Override
+//    public String callTool(String name,Map<String,Object> parameters){
+//        AITool tool = getTool(name);
+//        if(tool!=null) try(McpSyncClient mcpClient = createMcpSyncClient()) {
+//            mcpClient.initialize();
+//            McpSchema.CallToolResult result = mcpClient.callTool(
+//                    new McpSchema.CallToolRequest(tool.name(), parameters)
+//            );
+//            try {
+//                return JSON.toJson(result);
+//            }catch (Exception e){
+//                return "{}";
+//            }
+//        }
+//        return "The tool of '"+name+"' not available";
+//    }
     @Override
     public String callTool(String name,Map<String,Object> parameters){
         AITool tool = getTool(name);
-        if(tool!=null) try(McpSyncClient mcpClient = createMcpSyncClient()) {
-            mcpClient.initialize();
-            McpSchema.CallToolResult result = mcpClient.callTool(
+        if(tool!=null) try{
+            McpSchema.CallToolResult result = client.callTool(
                     new McpSchema.CallToolRequest(tool.name(), parameters)
             );
-            try {
-                return JSON.toJson(result);
-            }catch (Exception e){
-                return "{}";
-            }
+            return JSON.toJson(result);
+        } catch (Throwable e) {
+            status = STATUS_ERROR;
         }
         return "The tool of '"+name+"' not available";
     }
