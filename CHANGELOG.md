@@ -416,6 +416,21 @@
 - Updated appnet-hstp-engine.json to support dynamic gateway configuration
 - Added test methods for tool listing and tool call functionality
 
+## 2025-11-12
+
+**Summary:** Added server status management and enhanced MCP server configuration.
+
+**Detail:**
+- Added status field to MCPServerConfig to track server state
+- Added startMCPServer and stopMCPServer methods in AIToolServiceHandler
+- Enhanced connectMCPServer method to handle server status changes
+- Modified modifyMCPServerConfig to accept and update server status
+- Added MCP server status parameter to ConsoleServiceHandler API
+- Updated MCPServerConfig constructor to accept status parameter
+- Modified MCPToolProvider to conditionally create client based on status
+- Added OpenApiToJsonSchemaConverterTest for testing OpenAPI to JSON Schema conversion
+- Enhanced OpenAPIParser with improved path-based naming and schema building
+
 ## 2025-08-30
 
 **Summary:** Enhance device identification, improve machine ID generation, and add status tracking.

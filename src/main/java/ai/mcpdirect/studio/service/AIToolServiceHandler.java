@@ -31,45 +31,50 @@ public class AIToolServiceHandler {
     public static MCPServer getMCPServer(long serverId){
         return mcpToolsProviders.get(Long.toString(serverId,Character.MAX_RADIX));
     }
-//    public static List<MCPServer> addMCPServer(String json) throws Exception {
-//        List<MCPServer> list = new ArrayList<>();
-//        Map<String,Map<String, MCPServerConfig>> config = JSON.fromJson(json, new TypeReference<>() {
-//        });
-//        Map<String, MCPServerConfig> mcpServerConfigs = config.get("mcpServers");
-//        if(mcpServerConfigs!=null) for (Map.Entry<String, MCPServerConfig> entry
-//                : mcpServerConfigs.entrySet()) {
-//            String serverId = entry.getKey();
-//            MCPServerConfig value = entry.getValue();
-//            try {
-//                list.add(addMCPServer(serverId, value.url, value.command, value.args, value.env));
-//            }catch (Exception ignore){}
-//        }
-//        return list;
-//    }
-//    public static synchronized MCPServer addMCPServer(String serverId,int serverType,String url,String command,
-//                                    List<String> args, Map<String, String> env)
-    public static synchronized MCPServer connectMCPServer(long serverId, String serverName,
-                                                          MCPServerConfig conf)
-            throws MCPServerException, MalformedURLException {
-//        if(serverId==null||(serverId=serverId.trim()).isEmpty()){
-//            throw new MCPServerException("Server Name must not be empty");
-//        }
-        if((conf.url==null||(conf.url=conf.url.trim()).isEmpty())
-                &&(conf.command==null||(conf.command=conf.command.trim()).isEmpty())){
-            throw new MCPServerException("Server URL and command must not be empty both");
+    public static void stopMCPServer(long serverId){
+        MCPToolProvider provider = mcpToolsProviders.get(Long.toString(serverId, Character.MAX_RADIX));
+        if(provider!=null){
+            provider.close();
         }
+    }
+    public static void startMCPServer(long serverId){
+        MCPToolProvider provider = mcpToolsProviders.get(Long.toString(serverId, Character.MAX_RADIX));
+        if(provider!=null){
+            provider.createMcpSyncClient();
+            provider.refreshTools();
+        }
+    }
+    public static synchronized MCPServer connectMCPServer(long serverId, String serverName, MCPServerConfig conf)
+            throws MCPServerException, MalformedURLException {
         String serverKey = Long.toString(serverId,Character.MAX_RADIX);
         MCPToolProvider provider = mcpToolsProviders.get(serverKey);
         if(provider!=null){
+            if(conf!=null&&(conf.url==null||(conf.url=conf.url.trim()).isEmpty())
+                    &&(conf.command==null||(conf.command=conf.command.trim()).isEmpty())){
+                throw new MCPServerException("Server URL and command must not be empty both");
+            }
             provider.name = serverName;
-            provider.transport = conf.transport;
-            provider.url = conf.url;
-            provider.command = conf.command;
-            provider.args = conf.args;
-            provider.env = conf.env;
-            provider.createMcpSyncClient();
-            provider.refreshTools();
+            if(conf!=null) {
+                provider.transport = conf.transport;
+                provider.url = conf.url;
+                provider.command = conf.command;
+                provider.args = conf.args;
+                provider.env = conf.env;
+                if(provider.status!=conf.status) {
+                    provider.status = conf.status;
+                    if (conf.status == 1) {
+                        provider.createMcpSyncClient();
+                        provider.refreshTools();
+                    } else {
+                        provider.close();
+                    }
+                }
+            }
             return provider;
+        }
+        if(conf==null||((conf.url==null||(conf.url=conf.url.trim()).isEmpty())
+                &&(conf.command==null||(conf.command=conf.command.trim()).isEmpty()))){
+            throw new MCPServerException("Server URL and command must not be empty both");
         }
         if(conf.command!=null&&!conf.command.isEmpty()) {
             provider = new MCPToolProvider(
@@ -102,7 +107,10 @@ public class AIToolServiceHandler {
         provider.id = serverId;
         provider.name = serverName;
         provider.agentId = MCPDirectStudio.studioToolAgentId();
-        provider.refreshTools();
+        if(conf.status==1) {
+            provider.createMcpSyncClient();
+            provider.refreshTools();
+        }
         mcpToolsProviders.put(serverKey, provider);
         return provider;
     }

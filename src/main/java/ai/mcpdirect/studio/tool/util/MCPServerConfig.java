@@ -35,7 +35,8 @@ import java.util.Map;
  * "env": { "API_KEY": "value" } } } }
  */
 public class MCPServerConfig {
-
+    @JsonProperty
+    public int status = 1;
     @JsonProperty
     public int transport;
 	@JsonProperty
@@ -54,7 +55,8 @@ public class MCPServerConfig {
 //		this.args = args;
 //		this.env = env;
 //	}
-    public MCPServerConfig(AIPortMCPServerConfig c) throws Exception {
+    public MCPServerConfig(int status,AIPortMCPServerConfig c) throws Exception {
+        this.status = status;
         transport = c.transport;
         url = fillInputs(c.url,c.inputs);
         command = fillInputs(c.command,c.inputs);

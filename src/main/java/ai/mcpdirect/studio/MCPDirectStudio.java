@@ -812,7 +812,7 @@ public class MCPDirectStudio {
                             for (AIPortMCPServerConfig config : toolAgentDetails.mcpServerConfigs) {
                                 AIPortToolMaker maker = collect.get(config.id);
                                 if(maker!=null) {
-                                    MCPServerConfig mcpServerConfig = new MCPServerConfig(config);
+                                    MCPServerConfig mcpServerConfig = new MCPServerConfig(maker.status,config);
                                     if(maker.userId==accountId()) mcpServerConfigs.put(maker.name, mcpServerConfig);
                                     notificationHandler.onMCPServerNotification(new MCPServer(mcpServerConfig) {{
                                         id = config.id;
@@ -1880,12 +1880,16 @@ public class MCPDirectStudio {
     }
 
     public static void modifyMCPServerConfig(long serverId,String serverName,
-                                             MCPServerConfig conf,
+                                             Integer status,MCPServerConfig conf,
                                              Callback<MCPServer> callback){
         MCPServer server = AIToolServiceHandler.getMCPServer(serverId);
         if(server!=null) try{
             if(serverName==null) serverName = server.name;
             if(conf!=null){
+                conf.status = server.status;
+                if(status!=null) {
+                    conf.status = status;
+                }
                 server = AIToolServiceHandler.connectMCPServer(
                         serverId,serverName,conf
                 );
@@ -1902,6 +1906,12 @@ public class MCPDirectStudio {
                     AIToolServiceHandler.remapMCPServer(serverId);
                 }else{
                     server.name = serverName;
+                }
+                if(status!=null&&server.status!=status) {
+                    conf.status = status;
+                    server.status = status;
+                    if(status==1) AIToolServiceHandler.startMCPServer(serverId);
+                    else if(status==0) AIToolServiceHandler.stopMCPServer(serverId);
                 }
             }
             if(server.userId==0||server.userId==accountId()&&conf!=null) {
@@ -1993,7 +2003,7 @@ public class MCPDirectStudio {
         AIPortToolMaker maker;
         AIPortMCPServerConfig config;
         if(details!=null&&(maker=details.maker)!=null &&(config=details.config)!=null) {
-            MCPServerConfig mcpServerConfig = new MCPServerConfig(config);
+            MCPServerConfig mcpServerConfig = new MCPServerConfig(maker.status,config);
             mcpServerConfigs.put(maker.name, mcpServerConfig);
             notificationHandler.onMCPServerNotification(new MCPServer(mcpServerConfig) {{
                 id = config.id;

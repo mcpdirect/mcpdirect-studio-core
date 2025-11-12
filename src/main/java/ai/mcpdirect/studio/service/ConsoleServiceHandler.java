@@ -62,6 +62,7 @@ public class ConsoleServiceHandler {
     public static class RequestOfModifyMCPServer{
         public long mcpServerId;
         public String mcpServerName;
+        public Integer mcpServerStatus;
         public MCPServerConfig mcpServerConfig;
     }
     @ServiceRequestMapping("mcp_server/modify")
@@ -71,7 +72,7 @@ public class ConsoleServiceHandler {
     ) throws Exception {
         if(req.mcpServerId !=0) {
             MCPDirectStudio.modifyMCPServerConfig(
-                    req.mcpServerId,req.mcpServerName,req.mcpServerConfig,
+                    req.mcpServerId,req.mcpServerName,req.mcpServerStatus,req.mcpServerConfig,
                     (code, message, data)->{
                         resp.code = code;
                         resp.message = message;

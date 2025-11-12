@@ -45,7 +45,7 @@ public class MCPToolProvider extends MCPServer{
         this.baseUrl = baseUrl;
         this.sseEndpoint = sseEndpoint;
         clientInfo = new McpSchema.Implementation(clientName,clientVersion);
-        createMcpSyncClient();
+//        createMcpSyncClient();
     }
 
     public void createMcpSyncClient(){

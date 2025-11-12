@@ -1,9 +1,11 @@
 package ai.mcpdirect.studio.tool.util;
 
+import ai.mcpdirect.studio.jsonschema.JsonSchemaBuilder;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.media.JsonSchema;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
@@ -17,12 +19,12 @@ public class OpenAPIParser {
         OpenAPI openAPI = swaggerParseResult.getOpenAPI();
         Paths paths = openAPI.getPaths();
         for (Map.Entry<String, PathItem> e : paths.entrySet()) {
-
+            String path = e.getKey();
             PathItem i = e.getValue();
             Operation get = i.getGet();
-            print(get);
+            print("get",path,get);
             Operation post = i.getPost();
-            print(post);
+            print("post",path,post);
             Operation delete = i.getDelete();
             Operation patch = i.getPatch();
             Operation put = i.getPut();
@@ -31,17 +33,33 @@ public class OpenAPIParser {
             Operation trace = i.getTrace();
         }
     }
-    public static void print(Operation o){
+    public static void print(String method,String path,Operation o){
         if(o==null){
             return;
         }
-        System.out.println(o);
+        StringBuilder name = new StringBuilder();
+        for (String s : path.split("/")) {
+            if(!s.isEmpty()){
+                if(s.startsWith("{")&&s.endsWith("}")){
+                    s = s.substring(1,s.length()-1);
+                }
+                name.append("_").append(s);
+            }
+        }
+        System.out.println(method+name);
+        JsonSchemaBuilder inputSchemaBuilder = JsonSchemaBuilder.object();
+        inputSchemaBuilder.description(o.getSummary());
         List<Parameter> parameters = o.getParameters();
-        if(parameters!=null)for (Parameter parameter : parameters) {
-
-            System.out.println(parameter);
+        if(parameters!=null)for (Parameter parameter :parameters) {
             System.out.println(parameter.getSchema());
         }
+//        System.out.println(o);
+//        List<Parameter> parameters = o.getParameters();
+//        if(parameters!=null)for (Parameter parameter : parameters) {
+//
+//            System.out.println(parameter);
+//            System.out.println(parameter.getSchema());
+//        }
 
     }
 //    public static void parser(File file){
