@@ -418,9 +418,11 @@
 
 ## 2025-11-12
 
-**Summary:** Added server status management and enhanced MCP server configuration.
+**Summary:** Added OpenAPI to JSON Schema converter utility and enhanced server status management.
 
 **Detail:**
+- Added OpenAPISchemaConverter utility class to convert OpenAPI schemas to JSON Schema format
+- Implemented comprehensive conversion logic supporting allOf, anyOf, oneOf, not, additionalProperties, and other OpenAPI schema properties
 - Added status field to MCPServerConfig to track server state
 - Added startMCPServer and stopMCPServer methods in AIToolServiceHandler
 - Enhanced connectMCPServer method to handle server status changes
