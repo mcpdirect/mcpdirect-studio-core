@@ -78,4 +78,8 @@ public class MCPTool extends AIPortTool implements AITool{
     public String call(Map<String,Object> parameters){
         return provider!=null?provider.callTool(tool.name(),parameters):null;
     }
+
+    public static String buildCallResult(String content,boolean isError){
+        return "{\"content\":[{\"type\":\"text\",\"text\":\"[\""+JSON.quote(content)+"\"],\"isError\":"+isError+"}";
+    }
 }

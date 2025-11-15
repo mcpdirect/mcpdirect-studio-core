@@ -1,11 +1,9 @@
-package ai.mcpdirect.studio.jsonschema;
+package ai.mcpdirect.studio.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.*;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -113,6 +111,13 @@ public class JsonSchemaBuilder {
      * @return The current builder instance
      */
     public JsonSchemaBuilder required(String... propertyNames) {
+        ArrayNode requiredNode = schemaNode.withArray("required");
+        for (String propertyName : propertyNames) {
+            requiredNode.add(propertyName);
+        }
+        return this;
+    }
+    public JsonSchemaBuilder required(List<String> propertyNames) {
         ArrayNode requiredNode = schemaNode.withArray("required");
         for (String propertyName : propertyNames) {
             requiredNode.add(propertyName);

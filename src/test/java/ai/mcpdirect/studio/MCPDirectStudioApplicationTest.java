@@ -11,6 +11,7 @@ import appnet.hstp.exception.ServiceEngineException;
 import appnet.hstp.exception.ServiceException;
 import appnet.hstp.exception.USLSyntaxException;
 import appnet.hstp.labs.util.http.HstpHttpClient;
+import appnet.hstp.labs.util.http.HttpClient;
 import io.modelcontextprotocol.client.transport.ServerParameters;
 import junit.framework.TestCase;
 
@@ -44,24 +45,22 @@ public class MCPDirectStudioApplicationTest extends TestCase {
         System.out.println(reader.readLine());
     }
     public void test() throws Exception {
-        String s = HstpHttpClient.doPost(
+        String s = HttpClient.doPost(
                 "http://192.168.1.7:8081/tool/list",
                 Map.of(
                         "_Authorization","aik-mVIhlp725ZUf2FcxV5SyYbHo4LVoDAiWddbdcrfqayx811s5",
                         "X-MCPdirect-Key","aik-mVIhlp725ZUf2FcxV5SyYbHo4LVoDAiWddbdcrfqayx811s5"
                 ),
-                Map.of(),
                 Map.of()
         );
         System.out.println(s);
     }
     public void testToolCall() throws Exception {
-        String s = HstpHttpClient.doPost(
+        String s = HttpClient.doPost(
                 "http://192.168.1.7:8081/tool/_obsidian_list_files_in_vault_3fvd5v1",
                 Map.of(
                         "Authorization","aik-mVIhlp725ZUf2FcxV5SyYbHo4LVoDAiWddbdcrfqayx811s5"
                 ),
-                Map.of(),
                 Map.of()
         );
         System.out.println(s);

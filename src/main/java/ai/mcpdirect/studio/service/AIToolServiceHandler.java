@@ -1,5 +1,6 @@
 package ai.mcpdirect.studio.service;
 
+import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
 import appnet.hstp.ServiceEngine;
 import appnet.hstp.ServiceRequest;
@@ -10,6 +11,7 @@ import ai.mcpdirect.studio.exception.MCPServerException;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.tool.AITool;
 import ai.mcpdirect.studio.tool.util.MCPToolProvider;
+import appnet.hstp.engine.util.JSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +20,9 @@ import java.net.http.HttpRequest;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.INTERNAL_ERROR;
+import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.METHOD_NOT_FOUND;
 
 @ServiceName("aitools")
 @ServiceRequestMapping("/")
@@ -183,12 +188,13 @@ public class AIToolServiceHandler {
                 try {
                     result = tool.call(parameters);
                 } catch (Exception e) {
-                    result = "The tool throws an exception \""+e+"\". Please tell user to check";
+                    result = MCPTool.buildCallResult("Error "+INTERNAL_ERROR+": "+ e.getMessage(),true);
                 }
 
             }else{
-                result = "The tool was abandoned. Please tell user to check.";
+                result = MCPTool.buildCallResult("Error "+METHOD_NOT_FOUND,true);
             }
+            System.err.println(result);
             resp.success(result);
 //            String finalResult = result;
 //            new Thread(()->{

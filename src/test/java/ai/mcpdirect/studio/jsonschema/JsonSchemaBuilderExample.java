@@ -1,9 +1,8 @@
 package ai.mcpdirect.studio.jsonschema;
 
 import ai.mcpdirect.studio.openapi.util.OpenApiToJsonSchemaConverter;
+import ai.mcpdirect.studio.util.JsonSchemaBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
-
-import java.util.Map;
 
 /**
  * Example class demonstrating how to use the JsonSchemaBuilder with OpenAPI conversion.

@@ -1,12 +1,17 @@
 package ai.mcpdirect.studio.tool.util;
 
-import ai.mcpdirect.studio.jsonschema.JsonSchemaBuilder;
+import ai.mcpdirect.studio.util.JsonSchemaBuilder;
+import ai.mcpdirect.studio.util.OpenAPISchemaConverter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
-import io.swagger.v3.oas.models.media.JsonSchema;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 
@@ -14,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 public class OpenAPIParser {
+    private static final ObjectMapper mapper = new ObjectMapper();
     public static void parser(String openApiYaml){
         SwaggerParseResult swaggerParseResult = new OpenAPIV3Parser().readContents(openApiYaml);
         OpenAPI openAPI = swaggerParseResult.getOpenAPI();
@@ -46,13 +52,34 @@ public class OpenAPIParser {
                 name.append("_").append(s);
             }
         }
-        System.out.println(method+name);
-        JsonSchemaBuilder inputSchemaBuilder = JsonSchemaBuilder.object();
-        inputSchemaBuilder.description(o.getSummary());
-        List<Parameter> parameters = o.getParameters();
-        if(parameters!=null)for (Parameter parameter :parameters) {
-            System.out.println(parameter.getSchema());
+        ObjectNode tool = mapper.createObjectNode();
+        tool.put("name",method+name);
+//        System.out.println(method+name);
+//        JsonSchemaBuilder inputSchemaBuilder = JsonSchemaBuilder.object();
+//        inputSchemaBuilder.description(o.getDescription());
+        String description = o.getDescription();
+        if(description==null){
+            description = o.getSummary();
         }
+        tool.put("description",description);
+//        System.out.println(description);
+        tool.set("inputSchema",OpenAPISchemaConverter.toJsonSchema(o));
+        System.out.println(tool.toPrettyString());
+//        System.out.println(OpenAPISchemaConverter.toJsonSchema(o));
+//        List<Parameter> parameters = o.getParameters();
+//        if(parameters!=null)for (Parameter parameter :parameters) {
+//            System.out.println(OpenAPISchemaConverter.toJsonSchema(parameter.getSchema()));
+//        }
+//        RequestBody requestBody = o.getRequestBody();
+//        if(requestBody!=null) {
+//            Content content = requestBody.getContent();
+//            for (Map.Entry<String, MediaType> mediaTypeEntry : content.entrySet()) {
+//                System.out.println(mediaTypeEntry.getKey());
+//                MediaType value = mediaTypeEntry.getValue();
+//                System.out.println(OpenAPISchemaConverter.toJsonSchema(value.getSchema()));
+//            }
+//        }
+
 //        System.out.println(o);
 //        List<Parameter> parameters = o.getParameters();
 //        if(parameters!=null)for (Parameter parameter : parameters) {

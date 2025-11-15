@@ -21,7 +21,10 @@ import java.net.http.HttpRequest;
 import java.time.Duration;
 import java.util.Map;
 
-public class MCPToolProvider extends MCPServer{
+import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.INTERNAL_ERROR;
+import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.METHOD_NOT_FOUND;
+
+public class MCPToolProvider extends MCPServer implements AIToolProvider{
     private static final Logger LOG = LoggerFactory.getLogger(MCPToolProvider.class);
     public static final McpJsonMapper JSON_MAPPER = McpJsonMapper.getDefault();
     @JsonIgnore
@@ -154,6 +157,7 @@ public class MCPToolProvider extends MCPServer{
 //    }
     @Override
     public String callTool(String name,Map<String,Object> parameters){
+        String error = "Error "+METHOD_NOT_FOUND;
         AITool tool = getTool(name);
         if(tool!=null) try{
             McpSchema.CallToolResult result = client.callTool(
@@ -162,7 +166,8 @@ public class MCPToolProvider extends MCPServer{
             return JSON.toJson(result);
         } catch (Throwable e) {
             status = STATUS_ERROR;
+            error = "Error "+INTERNAL_ERROR+": " + statusMessage;
         }
-        return "The tool of '"+name+"' not available";
+        return MCPTool.buildCallResult(error,true);
     }
 }

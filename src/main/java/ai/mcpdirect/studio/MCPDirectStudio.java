@@ -17,6 +17,7 @@ import appnet.hstp.exception.ServiceNotFoundException;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.service.AIToolServiceHandler;
 import appnet.hstp.labs.util.http.HstpHttpClient;
+import appnet.hstp.labs.util.http.HttpClient;
 import appnet.util.crypto.SHA256;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
@@ -1380,11 +1381,11 @@ public class MCPDirectStudio {
             USL usl = USL.create(uslStr);
             if(usl.getDomainName().equals(studioEngineId())){
                 hstpRequest(uslStr,parameters,handler);
-            }else handler.onResponse(HstpHttpClient.doPost(hstpWebport, Map.of(
+            }else handler.onResponse(HttpClient.doPost(hstpWebport, Map.of(
                     "hstp-usl", uslStr,
                     "hstp-auth", accountDetails!=null?accountDetails.accessToken:"",
                     "mcpdirect-device",Long.toString(machineId)
-            ), null, parameters));
+            ), parameters));
         } catch (Exception e) {
             handler.onResponse(JSON.toJson(-1,e.getMessage()));
         }
