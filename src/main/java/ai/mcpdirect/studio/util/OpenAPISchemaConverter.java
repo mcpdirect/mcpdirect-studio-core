@@ -1,9 +1,7 @@
 package ai.mcpdirect.studio.util;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.media.Content;
-import io.swagger.v3.oas.models.media.JsonSchema;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,7 +10,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.parameters.RequestBody;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 

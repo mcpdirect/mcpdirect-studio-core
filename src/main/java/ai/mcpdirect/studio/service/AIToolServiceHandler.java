@@ -1,6 +1,9 @@
 package ai.mcpdirect.studio.service;
 
+import ai.mcpdirect.studio.dao.entity.OpenAPIServer;
 import ai.mcpdirect.studio.tool.MCPTool;
+import ai.mcpdirect.studio.tool.openapi.OpenAPIServerConfig;
+import ai.mcpdirect.studio.tool.openapi.OpenAPIToolProvider;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
 import appnet.hstp.ServiceEngine;
 import appnet.hstp.ServiceRequest;
@@ -29,6 +32,7 @@ import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.METHOD_NOT_FOUND
 public class AIToolServiceHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AIToolServiceHandler.class);
     private static final Map<String, MCPToolProvider> mcpToolsProviders = new ConcurrentHashMap<>();
+    private static final Map<String, OpenAPIToolProvider> openapiToolsProviders = new ConcurrentHashMap<>();
 
     public static Collection<? extends MCPServer> getMCPServers(){
         return mcpToolsProviders.values();
@@ -129,6 +133,40 @@ public class AIToolServiceHandler {
         if(maker!=null){
             mcpToolsProviders.put(Long.toString(maker.id,Character.MAX_RADIX),maker);
         }
+    }
+
+    public OpenAPIServer connectOpenAPIServer(long serverId, String serverName, OpenAPIServerConfig conf) throws Exception {
+        String serverKey = Long.toString(serverId,Character.MAX_RADIX);
+        OpenAPIToolProvider provider = openapiToolsProviders.get(serverKey);
+        if(provider!=null){
+            if(conf!=null&&(conf.url==null||(conf.url=conf.url.trim()).isEmpty())){
+                throw new Exception("Server URL must not be empty both");
+            }
+            provider.name = serverName;
+            if(conf!=null) {
+                provider.url = conf.url;
+                provider.securities = conf.securities;
+                if(provider.status!=conf.status) {
+                    provider.status = conf.status;
+                    if (conf.status == 1) {
+                        provider.refreshTools();
+                    } else {
+                        provider.close();
+                    }
+                }
+            }
+            return provider;
+        }
+//        if(conf==null||((conf.url==null||(conf.url=conf.url.trim()).isEmpty())
+//                &&(conf.command==null||(conf.command=conf.command.trim()).isEmpty()))){
+//            throw new MCPServerException("Server URL and command must not be empty both");
+//        }
+        provider = new OpenAPIToolProvider(conf);
+
+        return provider;
+    }
+    public static Collection<? extends OpenAPIServer> getOpenAPIServers(){
+        return openapiToolsProviders.values();
     }
     private static ServiceEngine serviceEngine;
 

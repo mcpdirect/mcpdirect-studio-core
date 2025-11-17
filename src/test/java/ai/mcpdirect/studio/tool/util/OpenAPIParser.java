@@ -12,6 +12,8 @@ import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.parameters.RequestBody;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 
@@ -23,6 +25,17 @@ public class OpenAPIParser {
     public static void parser(String openApiYaml){
         SwaggerParseResult swaggerParseResult = new OpenAPIV3Parser().readContents(openApiYaml);
         OpenAPI openAPI = swaggerParseResult.getOpenAPI();
+        List<SecurityRequirement> securities = openAPI.getSecurity();
+        for (SecurityRequirement security : securities) {
+            System.out.println(security);
+        }
+        List<Server> servers = openAPI.getServers();
+        for (Server server : servers) {
+            System.out.println(server);
+            server.getVariables().forEach((k,v)->{
+
+            });
+        }
         Paths paths = openAPI.getPaths();
         for (Map.Entry<String, PathItem> e : paths.entrySet()) {
             String path = e.getKey();

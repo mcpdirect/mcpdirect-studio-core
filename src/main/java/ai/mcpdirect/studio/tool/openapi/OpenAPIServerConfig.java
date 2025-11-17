@@ -2,6 +2,9 @@ package ai.mcpdirect.studio.tool.openapi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class OpenAPIServerConfig {
@@ -10,10 +13,9 @@ public class OpenAPIServerConfig {
     @JsonProperty
     public String url;
     @JsonProperty
-    public String docPath;
+    public String docUri;
     @JsonProperty
     public String doc;
-
     @JsonProperty
-    public Map<String, String> header ;
+    public Map<String,String> securities;
 }

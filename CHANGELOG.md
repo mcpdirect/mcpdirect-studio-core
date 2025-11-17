@@ -433,6 +433,25 @@
 - Added OpenApiToJsonSchemaConverterTest for testing OpenAPI to JSON Schema conversion
 - Enhanced OpenAPIParser with improved path-based naming and schema building
 
+## 2025-11-17
+
+**Summary:** Added OpenAPI server functionality and enhanced console service with OpenAPI support.
+
+**Detail:**
+- Updated hstp-service-engine dependency from version 1.4.2 to 1.5.1 in pom.xml
+- Added OpenAPIServer entity extending AIPortToolMaker with URL and securities fields
+- Created OpenAPIServerConfig class for OpenAPI server configuration
+- Implemented OpenAPIToolProvider extending OpenAPIServer implementing AIToolProvider
+- Added connectOpenAPIServer method in AIToolServiceHandler to manage OpenAPI tool providers
+- Enhanced ConsoleServiceHandler with OpenAPI server query, connection, and parsing endpoints
+- Added queryToolMakers endpoint to retrieve both MCP and OpenAPI servers
+- Implemented parseOpenAPIDoc functionality to parse OpenAPI specifications from URLs or content
+- Added OpenAPIServerDoc class for representing parsed OpenAPI document structure
+- Modified OpenAPIServerConfig to replace docPath with docUri field
+- Added securities field to OpenAPIServerConfig for security requirements
+- Added refreshTools and close methods to OpenAPIToolProvider
+- Added test cases for OpenAPI parsing in OpenAPIParser class
+
 ## 2025-08-30
 
 **Summary:** Enhance device identification, improve machine ID generation, and add status tracking.
