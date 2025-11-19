@@ -473,6 +473,22 @@
 - Added security improvements and status management for OpenAPI servers
 - Added support for persisting OpenAPI server configurations in SQLite database
 
+## 2025-11-17
+
+**Summary:** Enhanced OpenAPI server publishing functionality and refactored response classes.
+
+**Detail:**
+- Renamed AIPortServerResponse to AIPortServiceResponse class
+- Added code method to AIPortServiceResponse for setting response codes
+- Updated ConsoleServiceHandler to use AIPortServiceResponse instead of SimpleServiceResponseMessage
+- Implemented publishTools method for OpenAPIServer in MCPDirectStudio
+- Added createToolMaker method in MCPDirectStudio for creating tool makers
+- Enhanced OpenAPIServer with proper implementation including tools storage and merging
+- Added deprecated method to OpenAPIServer for marking servers as deprecated
+- Updated MCPTool and OpenAPITool with proper metadata handling
+- Refactored OpenAPIToolProvider to remove redundant methods
+- Used static import for AIPortToolMaker constants in MCPDirectStudio
+
 ## 2025-08-30
 
 **Summary:** Enhance device identification, improve machine ID generation, and add status tracking.

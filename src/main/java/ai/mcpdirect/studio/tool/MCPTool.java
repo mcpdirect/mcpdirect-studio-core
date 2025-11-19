@@ -14,7 +14,8 @@ public class MCPTool extends AIPortTool implements AITool{
     private MCPToolProvider provider;
     @JsonIgnore
     private McpSchema.Tool tool;
-//    private String inputSchema = "{}";
+    @JsonIgnore
+    private String _metaData;
     public MCPTool(){
         lastUpdated = 1;
     }
@@ -23,21 +24,6 @@ public class MCPTool extends AIPortTool implements AITool{
         this.makerId = provider.id;
         this.tool = tool;
         this.name = tool.name();
-        String metadata = metaData();
-        int hash = metadata.hashCode();
-        if(id>0) {
-            if (hash == this.hash) {
-                lastUpdated = 0;
-            } else {
-                lastUpdated = System.currentTimeMillis();
-            }
-        }else{
-            this.status = 1;
-        }
-        this.hash = hash;
-    }
-    public String metaData(){
-        String metadata = "{}";
         String inputSchema;
         try {
             inputSchema = JSON.toJson(tool.inputSchema());
@@ -45,11 +31,15 @@ public class MCPTool extends AIPortTool implements AITool{
             inputSchema = "{}";
         }
         try {
-            metadata = JSON.toJson(new ServiceDescription("aitools",
+            _metaData = JSON.toJson(new ServiceDescription("aitools",
                     "call/" + Long.toString(provider.id, Character.MAX_RADIX) + "/" + tool.name(),
                     tool.description(), inputSchema, "{}"));
-        }catch (Exception ignore){}
-        return metadata;
+        }catch (Exception ignore){
+            _metaData = "{}";
+        }
+    }
+    public String metaData(){
+        return _metaData;
     }
     public void merge(AIPortTool tool){
         id=tool.id;
@@ -60,9 +50,17 @@ public class MCPTool extends AIPortTool implements AITool{
         tags=tool.tags;
         agentId=tool.agentId;
         lastUpdated = -1;
-        if(this.tool!=null){
-            setMCPToolProvider(this.provider,this.tool);
+        int hash = _metaData.hashCode();
+        if(id>0) {
+            if (hash == this.hash) {
+                lastUpdated = 0;
+            } else {
+                lastUpdated = System.currentTimeMillis();
+            }
+        }else{
+            this.status = 1;
         }
+        this.hash = hash;
     }
 
     public String name(){

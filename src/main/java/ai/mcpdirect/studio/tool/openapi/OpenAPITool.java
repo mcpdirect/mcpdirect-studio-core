@@ -28,7 +28,8 @@ public class OpenAPITool extends AIPortTool implements AITool {
     private final String method;
     @JsonIgnore
     private final Map<String, Parameter> parameterMap = new HashMap<>();
-
+    @JsonIgnore
+    private String _metaData;
     public OpenAPITool (String name,String method,String path){
         this.name = name;
         this.path = path;
@@ -70,10 +71,10 @@ public class OpenAPITool extends AIPortTool implements AITool {
             inputSchema = "{}";
         }
         try {
-            metaData = JSON.toJson(new ServiceDescription("aitools",
+            _metaData = JSON.toJson(new ServiceDescription("aitools",
                     "call/" + Long.toString(provider.id, Character.MAX_RADIX) + "/" + name(),
                     description, inputSchema, "{}"));
-            hash = metaData.hashCode();
+            hash = _metaData.hashCode();
         }catch (Exception ignore){}
 
     }
@@ -86,7 +87,7 @@ public class OpenAPITool extends AIPortTool implements AITool {
         tags=tool.tags;
         agentId=tool.agentId;
         lastUpdated = -1;
-        int hash = metaData.hashCode();
+        int hash = _metaData.hashCode();
         if(id>0) {
             if (hash == this.hash) {
                 lastUpdated = 0;
@@ -97,6 +98,9 @@ public class OpenAPITool extends AIPortTool implements AITool {
             this.status = 1;
         }
         this.hash = hash;
+    }
+    public String metaData(){
+        return _metaData;
     }
     @Override
     public String name() {

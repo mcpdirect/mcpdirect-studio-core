@@ -28,8 +28,6 @@ import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.METHOD_NOT_FOUND
 public class OpenAPIToolProvider extends OpenAPIServer implements AIToolProvider {
     private static final ObjectMapper mapper = new ObjectMapper();
     public static final int OPENAPI_DOC_NOT_EXIST = -1000;
-    @JsonIgnore
-    private final ConcurrentHashMap<String,OpenAPITool> tools = new ConcurrentHashMap<>();
     public OpenAPIToolProvider(){
         type = TYPE_OPENAPI;
     }
@@ -86,39 +84,12 @@ public class OpenAPIToolProvider extends OpenAPIServer implements AIToolProvider
             }
         }
     }
-    public void merge(AIPortToolMaker maker, List<AIPortTool> tools){
-        if(maker.type!=TYPE_MCP){
-            return;
-        }
-        id  = maker.id;
-        name = maker.name;
-        type = maker.type;
-        agentStatus = maker.agentStatus;
-        agentId = maker.agentId;
-        userId = maker.userId;
-        teamId = maker.teamId;
-        tags = maker.tags;
-        status = maker.status;
-        lastUpdated = maker.lastUpdated;
-        created = maker.created;
-        templateId = maker.templateId;
-        if(tools!=null) for (AIPortTool tool : tools) if(tool.makerId==id){
-            OpenAPITool mcpTool = this.tools.get(tool.name);
-            if(mcpTool==null){
-                mcpTool = new OpenAPITool(tool.name,null,null);
-                this.tools.put(tool.name,mcpTool);
-            }else mcpTool.merge(tool);
-        }
-    }
     public void refreshTools() {
     }
     public void close(){
 
     }
-    @Override
-    public Collection<? extends OpenAPITool> getTools() {
-        return tools.values();
-    }
+
 
     @Override
     public AITool getTool(String name) {

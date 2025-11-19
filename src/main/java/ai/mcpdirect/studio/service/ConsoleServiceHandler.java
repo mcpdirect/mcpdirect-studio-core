@@ -41,7 +41,7 @@ public class ConsoleServiceHandler {
     }
     @ServiceRequestMapping("tool_maker/query")
     public void queryToolMakers(
-            @ServiceResponseMessage SimpleServiceResponseMessage<StudioToolMakers> resp
+            @ServiceResponseMessage AIPortServiceResponse<StudioToolMakers> resp
     ){
         StudioToolMakers studioToolMakers = new StudioToolMakers();
         studioToolMakers.mcpServers = List.copyOf(AIToolServiceHandler.getMCPServers());
@@ -52,7 +52,7 @@ public class ConsoleServiceHandler {
 
     @ServiceRequestMapping("mcp_server/query")
     public void queryMCPServers(
-            @ServiceResponseMessage SimpleServiceResponseMessage<List<MCPServer>> resp
+            @ServiceResponseMessage AIPortServiceResponse<List<MCPServer>> resp
     ){
         List<MCPServer> servers = List.copyOf(AIToolServiceHandler.getMCPServers());
         resp.success(servers);
@@ -64,7 +64,7 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("mcp_server/connect")
     public void connectMCPServers(
             @ServiceRequestMessage RequestOfConnectMCPServer req,
-            @ServiceResponseMessage SimpleServiceResponseMessage<List<MCPServer>> resp
+            @ServiceResponseMessage AIPortServiceResponse<List<MCPServer>> resp
     ) throws Exception {
         if(req.mcpServerConfigs !=null&&!req.mcpServerConfigs.isEmpty()) {
             List<MCPServer> servers = new ArrayList<>();
@@ -95,13 +95,13 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("mcp_server/modify")
     public void configMCPServer(
             @ServiceRequestMessage RequestOfModifyMCPServer req,
-            @ServiceResponseMessage SimpleServiceResponseMessage<MCPServer> resp
+            @ServiceResponseMessage AIPortServiceResponse<MCPServer> resp
     ) throws Exception {
         if(req.mcpServerId !=0) {
             MCPDirectStudio.modifyMCPServerConfig(
                     req.mcpServerId,req.mcpServerName,req.mcpServerStatus,req.mcpServerConfig,
                     (code, message, data)->{
-                        resp.code = code;
+                        resp.code(code);
                         resp.message = message;
                         resp.data = data;
                     }
@@ -111,12 +111,12 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("mcp_server/remove")
     public void removeMCPServer(
             @ServiceRequestMessage RequestOfModifyMCPServer req,
-            @ServiceResponseMessage SimpleServiceResponseMessage<MCPServer> resp
+            @ServiceResponseMessage AIPortServiceResponse<MCPServer> resp
     ) throws Exception {
         if(req.mcpServerId !=0) {
             MCPDirectStudio.removeLocalMCPServer(req.mcpServerId,
                     (code,message,server)->{
-                        resp.code = code;
+                        resp.code(code);
                         resp.message = message;
                         resp.data = server;
                     });
@@ -128,7 +128,7 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("mcp_server/tool/query")
     public void queryMCPTools(
             @ServiceRequestMessage RequestOfQueryMCPTools req,
-            @ServiceResponseMessage SimpleServiceResponseMessage<List<AIPortTool>> resp
+            @ServiceResponseMessage AIPortServiceResponse<List<AIPortTool>> resp
     ){
         if(req.mcpServerId !=0) {
             MCPServer mcpServer = AIToolServiceHandler.getMCPServer(req.mcpServerId);
@@ -139,13 +139,13 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("mcp_server/tool/publish")
     public void publicMCPTools(
             @ServiceRequestMessage RequestOfQueryMCPTools req,
-            @ServiceResponseMessage SimpleServiceResponseMessage<MCPServer> resp
+            @ServiceResponseMessage AIPortServiceResponse<MCPServer> resp
     ) throws Exception {
         if(req.mcpServerId !=0) {
             MCPServer mcpServer = AIToolServiceHandler.getMCPServer(req.mcpServerId);
             if(mcpServer!=null) MCPDirectStudio.publishTools(mcpServer,
                     (code,message,data)->{
-               resp.code = code;
+               resp.code(code);
                resp.message = message;
                resp.data = data;
             });
@@ -159,11 +159,11 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("tool_maker/connect")
     public void connectToolMaker(
             @ServiceRequestMessage RequestOfConnectToolMaker req,
-            @ServiceResponseMessage SimpleServiceResponseMessage<MCPServer> resp
+            @ServiceResponseMessage AIPortServiceResponse<MCPServer> resp
     ) throws Exception {
         if(req.makerId>0&&req.agentId==MCPDirectStudio.studioToolAgentId()){
             MCPDirectStudio.connectToolMaker(req.makerId,(code,message,mcpServer)->{
-                resp.code = code;
+                resp.code(code);
                 resp.message = message;
                 resp.data = mcpServer;
             });
@@ -204,7 +204,7 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("openapi_server/doc/parse")
     public void parseOpenAPIDoc(
             @ServiceRequestMessage RequestOfParseOpenAPIDoc req,
-            @ServiceResponseMessage SimpleServiceResponseMessage<OpenAPIServerDoc> resp
+            @ServiceResponseMessage AIPortServiceResponse<OpenAPIServerDoc> resp
     ) throws Exception {
         if(req.doc!=null){
             String doc = req.doc;
@@ -279,7 +279,7 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("openapi_server/connect")
     public void connectOpenAPIServer(
             @ServiceRequestMessage RequestOfCreateOpenAPIServer req,
-            @ServiceResponseMessage AIPortServerResponse<OpenAPIServer> resp
+            @ServiceResponseMessage AIPortServiceResponse<OpenAPIServer> resp
     ) throws Exception {
         if(req.validate()){
             resp.success(MCPDirectStudio.connectLocalOpenAPIServer(
@@ -289,7 +289,7 @@ public class ConsoleServiceHandler {
     }
     @ServiceRequestMapping("openapi_server/query")
     public void queryOpenAPIServers(
-            @ServiceResponseMessage SimpleServiceResponseMessage<List<OpenAPIServer>> resp
+            @ServiceResponseMessage AIPortServiceResponse<List<OpenAPIServer>> resp
     ){
         List<OpenAPIServer> servers = List.copyOf(AIToolServiceHandler.getOpenAPIServers());
         resp.success(servers);
@@ -303,14 +303,14 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("openapi_server/modify")
     public void configOpenAPIServer(
             @ServiceRequestMessage RequestOfModifyOpenAPIServer req,
-            @ServiceResponseMessage SimpleServiceResponseMessage<OpenAPIServer> resp
+            @ServiceResponseMessage AIPortServiceResponse<OpenAPIServer> resp
     ) throws Exception {
         if(req.openapiServerId !=0) {
             MCPDirectStudio.modifyOpenAPIServerConfig(
                     req.openapiServerId,req.openapiServerName,
                     req.openapiServerStatus,req.openapiServerConfig,
                     (code, message, data)->{
-                        resp.code = code;
+                        resp.code(code);
                         resp.message = message;
                         resp.data = data;
                     }
@@ -320,12 +320,12 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("openapi_server/remove")
     public void removeOpenAPIServer(
             @ServiceRequestMessage RequestOfModifyOpenAPIServer req,
-            @ServiceResponseMessage SimpleServiceResponseMessage<OpenAPIServer> resp
+            @ServiceResponseMessage AIPortServiceResponse<OpenAPIServer> resp
     ) throws Exception {
 //        if(req.mcpServerId !=0) {
 //            MCPDirectStudio.removeLocalMCPServer(req.mcpServerId,
 //                    (code,message,server)->{
-//                        resp.code = code;
+//                        resp.code(code);
 //                        resp.message = message;
 //                        resp.data = server;
 //                    });
@@ -337,7 +337,7 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("openapi_server/tool/query")
     public void queryOpenAPITools(
             @ServiceRequestMessage RequestOfQueryOpenAPITools req,
-            @ServiceResponseMessage AIPortServerResponse<List<AIPortTool>> resp
+            @ServiceResponseMessage AIPortServiceResponse<List<AIPortTool>> resp
     ){
         if(req.openapiServerId !=0) {
             OpenAPIServer server = AIToolServiceHandler.getOpenAPIServer(req.openapiServerId);
@@ -348,16 +348,16 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("openapi_server/tool/publish")
     public void publicOpenAPITools(
             @ServiceRequestMessage RequestOfQueryOpenAPITools req,
-            @ServiceResponseMessage AIPortServerResponse<OpenAPIServer> resp
+            @ServiceResponseMessage AIPortServiceResponse<OpenAPIServer> resp
     ) throws Exception {
         if(req.openapiServerId !=0) {
-//            MCPServer mcpServer = AIToolServiceHandler.getMCPServer(req.mcpServerId);
-//            if(mcpServer!=null) MCPDirectStudio.publishTools(mcpServer,
-//                    (code,message,data)->{
-//                        resp.code = code;
-//                        resp.message = message;
-//                        resp.data = data;
-//                    });
+            OpenAPIServer server = AIToolServiceHandler.getOpenAPIServer(req.openapiServerId);
+            if(server!=null) MCPDirectStudio.publishTools(server,
+                    (code,message,data)->{
+                        resp.code(code);
+                        resp.message = message;
+                        resp.data = data;
+                    });
         }
     }
 }

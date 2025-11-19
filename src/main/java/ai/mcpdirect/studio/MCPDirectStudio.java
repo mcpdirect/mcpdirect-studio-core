@@ -43,8 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker.TYPE_MCP;
-import static ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker.TYPE_VIRTUAL;
+import static ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker.*;
 
 @ServiceScan
 public class MCPDirectStudio {
@@ -1153,6 +1152,72 @@ public class MCPDirectStudio {
         callback.onResult(code.get(),message.get(),mcpServer);
     }
 
+    public static void publishTools(OpenAPIServer server,Callback<OpenAPIServer> callback) throws Exception {
+        long oldServerId = server.id;
+        String name = server.name;
+        if(name==null||(name=name.trim()).isEmpty()||name.length()>32){
+            throw new Exception("The name must not be empty and the max length is 32");
+        }
+        AtomicInteger code = new AtomicInteger(255);
+        AtomicReference<String> message = new AtomicReference<>();
+        if(server.id<0) createToolMaker(TYPE_OPENAPI,name,"",
+                (c,m,d)->{
+                    code.set(c);
+                    message.set(m);
+                    if(c==0){
+                        server.merge(d,null);
+                        OpenAPIServerConfig config = dbHelper.selectOpenAPIServerConfig(oldServerId);
+                        if(config!=null) {
+                            config.id = server.id;
+                            dbHelper.setOpenAPIServerConfig(oldServerId,config);
+                        }
+                        AIToolServiceHandler.remapMCPServer(oldServerId);
+                        MCPDirectStudio.notificationHandler().onOpenAPIServerNotification(
+                                OpenAPIServer.deprecated(oldServerId)
+                        );
+                    }
+                }); else code.set(0);
+
+        if(code.get()==0){
+            List<AIPortTool> publishingTools = new ArrayList<>();
+            List<AIPortTool> tools = new ArrayList<>();
+            for (OpenAPITool tool : server.getTools()) if(tool.lastUpdated!=0){
+                AIPortTool duplicate = tool.duplicate();
+                duplicate.metaData = tool.metaData();
+                duplicate.hash = duplicate.metaData.hashCode();
+                publishingTools.add(duplicate);
+                tools.add(tool);
+            }
+            if(publishingTools.isEmpty()){
+                callback.onResult(0,"no tools updated",server);
+                return;
+            }
+            Service service = aitoolsManagementUSL
+                    .appendPath("tool/publish")
+                    .createServiceClient()
+                    .headers(authHeaders)
+                    .content(JSON.toJson(Map.of(
+                            "toolAgentId",toolAgentDetails.toolAgent.id,
+                            "toolMakerId",server.id,
+                            "tools",publishingTools
+                    )))
+                    .request(serviceEngine);
+            code.set(service.getErrorCode());
+            message.set(service.getErrorMessage());
+            if(code.get() ==0) {
+                SimpleServiceResponseMessage<List<AIPortTool>> resp
+                        = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+                code.set(resp.code);
+                message.set(resp.message);
+                if(resp.code==0){
+                    server.merge(null,resp.data);
+                    MCPDirectStudio.notificationHandler().onOpenAPIServerNotification(server);
+                }
+            }
+        }
+        callback.onResult(code.get(),message.get(),server);
+    }
+
     public static AIPortAccessKeyCredential generateAccessKey(String name) throws Exception {
         Service service = hstpRequest(accountServiceUSL,"access_key/create",Map.of("name", name));
         AIPortAccessKeyCredential key = null;
@@ -1506,6 +1571,27 @@ public class MCPDirectStudio {
                             args = JSON.toJson(server.args);
                             env = JSON.toJson(server.env);
                         }}
+                )))
+                .request(serviceEngine);
+        if(service.getErrorCode()==0) {
+            SimpleServiceResponseMessage<AIPortToolMaker> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            callback.onResult(resp.code,resp.message,resp.data);
+        }else{
+            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+        }
+    }
+
+    public static void createToolMaker(int type,String name, String tags,
+                                       Callback<AIPortToolMaker> callback) throws Exception{
+        Service service = aitoolsManagementUSL
+                .appendPath("tool_maker/create")
+                .createServiceClient()
+                .headers(authHeaders)
+                .content(JSON.toJson(Map.of(
+                        "name",name,
+                        "type", type,
+                        "tags",tags
                 )))
                 .request(serviceEngine);
         if(service.getErrorCode()==0) {
