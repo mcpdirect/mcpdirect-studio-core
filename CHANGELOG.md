@@ -452,6 +452,27 @@
 - Added refreshTools and close methods to OpenAPIToolProvider
 - Added test cases for OpenAPI parsing in OpenAPIParser class
 
+## 2025-11-17
+
+**Summary:** Added SQLite database support for OpenAPI server configs and enhanced OpenAPI tool functionality.
+
+**Detail:**
+- Added sqlite-jdbc dependency version 3.51.0.0 to pom.xml
+- Created MCPDirectStudioDBHelper class for SQLite database operations
+- Added STATUS_ON, STATUS_OFF, STATUS_ERROR constants and TYPE_OPENAPI constant to AIPortToolMaker
+- Added database helper initialization and usage in MCPDirectStudio
+- Implemented connectLocalOpenAPIServers and modifyOpenAPIServerConfig methods in MCPDirectStudio
+- Added OpenAPI server management endpoints in ConsoleServiceHandler
+- Enhanced OpenAPIToolProvider with full implementation for handling OpenAPI tools
+- Added OpenAPITool class with complete implementation for OpenAPI operations
+- Added NotificationHandler for OpenAPI server notifications
+- Added AIPortServerResponse generic class extending SimpleServiceResponseMessage
+- Added validation methods for server names and URLs in ConsoleServiceHandler
+- Implemented OpenAPI tool query and publishing functionality
+- Added localServerId method replacing localMCPServerId
+- Added security improvements and status management for OpenAPI servers
+- Added support for persisting OpenAPI server configurations in SQLite database
+
 ## 2025-08-30
 
 **Summary:** Enhance device identification, improve machine ID generation, and add status tracking.

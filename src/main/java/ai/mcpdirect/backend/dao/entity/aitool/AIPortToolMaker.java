@@ -3,9 +3,13 @@ package ai.mcpdirect.backend.dao.entity.aitool;
 public class AIPortToolMaker {
     public long id;
     public long created;
+    public static int STATUS_ON = 1;
+    public static int STATUS_OFF = 0;
+    public static int STATUS_ERROR = -1;
     public int status;
     public long lastUpdated;
     public static final int TYPE_VIRTUAL = 0;
+    public static final int TYPE_OPENAPI = 1;
     public static final int TYPE_MCP = 1000;
     /**
      * 1000 is MCP

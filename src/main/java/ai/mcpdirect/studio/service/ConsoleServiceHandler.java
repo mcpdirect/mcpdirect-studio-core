@@ -201,20 +201,19 @@ public class ConsoleServiceHandler {
             securities.put(keyName,security);
         }
     }
-    @ServiceRequestMapping("mcp_server/openapi/parse")
+    @ServiceRequestMapping("openapi_server/doc/parse")
     public void parseOpenAPIDoc(
             @ServiceRequestMessage RequestOfParseOpenAPIDoc req,
             @ServiceResponseMessage SimpleServiceResponseMessage<OpenAPIServerDoc> resp
     ) throws Exception {
         if(req.doc!=null){
-            OpenAPI openAPI;
             String doc = req.doc;
             if(req.doc.startsWith("http://")||req.doc.startsWith("https://")){
                 doc = HttpClient.doGet(req.doc);
             }
             SwaggerParseResult swaggerParseResult = new OpenAPIV3Parser().readContents(doc);
-            openAPI = swaggerParseResult.getOpenAPI();
-            OpenAPIServerDoc form = new OpenAPIServerDoc();
+            OpenAPI openAPI = swaggerParseResult.getOpenAPI();
+            OpenAPIServerDoc serverDoc = new OpenAPIServerDoc();
             List<Server> servers = openAPI.getServers();
             if(servers!=null) {
                 for (Server server :servers) {
@@ -231,7 +230,7 @@ public class ConsoleServiceHandler {
                             url.set(url.get().replace("{" + k + "}", value));
                         }
                     });
-                    form.addServer(server.getDescription(), url.get());
+                    serverDoc.addServer(server.getDescription(), url.get());
                 }
             }
             List<SecurityRequirement> securities = openAPI.getSecurity();
@@ -242,39 +241,123 @@ public class ConsoleServiceHandler {
                     for (String keyName : requirement.keySet()) {
                         SecurityScheme scheme = schemes.get(keyName);
                         if(scheme!=null){
-                            form.addSecurity(scheme.getDescription(),keyName);
+                            serverDoc.addSecurity(scheme.getDescription(),keyName);
                         }
                     }
                 }
             }
-            resp.success(form);
+            resp.success(serverDoc);
         }
     }
+    private static String validateName(String name){
+        if(name!=null&&!(name=name.trim()).isEmpty()){
+            return name;
+        }
+        return null;
+    }
+    private static String validateUrl(String url){
+        if(url!=null&&!(url=url.trim()).isEmpty()
+                &&(url.startsWith("http://")||url.startsWith("https://"))){
+            return url;
+        }
+        return null;
+    }
+
     public static class RequestOfCreateOpenAPIServer{
         public String openAPIServerName;
-        public OpenAPIServerConfig openAPIServerconfig;
-    }
-    @ServiceRequestMapping("mcp_server/openapi/connect")
-    public void connectOpenAPIMCPServer(
-            @ServiceRequestMessage RequestOfCreateOpenAPIServer req,
-            @ServiceResponseMessage SimpleServiceResponseMessage<List<MCPServer>> resp
-    ) throws Exception {
-        String name = req.openAPIServerName;
-        OpenAPIServerConfig config = req.openAPIServerconfig;
-        if(name!=null&&config!=null&&(config.doc!=null||config.docUri!=null)){
-            if(config.url==null){
-                if(config.doc==null){
-                    config.doc = HttpClient.doGet(config.docUri);
-                }
+        public OpenAPIServerConfig openAPIServerConfig;
 
-            }
+        public boolean validate(){
+            openAPIServerName = validateName(openAPIServerName);
+            OpenAPIServerConfig config = openAPIServerConfig;
+            return openAPIServerName!=null&&config!=null
+                    &&(config.url=validateUrl(config.url))!=null
+                    &&((config.docUri=validateUrl(config.docUri))!=null
+                    ||config.doc!=null);
         }
     }
-    @ServiceRequestMapping("mcp_server/openapi/query")
+    @ServiceRequestMapping("openapi_server/connect")
+    public void connectOpenAPIServer(
+            @ServiceRequestMessage RequestOfCreateOpenAPIServer req,
+            @ServiceResponseMessage AIPortServerResponse<OpenAPIServer> resp
+    ) throws Exception {
+        if(req.validate()){
+            resp.success(MCPDirectStudio.connectLocalOpenAPIServer(
+                    req.openAPIServerName,req.openAPIServerConfig
+            ));
+        }
+    }
+    @ServiceRequestMapping("openapi_server/query")
     public void queryOpenAPIServers(
             @ServiceResponseMessage SimpleServiceResponseMessage<List<OpenAPIServer>> resp
     ){
         List<OpenAPIServer> servers = List.copyOf(AIToolServiceHandler.getOpenAPIServers());
         resp.success(servers);
+    }
+    public static class RequestOfModifyOpenAPIServer{
+        public long openapiServerId;
+        public String openapiServerName;
+        public Integer openapiServerStatus;
+        public OpenAPIServerConfig openapiServerConfig;
+    }
+    @ServiceRequestMapping("openapi_server/modify")
+    public void configOpenAPIServer(
+            @ServiceRequestMessage RequestOfModifyOpenAPIServer req,
+            @ServiceResponseMessage SimpleServiceResponseMessage<OpenAPIServer> resp
+    ) throws Exception {
+        if(req.openapiServerId !=0) {
+            MCPDirectStudio.modifyOpenAPIServerConfig(
+                    req.openapiServerId,req.openapiServerName,
+                    req.openapiServerStatus,req.openapiServerConfig,
+                    (code, message, data)->{
+                        resp.code = code;
+                        resp.message = message;
+                        resp.data = data;
+                    }
+            );
+        }
+    }
+    @ServiceRequestMapping("openapi_server/remove")
+    public void removeOpenAPIServer(
+            @ServiceRequestMessage RequestOfModifyOpenAPIServer req,
+            @ServiceResponseMessage SimpleServiceResponseMessage<OpenAPIServer> resp
+    ) throws Exception {
+//        if(req.mcpServerId !=0) {
+//            MCPDirectStudio.removeLocalMCPServer(req.mcpServerId,
+//                    (code,message,server)->{
+//                        resp.code = code;
+//                        resp.message = message;
+//                        resp.data = server;
+//                    });
+//        }
+    }
+    public static class RequestOfQueryOpenAPITools{
+        public long openapiServerId;
+    }
+    @ServiceRequestMapping("openapi_server/tool/query")
+    public void queryOpenAPITools(
+            @ServiceRequestMessage RequestOfQueryOpenAPITools req,
+            @ServiceResponseMessage AIPortServerResponse<List<AIPortTool>> resp
+    ){
+        if(req.openapiServerId !=0) {
+            OpenAPIServer server = AIToolServiceHandler.getOpenAPIServer(req.openapiServerId);
+            if(server!=null) resp.success(MCPDirectStudio.getAIPortTools(server));
+        }
+    }
+
+    @ServiceRequestMapping("openapi_server/tool/publish")
+    public void publicOpenAPITools(
+            @ServiceRequestMessage RequestOfQueryOpenAPITools req,
+            @ServiceResponseMessage AIPortServerResponse<OpenAPIServer> resp
+    ) throws Exception {
+        if(req.openapiServerId !=0) {
+//            MCPServer mcpServer = AIToolServiceHandler.getMCPServer(req.mcpServerId);
+//            if(mcpServer!=null) MCPDirectStudio.publishTools(mcpServer,
+//                    (code,message,data)->{
+//                        resp.code = code;
+//                        resp.message = message;
+//                        resp.data = data;
+//                    });
+        }
     }
 }

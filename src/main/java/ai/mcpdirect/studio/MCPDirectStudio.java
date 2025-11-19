@@ -4,8 +4,11 @@ package ai.mcpdirect.studio;
 import ai.mcpdirect.backend.dao.entity.account.*;
 import ai.mcpdirect.backend.dao.entity.aitool.*;
 import ai.mcpdirect.backend.util.AIPortAccessKeyValidator;
+import ai.mcpdirect.studio.dao.entity.OpenAPIServer;
 import ai.mcpdirect.studio.handler.*;
 import ai.mcpdirect.studio.tool.MCPTool;
+import ai.mcpdirect.studio.tool.openapi.OpenAPIServerConfig;
+import ai.mcpdirect.studio.tool.openapi.OpenAPITool;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
 import appnet.communicator.ssl.SSLContextGenerator;
 import appnet.hstp.*;
@@ -16,6 +19,8 @@ import appnet.hstp.exception.ServiceException;
 import appnet.hstp.exception.ServiceNotFoundException;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.service.AIToolServiceHandler;
+import appnet.hstp.labs.util.db.TableResultSet;
+import appnet.hstp.labs.util.db.sqlite.SQLiteHelper;
 import appnet.hstp.labs.util.http.HstpHttpClient;
 import appnet.hstp.labs.util.http.HttpClient;
 import appnet.util.crypto.SHA256;
@@ -31,6 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -59,6 +65,7 @@ public class MCPDirectStudio {
     private static ToolLogHandler toolLogHandler;
     private static final Map<String,AIPortAccessKeyCredential> accessKeyCredentials = new ConcurrentHashMap<>();
 
+    private static MCPDirectStudioDBHelper dbHelper;
 
     static{
         Properties props = new Properties();
@@ -233,6 +240,7 @@ public class MCPDirectStudio {
     }
 
     private static void start(String keySeed) throws Exception {
+        dbHelper = new MCPDirectStudioDBHelper();
         serviceEngine = new HstpServiceEngine(engineConfig,null,
                 "ai.mcpdirect.studio."+machineId+"."+keySeed);
         accountServiceUSL = new USL("account.management", adminProvider);
@@ -434,10 +442,6 @@ public class MCPDirectStudio {
                 accountDetails.userInfo.name = accountDetails.account;
             }
             notifyUserInfo();
-//            System.setProperty(ServiceEngineConfiguration.ENGINE_ID_SEED_PROPERTY,
-//                    "ai.mcpdirect.studio."+machineId+"."+accountDetails.userInfo.id);
-//            System.setProperty(ServiceEngineConfiguration.ENGINE_ID_SEED_PROPERTY,
-//                    "ai.mcpdirect.studio."+machineId);
             start(accountDetails.accountKeySeed);
             authHeaders = new ServiceHeaders()
                     .addHeader("hstp-auth", accountDetails.accessToken)
@@ -704,8 +708,8 @@ public class MCPDirectStudio {
         if(serverName==null||(serverName=serverName.trim()).isEmpty()||serverName.length()>32){
             throw new Exception("The name must not be empty and the max length is 32");
         }
-        MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(localMCPServerId(serverName),serverName,conf);
-        mcpServer.id = localMCPServerId(serverName);
+        MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(localServerId(serverName),serverName,conf);
+        mcpServer.id = localServerId(serverName);
         mcpServer.name = serverName;
         mcpServerConfigs.put(serverName,conf);
 //        notifyMCPServer(List.of(mcpServer));
@@ -734,39 +738,21 @@ public class MCPDirectStudio {
     }
     private static final ConcurrentHashMap<String, MCPServerConfig> mcpServerConfigs = new ConcurrentHashMap<>();
     private static File mcpServerConfigFile;
+//    private static final ConcurrentHashMap<String, OpenAPIServerConfig> openapiServerConfigs = new ConcurrentHashMap<>();
+//    private static File openapiServerConfigFile;
     private static void writeMCPServerConfigs(){
         try(FileOutputStream out = new FileOutputStream(mcpServerConfigFile)) {
             out.write(JSON.toJsonBytes(mcpServerConfigs));
         }catch (Exception ignore){}
     }
-    public static long localMCPServerId(String name){
-        return name.hashCode()|Long.MIN_VALUE;
-    }
-//    public static void getLocalMCPServers(){
-//        String userHome = System.getProperty("user.home");
-//        File file = new File(userHome, ".mcpdirect/studio/"+Long.toString(accountDetails.userInfo.id,36));
-//        if(!file.exists()){
-//            file.mkdirs();
-//        }
-//        if(file.exists()) try{
-//            mcpServerConfigFile = new File(file,"mcpservers");
-//            if(file.exists()) try(FileInputStream in = new FileInputStream(mcpServerConfigFile)) {
-////                List<MCPServer> mcpServers = new ArrayList<>();
-//                Map<String, MCPServerConfig> map = JSON.fromJson(in.readAllBytes(), new TypeReference<>() {});
-//                map.forEach((n,c)->{
-//                    if(!mcpServerConfigs.containsKey(n)) try {
-//                        MCPServer mcpServer
-//                                = AIToolServiceHandler.connectMCPServer(localMCPServerId(n),n ,c);
-////                        if (mcpServer.id < 0) mcpServers.add(mcpServer);
-//                        if (mcpServer.id < 0) notificationHandler.onMCPServerNotification(mcpServer);
-//                        mcpServerConfigs.put(n,c);
-//                    } catch (Exception ignore) {}
-//                });
-//                writeMCPServerConfigs();
-////                notifyLocalMCPServer(mcpServers);
-//            }
+//    private static void writeOpenAPIServerConfigs(){
+//        try(FileOutputStream out = new FileOutputStream(openapiServerConfigFile)) {
+//            out.write(JSON.toJsonBytes(openapiServerConfigs));
 //        }catch (Exception ignore){}
 //    }
+    public static long localServerId(String name){
+        return name.hashCode()|Long.MIN_VALUE;
+    }
     public static void removeLocalMCPServer(long serverId,Callback<MCPServer> callback){
         MCPServer server = AIToolServiceHandler.removeMCPServer(serverId);
         if(server!=null) {
@@ -844,6 +830,7 @@ public class MCPDirectStudio {
             e.printStackTrace();
         }
         connectLocalMCPServers(localMCPServerConfigs);
+        connectLocalOpenAPIServers();
         writeMCPServerConfigs();
     }).start();}
 
@@ -856,17 +843,18 @@ public class MCPDirectStudio {
         }
         if(file.exists()) try{
             mcpServerConfigFile = new File(file,"mcpservers");
-            if(file.exists()) try(FileInputStream in = new FileInputStream(mcpServerConfigFile)) {
+            if(mcpServerConfigFile.exists()) try(FileInputStream in = new FileInputStream(mcpServerConfigFile)) {
                 map.putAll(JSON.fromJson(in.readAllBytes(), new TypeReference<>() {}));
             }
         }catch (Exception ignore){}
         return map;
     }
+
     private static void connectLocalMCPServers(Map<String, MCPServerConfig> configs){
         configs.forEach((serverName,config)->{
             if(!mcpServerConfigs.containsKey(serverName)) {
                 mcpServerConfigs.put(serverName,config);
-                long mcpServerId = localMCPServerId(serverName);
+                long mcpServerId = localServerId(serverName);
                 notificationHandler.onMCPServerNotification(new MCPServer(config){{
                     id = mcpServerId;
                     name = serverName;
@@ -891,7 +879,7 @@ public class MCPDirectStudio {
     }
 
     public static MCPServer connectLocalMCPServer(String serverName, MCPServerConfig config){
-        long mcpServerId = localMCPServerId(serverName);
+        long mcpServerId = localServerId(serverName);
         MCPServer mcpServer = null;
         if(!mcpServerConfigs.containsKey(serverName)) try{
             mcpServerConfigs.put(serverName,config);
@@ -914,6 +902,79 @@ public class MCPDirectStudio {
         }
         return mcpServer;
     }
+    private static void connectLocalOpenAPIServers(){
+        List<OpenAPIServerConfig> configs = dbHelper.selectOpenAPIServerConfigs();
+        for (OpenAPIServerConfig config : configs) if(config.id<Integer.MAX_VALUE){
+            String serverName = config.name;
+            if(serverName==null){
+                dbHelper.deleteOpenAPIServerConfig(config.id);
+                continue;
+            }
+            long serverId = localServerId(serverName);
+            notificationHandler.onOpenAPIServerNotification(new OpenAPIServer(){{
+                id = serverId;
+                name = serverName;
+                status = Integer.MIN_VALUE;
+                agentId = studioToolAgentId();
+                url = config.url;
+                securities = config.securities;
+                userId = accountId();
+            }});
+            new Thread(()-> {try {
+                OpenAPIServer server
+                        = AIToolServiceHandler.connectOpenAPIServer(serverId, serverName, config);
+                server.userId = accountId();
+                notificationHandler.onOpenAPIServerNotification(server);
+            } catch (Exception e) {
+                OpenAPIServer server = new OpenAPIServer(){{
+                    id = serverId;
+                    name = serverName;
+                    status = -1;
+                    statusMessage = e.getMessage();
+                    agentId = studioToolAgentId();
+                    url = config.url;
+                    securities = config.securities;
+                    userId = accountId();
+                }};
+                notificationHandler.onOpenAPIServerNotification(server);
+            }}).start();
+        }
+    }
+    public static OpenAPIServer connectLocalOpenAPIServer(String serverName, OpenAPIServerConfig config){
+        long serverId = localServerId(serverName);
+        OpenAPIServer openapiServer = null;
+        if(dbHelper.selectOpenAPIServerConfigId(serverId)==null) try{
+            config.id = serverId;
+            config.name = serverName;
+//            config.status = 1;
+            dbHelper.insertOpenAPIServerConfig(config);
+            notificationHandler.onOpenAPIServerNotification(new OpenAPIServer(){{
+                id = serverId;
+                name = serverName;
+                status = Integer.MIN_VALUE;
+                agentId = studioToolAgentId();
+                url = config.url;
+                securities = config.securities;
+                userId = accountId();
+            }});
+            openapiServer = AIToolServiceHandler.connectOpenAPIServer(serverId, serverName, config);
+            openapiServer.userId = accountId();
+            notificationHandler.onOpenAPIServerNotification(openapiServer);
+        }catch (Exception e) {
+            openapiServer = new OpenAPIServer(){{
+                id = serverId;
+                name = serverName;
+                status = -1;
+                statusMessage = e.getMessage();
+                agentId = studioToolAgentId();
+                url = config.url;
+                securities = config.securities;
+                userId = accountId();
+            }};
+            notificationHandler.onOpenAPIServerNotification(openapiServer);
+        }
+        return openapiServer;
+    }
 
     public static List<AIPortTool> getAIPortTools(MCPServer mcpServer){
         List<AIPortTool> tools = new ArrayList<>();
@@ -921,41 +982,13 @@ public class MCPDirectStudio {
             tools.add(tool.duplicate());
         }
         return tools;
-//        Map<String, AIPortTool> collect;
-//        if(mcpServer.id>0&&toolAgentDetails.tools!=null) {
-//            collect = toolAgentDetails.tools.stream()
-//                    .filter(t -> t.makerId == mcpServer.id)
-//                    .collect(Collectors.toMap(t->t.name,t-> {
-//                        t = t.duplicate();
-//                        t.lastUpdated = -1;
-//                        return t;
-//                    }));
-//        }else{
-//            collect = new HashMap<>();
-//        }
-//        for (AITool tool : mcpServer.getTools()) try {
-//            String metaData = JSON.toJson(new ServiceDescription("aitools",
-//                    "call/" + Long.toString(mcpServer.id,Character.MAX_RADIX) + "/" + tool.name(),
-//                    tool.description(), tool.inputSchema(), "{}"));
-//            int hash = metaData.hashCode();
-//            AIPortTool aiPortTool = collect.get(tool.name());
-//            if(aiPortTool==null) {
-//                aiPortTool = new AIPortTool(
-//                        0, mcpServer.id, 1, 1, tool.name(), hash, null, ""
-//                );
-////                toolAgentDetails.tools.add(aiPortTool);
-//                collect.put(aiPortTool.name,aiPortTool);
-//            }else if(aiPortTool.hash==hash){
-//                aiPortTool.lastUpdated = 0;
-////                aiPortTool.metaData = tool.description();
-//            }else{
-//                aiPortTool.hash = hash;
-//                aiPortTool.lastUpdated = System.currentTimeMillis();
-////                aiPortTool.metaData = tool.description();
-//            }
-//
-//        }catch (Exception ignore){}
-//        return collect.values().stream().toList();
+    }
+    public static List<AIPortTool> getAIPortTools(OpenAPIServer server) {
+        List<AIPortTool> tools = new ArrayList<>();
+        for (OpenAPITool tool : server.getTools()) {
+            tools.add(tool.duplicate());
+        }
+        return tools;
     }
     public static ToolAgentDetails getToolAgentDetails() throws Exception {
         Service service = aitoolsManagementUSL.appendPath("tool_agent/details/get")
@@ -1902,7 +1935,7 @@ public class MCPDirectStudio {
             }else{
                 conf = mcpServerConfigs.remove(server.name);
                 if(serverId<Integer.MAX_VALUE){
-                    server.id = localMCPServerId(serverName);
+                    server.id = localServerId(serverName);
                     server.name = serverName;
                     AIToolServiceHandler.remapMCPServer(serverId);
                 }else{
@@ -1921,6 +1954,55 @@ public class MCPDirectStudio {
             }
             callback.onResult(0,null,server);
             notificationHandler.onMCPServerNotification(server);
+        } catch (Exception e) {
+            callback.onResult(255,e.getMessage(),null);
+        } else {
+            callback.onResult(255,null,null);
+        }
+    }
+
+    public static void modifyOpenAPIServerConfig(long serverId,String serverName,
+                                             Integer status,OpenAPIServerConfig conf,
+                                             Callback<OpenAPIServer> callback){
+        OpenAPIServer server = AIToolServiceHandler.getOpenAPIServer(serverId);
+        if(server!=null) try{
+            if(serverName==null) serverName = server.name;
+            if(conf!=null){
+                conf.status = server.status;
+                if(status!=null) {
+                    conf.status = status;
+                }
+                server = AIToolServiceHandler.connectOpenAPIServer(
+                        serverId,serverName,conf
+                );
+                if(server.status<0){
+                    callback.onResult(255,server.statusMessage,null);
+                    notificationHandler.onOpenAPIServerNotification(server);
+                    return;
+                }
+            }else{
+                conf = dbHelper.selectOpenAPIServerConfig(serverId);
+                if(serverId<Integer.MAX_VALUE){
+                    conf.id = localServerId(serverName);
+                    server.id = conf.id;
+                    server.name = serverName;
+                    AIToolServiceHandler.remapOpenAPIServer(serverId);
+                }else{
+                    server.name = serverName;
+                }
+                if(status!=null&&server.status!=status) {
+                    conf.status = status;
+                    server.status = status;
+                    if(status==1) AIToolServiceHandler.startMCPServer(serverId);
+                    else if(status==0) AIToolServiceHandler.stopMCPServer(serverId);
+                }
+            }
+            if(conf!=null) {
+                if(serverId==server.id) dbHelper.insertOpenAPIServerConfig(conf);
+                else dbHelper.setOpenAPIServerConfig(serverId,conf);
+            }
+            callback.onResult(0,null,server);
+            notificationHandler.onOpenAPIServerNotification(server);
         } catch (Exception e) {
             callback.onResult(255,e.getMessage(),null);
         } else {

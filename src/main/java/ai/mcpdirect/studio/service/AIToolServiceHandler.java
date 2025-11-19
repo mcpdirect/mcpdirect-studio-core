@@ -14,7 +14,6 @@ import ai.mcpdirect.studio.exception.MCPServerException;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.tool.AITool;
 import ai.mcpdirect.studio.tool.util.MCPToolProvider;
-import appnet.hstp.engine.util.JSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,38 +134,34 @@ public class AIToolServiceHandler {
         }
     }
 
-    public OpenAPIServer connectOpenAPIServer(long serverId, String serverName, OpenAPIServerConfig conf) throws Exception {
+    public static OpenAPIServer connectOpenAPIServer(
+            long serverId, String serverName,
+            OpenAPIServerConfig conf) throws Exception {
         String serverKey = Long.toString(serverId,Character.MAX_RADIX);
         OpenAPIToolProvider provider = openapiToolsProviders.get(serverKey);
         if(provider!=null){
-            if(conf!=null&&(conf.url==null||(conf.url=conf.url.trim()).isEmpty())){
-                throw new Exception("Server URL must not be empty both");
-            }
             provider.name = serverName;
-            if(conf!=null) {
-                provider.url = conf.url;
-                provider.securities = conf.securities;
-                if(provider.status!=conf.status) {
-                    provider.status = conf.status;
-                    if (conf.status == 1) {
-                        provider.refreshTools();
-                    } else {
-                        provider.close();
-                    }
-                }
-            }
-            return provider;
+        }else {
+            provider = new OpenAPIToolProvider();
+            provider.id = serverId;
+            provider.name = serverName;
+            provider.agentId = MCPDirectStudio.studioToolAgentId();
+            openapiToolsProviders.put(serverKey,provider);
         }
-//        if(conf==null||((conf.url==null||(conf.url=conf.url.trim()).isEmpty())
-//                &&(conf.command==null||(conf.command=conf.command.trim()).isEmpty()))){
-//            throw new MCPServerException("Server URL and command must not be empty both");
-//        }
-        provider = new OpenAPIToolProvider(conf);
-
+        provider.config(conf);
         return provider;
     }
     public static Collection<? extends OpenAPIServer> getOpenAPIServers(){
         return openapiToolsProviders.values();
+    }
+    public static OpenAPIServer getOpenAPIServer(long serverId){
+        return openapiToolsProviders.get(Long.toString(serverId,Character.MAX_RADIX));
+    }
+    public static void remapOpenAPIServer(long serverId){
+        OpenAPIToolProvider maker = openapiToolsProviders.remove(Long.toString(serverId,Character.MAX_RADIX));
+        if(maker!=null){
+            openapiToolsProviders.put(Long.toString(maker.id,Character.MAX_RADIX),maker);
+        }
     }
     private static ServiceEngine serviceEngine;
 

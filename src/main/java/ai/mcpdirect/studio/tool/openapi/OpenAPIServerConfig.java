@@ -2,12 +2,13 @@ package ai.mcpdirect.studio.tool.openapi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class OpenAPIServerConfig {
+    @JsonProperty
+    public long id;
+    @JsonProperty
+    public String name;
     @JsonProperty
     public int status = 1;
     @JsonProperty

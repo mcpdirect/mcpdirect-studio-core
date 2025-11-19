@@ -16,7 +16,6 @@ public class AIPortTool {
         this.name = name;
     }
     public AIPortTool(long id,long makerId, int status, long lastUpdated, String name, int hash, String metaData, String tags) {
-//        this.id = ID.nextId();
         this.id = id;
         this.makerId = makerId;
         this.status = status;
