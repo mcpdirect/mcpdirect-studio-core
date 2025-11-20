@@ -31,7 +31,7 @@ public class HttpClient {
 
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setRequestProperty("user-agent","Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0");
-        conn.setRequestMethod("POST");
+        conn.setRequestMethod(method);
 
         if(header!=null&&!header.isEmpty()) for (Map.Entry<String, String> entry : header.entrySet()) {
             conn.setRequestProperty(entry.getKey(),entry.getValue());

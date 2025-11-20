@@ -507,6 +507,20 @@
 - Improved OpenAPIToolProvider with proper security configuration handling
 - Updated OpenAPITool with proper call result formatting using McpSchema
 
+## 2025-11-17
+
+**Summary:** Enhanced OpenAPI content handling and request/response processing.
+
+**Detail:**
+- Added OpenAPIContent class for handling API response content
+- Enhanced MCPTool with improved metadata hash calculation and status handling
+- Updated OpenAPITool to handle request/response content types and data
+- Enhanced OpenAPISchemaConverter with response content type support
+- Added API response schema conversion capabilities to OpenAPISchemaConverter
+- Updated HttpClient to use the correct HTTP method instead of defaulting to POST
+- Added response content type parameter handling in OpenAPI tool calls
+- Improved parameter processing in OpenAPI tools with content type support
+
 ## 2025-08-30
 
 **Summary:** Enhance device identification, improve machine ID generation, and add status tracking.

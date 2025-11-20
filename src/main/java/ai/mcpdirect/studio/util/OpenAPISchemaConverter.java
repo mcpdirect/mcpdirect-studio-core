@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.parameters.RequestBody;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.responses.ApiResponses;
 
 import java.util.List;
 import java.util.Map;
@@ -47,7 +49,6 @@ public class OpenAPISchemaConverter {
             ArrayNode dataExamples = mapper.createArrayNode();
             Content content = requestBody.getContent();
             for (Map.Entry<String, MediaType> entry : content.entrySet()) {
-
                 String name = entry.getKey();
                 MediaType mediaType = entry.getValue();
                 mediaTypes.add(name);
@@ -107,8 +108,74 @@ public class OpenAPISchemaConverter {
             ArrayNode required = mapper.createArrayNode();
             required.add("mediaType").add("data");
             parametersSchema.set("required", required);
+
             rootPropertiesSchema.set("content",parametersSchema);
         }
+        ApiResponses responses = operation.getResponses();
+        ApiResponse apiResponse;
+        Content respContent;
+        if(responses!=null&&(apiResponse = responses.get("200"))!=null&&(respContent=apiResponse.getContent())!=null){
+            ObjectNode responseTypeNode = mapper.createObjectNode();
+
+            ArrayNode mediaTypes = mapper.createArrayNode();
+            for (Map.Entry<String, MediaType> entry : respContent.entrySet()) {
+                String name = entry.getKey();
+                MediaType mediaType = entry.getValue();
+                mediaTypes.add(name);
+                if(mediaType.getExample()!=null){
+                    ObjectNode exampleNode = mapper.createObjectNode();
+                    exampleNode.put("$comment","Example for mediaType \""+name+"\"");
+                    exampleNode.put("example",mediaType.getExample().toString());
+                }
+                if(mediaType.getExamples()!=null){
+                    mediaType.getExamples().forEach((key,value)->{
+                        ObjectNode exampleNode = mapper.createObjectNode();
+                        String summary = value.getSummary();
+                        String description = value.getDescription();
+                        if(summary!=null&&description!=null){
+                            description = summary+"\n"+description;
+                        }
+                        if(description!=null){
+                            exampleNode.put("$comment","Example for mediaType \""
+                                    +name+"\" , "+description);
+                        }else{
+                            exampleNode.put("$comment","Example for mediaType \""+name+"\"");
+                        }
+                        exampleNode.put("example",value.getValue().toString());
+                    });
+                }
+
+                Schema<?> schema = mediaType.getSchema();
+                if(schema.getExample()!=null){
+                    ObjectNode exampleNode = mapper.createObjectNode();
+                    exampleNode.put("$comment","Example for mediaType \""+name+"\"");
+                    exampleNode.put("example",schema.getExample().toString());
+                }
+                if(schema.getExamples()!=null){
+                    schema.getExamples().forEach((value)->{
+                        ObjectNode exampleNode = mapper.createObjectNode();
+                        exampleNode.put("$comment","Example for mediaType \""+name+"\"");
+                        exampleNode.put("example",value.toString());
+                    });
+                }
+            }
+            ObjectNode mediaTypeNode = mapper.createObjectNode();
+            mediaTypeNode.put("type","string");
+            mediaTypeNode.put("description","Your preferred response content type");
+            mediaTypeNode.set("enum",mediaTypes);
+//            dataNode.put("type","string");
+            responseTypeNode.set("mediaType",mediaTypeNode);
+            ObjectNode parametersSchema = mapper.createObjectNode();
+            parametersSchema.put("type", "object");
+            parametersSchema.set("properties", responseTypeNode);
+
+            ArrayNode required = mapper.createArrayNode();
+            required.add("mediaType");
+            parametersSchema.set("required", required);
+
+            rootPropertiesSchema.set("responseContentType",parametersSchema);
+        }
+        System.out.println(jsonSchemaNode.toPrettyString());
         return jsonSchemaNode;
     }
     public static ObjectNode toJsonSchema(Parameter parameter) {

@@ -41,6 +41,7 @@ public class OpenAPIParser {
             String path = e.getKey();
             PathItem i = e.getValue();
             Operation get = i.getGet();
+
             print("get",path,get);
             Operation post = i.getPost();
             print("post",path,post);

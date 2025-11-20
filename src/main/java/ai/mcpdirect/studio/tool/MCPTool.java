@@ -34,6 +34,17 @@ public class MCPTool extends AIPortTool implements AITool{
             _metaData = JSON.toJson(new ServiceDescription("aitools",
                     "call/" + Long.toString(provider.id, Character.MAX_RADIX) + "/" + tool.name(),
                     tool.description(), inputSchema, "{}"));
+            int hash = _metaData.hashCode();
+            if (id > 0) {
+                if (hash == this.hash) {
+                    lastUpdated = 0;
+                } else {
+                    lastUpdated = System.currentTimeMillis();
+                }
+            } else {
+                this.status = 1;
+            }
+            this.hash = hash;
         }catch (Exception ignore){
             _metaData = "{}";
         }
@@ -49,18 +60,20 @@ public class MCPTool extends AIPortTool implements AITool{
         hash=tool.hash;
         tags=tool.tags;
         agentId=tool.agentId;
-        lastUpdated = -1;
-        int hash = _metaData.hashCode();
-        if(id>0) {
-            if (hash == this.hash) {
-                lastUpdated = 0;
+//        lastUpdated = -1;
+        if(_metaData!=null) {
+            int hash = _metaData.hashCode();
+            if (id > 0) {
+                if (hash == this.hash) {
+                    lastUpdated = 0;
+                } else {
+                    lastUpdated = System.currentTimeMillis();
+                }
             } else {
-                lastUpdated = System.currentTimeMillis();
+                this.status = 1;
             }
-        }else{
-            this.status = 1;
+            this.hash = hash;
         }
-        this.hash = hash;
     }
 
     public String name(){

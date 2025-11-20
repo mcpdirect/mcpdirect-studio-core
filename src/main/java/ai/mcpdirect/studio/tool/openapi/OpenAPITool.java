@@ -144,7 +144,17 @@ public class OpenAPITool extends AIPortTool implements AITool {
                 }
             }
             try {
-                String requestBody = (String) parameters.get("requestBody");
+                Map<String,Object> responseContentType = (Map<String,Object>) parameters.get("responseContentType");
+                String mediaType;
+                if(responseContentType!=null&&(mediaType = (String)responseContentType.get("mediaType"))!=null){
+                    header.put("Accept",mediaType);
+                }
+                Map<String,Object> content = (Map<String,Object>) parameters.get("content");
+                Object data = null;
+                if(content!=null&&(mediaType = (String)content.get("mediaType"))!=null){
+                    header.put("Content-Type",mediaType);
+                    data = content.get("data");
+                }
                 parameters = (Map<String, Object>) parameters.get("parameters");
                 for (Map.Entry<String, Object> entry : parameters.entrySet()) {
                     Parameter parameter = parameterMap.get(entry.getKey());
@@ -167,7 +177,7 @@ public class OpenAPITool extends AIPortTool implements AITool {
                     url += "?" + String.join("&", queries);
                 }
                 LOG.info("url:"+url);
-                result = HttpClient.doRequest(method, url, header, requestBody);
+                result = HttpClient.doRequest(method, url, header, data);
                 isError = false;
             } catch (Exception e) {
                 result = "Error " + INTERNAL_ERROR + ": " + e.getMessage();
