@@ -4,6 +4,7 @@ import ai.mcpdirect.studio.dao.entity.OpenAPIServer;
 import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.tool.openapi.OpenAPIServerConfig;
 import ai.mcpdirect.studio.tool.openapi.OpenAPIToolProvider;
+import ai.mcpdirect.studio.tool.util.AIToolProvider;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
 import appnet.hstp.ServiceEngine;
 import appnet.hstp.ServiceRequest;
@@ -212,10 +213,17 @@ public class AIToolServiceHandler {
             }
         }
         if(p>-1&&paths.length>=(p+2)){
+            boolean isOpenAPITool=false;
+            if(paths[p].equals("openapi")){
+                isOpenAPITool = true;
+                p++;
+            }
             AITool tool;
             String result;
             String providerName = paths[p++];
-            MCPToolProvider provider = mcpToolsProviders.get(providerName);
+            AIToolProvider provider;
+            if(isOpenAPITool) provider = openapiToolsProviders.get(providerName);
+            else provider = mcpToolsProviders.get(providerName);
             String toolName = paths[p];
             if(provider!=null&&(tool=provider.getTool(toolName))!=null){
                 try {

@@ -9,13 +9,12 @@ import ai.mcpdirect.studio.tool.util.AIToolProvider;
 import appnet.hstp.labs.util.http.HttpClient;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.Operation;
-import io.swagger.v3.oas.models.PathItem;
-import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.*;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -28,12 +27,25 @@ import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.METHOD_NOT_FOUND
 public class OpenAPIToolProvider extends OpenAPIServer implements AIToolProvider {
     private static final ObjectMapper mapper = new ObjectMapper();
     public static final int OPENAPI_DOC_NOT_EXIST = -1000;
+    public List<OpenAPISecurity> openAPISecurities = new ArrayList<>();
     public OpenAPIToolProvider(){
         type = TYPE_OPENAPI;
     }
     private void parserOpenAPIYaml(String openApiYaml){
         SwaggerParseResult swaggerParseResult = new OpenAPIV3Parser().readContents(openApiYaml);
         OpenAPI openAPI = swaggerParseResult.getOpenAPI();
+        Components components = openAPI.getComponents();
+        Map<String,SecurityScheme> schemeMap=null;
+        if(components!=null){
+            schemeMap = components.getSecuritySchemes();
+        }
+        openAPISecurities.clear();
+        if(schemeMap!=null&&securities!=null) for (Map.Entry<String, String> entry : securities.entrySet()) {
+            SecurityScheme scheme = schemeMap.get(entry.getKey());
+            if(scheme!=null){
+                openAPISecurities.add(new OpenAPISecurity(scheme,entry.getValue()));
+            }
+        }
         Paths paths = openAPI.getPaths();
         for (Map.Entry<String, PathItem> e : paths.entrySet()) {
             String path = e.getKey();
@@ -52,7 +64,7 @@ public class OpenAPIToolProvider extends OpenAPIServer implements AIToolProvider
         if(operation==null){
             return;
         }
-        String name = OpenAPITool.name(method,path);
+        String name = OpenAPITool.name(this.name,method,path);
         OpenAPITool tool = tools.computeIfAbsent(
                 name,(key)-> new OpenAPITool(name,method,path)
         );
@@ -60,6 +72,9 @@ public class OpenAPIToolProvider extends OpenAPIServer implements AIToolProvider
     }
     public void config(OpenAPIServerConfig conf){
         if(conf!=null) {
+            name = conf.name;
+            url = conf.url;
+            securities = conf.securities;
             String doc = conf.doc;
             if(conf.docUri!=null) try{
                 doc = HttpClient.doGet(conf.docUri);
@@ -71,9 +86,6 @@ public class OpenAPIToolProvider extends OpenAPIServer implements AIToolProvider
                 }
             }
             parserOpenAPIYaml(doc);
-
-            url = conf.url;
-            securities = conf.securities;
             if(status!=conf.status) {
                 status = conf.status;
                 if (conf.status == 1) {

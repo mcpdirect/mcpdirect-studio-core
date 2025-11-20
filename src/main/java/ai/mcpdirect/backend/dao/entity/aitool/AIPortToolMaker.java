@@ -23,4 +23,8 @@ public class AIPortToolMaker {
     public long userId;
     public long teamId;
     public long templateId;
+
+    public boolean openapi(){
+        return type==TYPE_OPENAPI;
+    }
 }

@@ -820,6 +820,19 @@ public class MCPDirectStudio {
                                 }
                             }
                         }
+                        for (AIPortToolMaker toolMaker : collect.values()) {
+                            if(toolMaker.openapi()){
+                                OpenAPIServerConfig config = dbHelper.selectOpenAPIServerConfig(toolMaker.id);
+                                if(config!=null){
+                                    OpenAPIServer server = AIToolServiceHandler.connectOpenAPIServer(
+                                            toolMaker.id,toolMaker.name,config);
+                                    server.merge(toolMaker, toolAgentDetails.tools);
+                                    server.id = config.id;
+                                    server.tags = toolMaker.tags;
+                                    notificationHandler.onOpenAPIServerNotification(server);
+                                }
+                            }
+                        }
                     }
                 }
                 break;
@@ -1171,7 +1184,7 @@ public class MCPDirectStudio {
                             config.id = server.id;
                             dbHelper.setOpenAPIServerConfig(oldServerId,config);
                         }
-                        AIToolServiceHandler.remapMCPServer(oldServerId);
+                        AIToolServiceHandler.remapOpenAPIServer(oldServerId);
                         MCPDirectStudio.notificationHandler().onOpenAPIServerNotification(
                                 OpenAPIServer.deprecated(oldServerId)
                         );
@@ -1183,8 +1196,10 @@ public class MCPDirectStudio {
             List<AIPortTool> tools = new ArrayList<>();
             for (OpenAPITool tool : server.getTools()) if(tool.lastUpdated!=0){
                 AIPortTool duplicate = tool.duplicate();
-                duplicate.metaData = tool.metaData();
-                duplicate.hash = duplicate.metaData.hashCode();
+                if(duplicate.status>-1) {
+                    duplicate.metaData = tool.metaData();
+                    duplicate.hash = duplicate.metaData.hashCode();
+                }
                 publishingTools.add(duplicate);
                 tools.add(tool);
             }

@@ -2,24 +2,29 @@ package ai.mcpdirect.studio.tool.openapi;
 
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortTool;
 import ai.mcpdirect.studio.tool.AITool;
+import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.util.OpenAPISchemaConverter;
 import appnet.hstp.ServiceDescription;
 import appnet.hstp.engine.util.JSON;
 import appnet.hstp.labs.util.http.HttpClient;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import io.modelcontextprotocol.spec.McpSchema;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.INTERNAL_ERROR;
 
 public class OpenAPITool extends AIPortTool implements AITool {
+    private static final Logger LOG = LoggerFactory.getLogger(OpenAPITool.class);
     @JsonIgnore
     private OpenAPIToolProvider provider;
     @JsonIgnore
@@ -36,11 +41,14 @@ public class OpenAPITool extends AIPortTool implements AITool {
         this.method = method;
         if(method==null||path==null){
             status = -1;
+            lastUpdated = -1;
+        }else {
+            status = 1;
+            lastUpdated = 1;
         }
-        lastUpdated = 1;
     }
 
-    public static String name(String method,String path){
+    public static String name(String prefix,String method,String path){
         StringBuilder name = new StringBuilder();
         for (String s : path.split("/")) {
             if(!s.isEmpty()){
@@ -50,10 +58,12 @@ public class OpenAPITool extends AIPortTool implements AITool {
                 name.append("_").append(s);
             }
         }
-        return method+name;
+        return prefix+"_"+method+name;
     }
 
-    public void setOpenAPIToolProvider(OpenAPIToolProvider provider,Operation operation){
+    public void setOpenAPIToolProvider(
+            OpenAPIToolProvider provider,
+            Operation operation){
         this.provider = provider;
         this.makerId = provider.id;
         parameterMap.clear();
@@ -72,7 +82,7 @@ public class OpenAPITool extends AIPortTool implements AITool {
         }
         try {
             _metaData = JSON.toJson(new ServiceDescription("aitools",
-                    "call/" + Long.toString(provider.id, Character.MAX_RADIX) + "/" + name(),
+                    "call/openapi/" + Long.toString(provider.id, Character.MAX_RADIX) + "/" + name(),
                     description, inputSchema, "{}"));
             hash = _metaData.hashCode();
         }catch (Exception ignore){}
@@ -109,12 +119,30 @@ public class OpenAPITool extends AIPortTool implements AITool {
 
     @Override
     public String call(Map<String, Object> parameters) {
-        boolean isError = false;
+        boolean isError = true;
         String result;
         if(status>0) {
             String path = this.path;
             Map<String, String> header = new HashMap<>();
             List<String> queries = new ArrayList<>();
+            for (OpenAPISecurity security : provider.openAPISecurities) {
+                SecurityScheme scheme = security.scheme();
+                SecurityScheme.Type type = scheme.getType();
+                if(type== SecurityScheme.Type.HTTP){
+                    switch (scheme.getScheme()){
+                        case "bearer" -> {
+                            header.put("Authorization","Bearer "+security.security());
+                        }
+                        case "basic" -> header.put("Authorization","Basic "
+                                +Base64.getEncoder().encodeToString(security.security().getBytes()));
+                    }
+                } else if(type== SecurityScheme.Type.APIKEY){
+                    SecurityScheme.In in = scheme.getIn();
+                    if(in== SecurityScheme.In.HEADER){
+
+                    }
+                }
+            }
             try {
                 String requestBody = (String) parameters.get("requestBody");
                 parameters = (Map<String, Object>) parameters.get("parameters");
@@ -126,22 +154,36 @@ public class OpenAPITool extends AIPortTool implements AITool {
                         String in = parameter.getIn().toLowerCase();
                         switch (in) {
                             case "header" -> header.put(name, value);
-                            case "path" -> path = path.replace("{" + name + "}", value);
-                            case "query" -> queries.add(name + "=" + value);
+                            case "path" ->
+                                    path = path.replace("{" + name + "}",
+                                            URLEncoder.encode(value, StandardCharsets.UTF_8));
+                            case "query" -> queries.add(name + "=" + URLEncoder.encode(
+                                    value,StandardCharsets.UTF_8));
                         }
                     }
                 }
-                String url = provider.url + path + "?" + String.join("&", queries);
+                String url = provider.url + path;
+                if(!queries.isEmpty()){
+                    url += "?" + String.join("&", queries);
+                }
+                LOG.info("url:"+url);
                 result = HttpClient.doRequest(method, url, header, requestBody);
+                isError = false;
             } catch (Exception e) {
-                result = "Error " + INTERNAL_ERROR + ": " + JSON.quote(e.getMessage());
-                isError = true;
+                result = "Error " + INTERNAL_ERROR + ": " + e.getMessage();
+
             }
         }else if(status==0){
             result = "Error " + INTERNAL_ERROR + ": tool is disabled";
         }else{
             result = "Error " + INTERNAL_ERROR + ": tool is deprecated";
         }
-        return "{\"content\":[\""+result+"\"],\"isError\":"+isError+"}";
+        try {
+            McpSchema.CallToolResult callToolResult = McpSchema.CallToolResult.builder()
+                    .addTextContent(result).isError(isError).build();
+            return JSON.toJson(callToolResult);
+        }catch (Exception e){
+            return "{}";
+        }
     }
 }

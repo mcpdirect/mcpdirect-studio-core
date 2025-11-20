@@ -78,6 +78,6 @@ public class MCPTool extends AIPortTool implements AITool{
     }
 
     public static String buildCallResult(String content,boolean isError){
-        return "{\"content\":[{\"type\":\"text\",\"text\":\"[\""+JSON.quote(content)+"\"],\"isError\":"+isError+"}";
+        return "{\"content\":[{\"type\":\"text\",\"text\":\"["+JSON.quote(content)+"],\"isError\":"+isError+"}";
     }
 }

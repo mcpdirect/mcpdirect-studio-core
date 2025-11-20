@@ -489,6 +489,24 @@
 - Refactored OpenAPIToolProvider to remove redundant methods
 - Used static import for AIPortToolMaker constants in MCPDirectStudio
 
+## 2025-11-17
+
+**Summary:** Added OpenAPI security support and enhanced tool functionality.
+
+**Detail:**
+- Added openapi() method to AIPortToolMaker to check if tool maker is OpenAPI type
+- Added OpenAPISecurity class for handling API security requirements
+- Enhanced MCPDirectStudio to handle OpenAPI server configurations on startup
+- Updated MCPDirectStudio to use remapOpenAPIServer instead of remapMCPServer
+- Added status checks for OpenAPI tool publishing to prevent publishing disabled tools
+- Improved MCPTool and OpenAPIServer with better initialization and merging
+- Updated AIToolServiceHandler to handle OpenAPI vs MCP tool calls separately
+- Fixed JSON response formatting in MCPTool.buildCallResult method
+- Enhanced OpenAPITool with proper security handling (bearer, basic, API key)
+- Added URL encoding for path and query parameters in OpenAPI tool calls
+- Improved OpenAPIToolProvider with proper security configuration handling
+- Updated OpenAPITool with proper call result formatting using McpSchema
+
 ## 2025-08-30
 
 **Summary:** Enhance device identification, improve machine ID generation, and add status tracking.
