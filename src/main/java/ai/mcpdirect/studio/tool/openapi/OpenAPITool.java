@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.INTERNAL_ERROR;
+import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.INVALID_PARAMS;
 
 public class OpenAPITool extends AIPortTool implements AITool {
     private static final Logger LOG = LoggerFactory.getLogger(OpenAPITool.class);
@@ -33,6 +35,8 @@ public class OpenAPITool extends AIPortTool implements AITool {
     private final String method;
     @JsonIgnore
     private final Map<String, Parameter> parameterMap = new HashMap<>();
+    @JsonIgnore
+    private boolean bodyRequired;
     @JsonIgnore
     private String _metaData;
     public OpenAPITool (String name,String method,String path){
@@ -70,6 +74,11 @@ public class OpenAPITool extends AIPortTool implements AITool {
         List<Parameter> parameters = operation.getParameters();
         if(parameters!=null) parameterMap.putAll(parameters.stream().collect(
                 Collectors.toMap(Parameter::getName, v -> v)));
+        RequestBody requestBody = operation.getRequestBody();
+        if(requestBody!=null){
+            Boolean required = requestBody.getRequired();
+            bodyRequired = required != null && required;
+        }
         String description = operation.getDescription();
         if(description==null){
             description = operation.getSummary();
@@ -143,6 +152,7 @@ public class OpenAPITool extends AIPortTool implements AITool {
                     }
                 }
             }
+            Object data = null;
             try {
                 Map<String,Object> responseContentType = (Map<String,Object>) parameters.get("responseContentType");
                 String mediaType;
@@ -150,17 +160,35 @@ public class OpenAPITool extends AIPortTool implements AITool {
                     header.put("Accept",mediaType);
                 }
                 Map<String,Object> content = (Map<String,Object>) parameters.get("content");
-                Object data = null;
-                if(content!=null&&(mediaType = (String)content.get("mediaType"))!=null){
-                    header.put("Content-Type",mediaType);
+                if(content==null&&bodyRequired){
+                    throw new Exception("Missing \"content\"");
+                }else if(content!=null){
+                    mediaType = (String)content.get("mediaType");
                     data = content.get("data");
+                    if(mediaType==null){
+                        throw new Exception("Missing \"mediaType\" in \"content\"");
+                    }
+                    if(data==null){
+                        throw new Exception("Missing \"data\" in \"content\"");
+                    }
+                    header.put("Content-Type",mediaType);
+//                    data = content.get("data");
                 }
                 parameters = (Map<String, Object>) parameters.get("parameters");
-                for (Map.Entry<String, Object> entry : parameters.entrySet()) {
-                    Parameter parameter = parameterMap.get(entry.getKey());
-                    if (parameter != null) {
+                if(parameters==null&&!parameterMap.isEmpty()){
+                    throw new Exception("Missing parameters");
+                } else for (Map.Entry<String, Parameter> entry : parameterMap.entrySet()) {
+                    Parameter parameter = entry.getValue();
+                    Boolean required = parameter.getRequired();
+                    if(required==null){
+                        required = false;
+                    }
+                    String value = (String)parameters.get(entry.getKey());
+                    if(required&&value==null){
+                        throw new Exception("Missing parameter \""+entry.getKey()+"\"");
+                    }
+                    if(value!=null){
                         String name = parameter.getName();
-                        String value = (String) entry.getValue();
                         String in = parameter.getIn().toLowerCase();
                         switch (in) {
                             case "header" -> header.put(name, value);
@@ -172,16 +200,20 @@ public class OpenAPITool extends AIPortTool implements AITool {
                         }
                     }
                 }
-                String url = provider.url + path;
-                if(!queries.isEmpty()){
-                    url += "?" + String.join("&", queries);
-                }
-                LOG.info("url:"+url);
-                result = HttpClient.doRequest(method, url, header, data);
-                isError = false;
-            } catch (Exception e) {
-                result = "Error " + INTERNAL_ERROR + ": " + e.getMessage();
+                try {
+                    String url = provider.url + path;
+                    if(!queries.isEmpty()){
+                        url += "?" + String.join("&", queries);
+                    }
+                    LOG.info("url:"+url);
+                    result = HttpClient.doRequest(method, url, header, data);
+                    isError = false;
+                } catch (Exception e) {
+                    result = "Error " + INTERNAL_ERROR + ": " + e.getMessage();
 
+                }
+            }catch (Exception e){
+                result = "Error " + INVALID_PARAMS + ": "+e.getMessage();
             }
         }else if(status==0){
             result = "Error " + INTERNAL_ERROR + ": tool is disabled";
