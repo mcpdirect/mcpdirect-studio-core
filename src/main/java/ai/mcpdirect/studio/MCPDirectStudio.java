@@ -757,6 +757,7 @@ public class MCPDirectStudio {
         if(server!=null) {
             mcpServerConfigs.remove(server.name);
             writeMCPServerConfigs();
+            server.status = STATUS_ABANDONED;
             notificationHandler.onToolMakerNotification(server);
             callback.onResult(0,null,server);
         }else{
@@ -805,14 +806,15 @@ public class MCPDirectStudio {
                                         id = config.id;
                                         name = maker.name;
                                         status = STATUS_WAITING;
+                                        agentId = studioToolAgentId();
                                     }});
                                     new Thread(() -> {
                                         try {
                                             MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(
                                                     maker.id, maker.name, mcpServerConfig);
                                             mcpServer.merge(maker, toolAgentDetails.tools);
-                                            mcpServer.id = config.id;
-                                            mcpServer.tags = maker.tags;
+//                                            mcpServer.id = config.id;
+//                                            mcpServer.tags = maker.tags;
                                             notificationHandler.onToolMakerNotification(mcpServer);
                                         } catch (Exception e) {
                                             throw new RuntimeException(e);
@@ -828,8 +830,9 @@ public class MCPDirectStudio {
                                     OpenAPIServer server = AIToolServiceHandler.connectOpenAPIServer(
                                             toolMaker.id,toolMaker.name,config);
                                     server.merge(toolMaker, toolAgentDetails.tools);
-                                    server.id = config.id;
-                                    server.tags = toolMaker.tags;
+//                                    server.id = config.id;
+//                                    server.tags = toolMaker.tags;
+                                    server.agentId = studioToolAgentId();
                                     notificationHandler.onToolMakerNotification(server);
                                 }
                             }
@@ -872,6 +875,7 @@ public class MCPDirectStudio {
                     id = mcpServerId;
                     name = serverName;
                     status = STATUS_WAITING;
+                    agentId = studioToolAgentId();
                 }});
                 new Thread(()-> {try {
                     MCPServer mcpServer
@@ -900,6 +904,7 @@ public class MCPDirectStudio {
                 id = mcpServerId;
                 name = serverName;
                 status = STATUS_WAITING;
+                agentId = studioToolAgentId();
             }});
             mcpServer = AIToolServiceHandler.connectMCPServer(mcpServerId, serverName, config);
             mcpServer.agentId = studioToolAgentId();
@@ -937,6 +942,7 @@ public class MCPDirectStudio {
                 OpenAPIServer server
                         = AIToolServiceHandler.connectOpenAPIServer(serverId, serverName, config);
                 server.userId = accountId();
+                server.agentId = studioToolAgentId();
                 notificationHandler.onToolMakerNotification(server);
             } catch (Exception e) {
                 OpenAPIServer server = new OpenAPIServer(){{
@@ -972,6 +978,7 @@ public class MCPDirectStudio {
             }});
             openapiServer = AIToolServiceHandler.connectOpenAPIServer(serverId, serverName, config);
             openapiServer.userId = accountId();
+            openapiServer.agentId = studioToolAgentId();
             notificationHandler.onToolMakerNotification(openapiServer);
         }catch (Exception e) {
             openapiServer = new OpenAPIServer(){{
@@ -2205,8 +2212,8 @@ public class MCPDirectStudio {
                 return;
             }
             mcpServer.merge(maker, details.tools);
-            mcpServer.id = config.id;
-            mcpServer.tags = maker.tags;
+//            mcpServer.id = config.id;
+//            mcpServer.tags = maker.tags;
             notificationHandler.onToolMakerNotification(mcpServer);
 
             List<AIPortTool> publishingTools = new ArrayList<>();
