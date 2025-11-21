@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class OpenAPIServer extends AIPortToolMaker {
     @JsonProperty
-    public String statusMessage="";
+    protected String statusMessage="";
     @JsonProperty
     public String url;
     @JsonProperty
@@ -52,10 +52,14 @@ public class OpenAPIServer extends AIPortToolMaker {
         }
     }
 
+    public String statusMessage() {
+        return statusMessage;
+    }
+
     public static OpenAPIServer deprecated(long id){
         OpenAPIServer openAPIServer = new OpenAPIServer();
         openAPIServer.id = id;
-        openAPIServer.status = Integer.MIN_VALUE;
+        openAPIServer.status = STATUS_ABANDONED;
         return openAPIServer;
     }
 }

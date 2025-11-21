@@ -3,9 +3,11 @@ package ai.mcpdirect.backend.dao.entity.aitool;
 public class AIPortToolMaker {
     public long id;
     public long created;
-    public static int STATUS_ON = 1;
-    public static int STATUS_OFF = 0;
-    public static int STATUS_ERROR = -1;
+    public static final int STATUS_ABANDONED = -1;
+    public static final int STATUS_OFF = 0;
+    public static final int STATUS_ON = 1;
+    public static final int STATUS_ERROR = 256;
+    public static final int STATUS_WAITING = Integer.MAX_VALUE;
     public int status;
     public long lastUpdated;
     public static final int TYPE_VIRTUAL = 0;

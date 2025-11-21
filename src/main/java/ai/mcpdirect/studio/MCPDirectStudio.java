@@ -712,7 +712,7 @@ public class MCPDirectStudio {
         mcpServer.name = serverName;
         mcpServerConfigs.put(serverName,conf);
 //        notifyMCPServer(List.of(mcpServer));
-        notificationHandler.onMCPServerNotification(mcpServer);
+        notificationHandler.onToolMakerNotification(mcpServer);
         writeMCPServerConfigs();
         return mcpServer;
     }
@@ -757,7 +757,7 @@ public class MCPDirectStudio {
         if(server!=null) {
             mcpServerConfigs.remove(server.name);
             writeMCPServerConfigs();
-            notificationHandler.onMCPServerNotification(server);
+            notificationHandler.onToolMakerNotification(server);
             callback.onResult(0,null,server);
         }else{
             callback.onResult(255,null,null);
@@ -790,6 +790,7 @@ public class MCPDirectStudio {
                 }
                 if (code == 0 && (resp = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {})).code == 0) {
                     toolAgentDetails = resp.data;
+                    notificationHandler.onToolAgentNotification(toolAgentDetails.toolAgent);
                     if (toolAgentDetails.makers != null) {
                         if(toolAgentDetails.tools==null) toolAgentDetails.tools = new ArrayList<>();
                         Map<Long, AIPortToolMaker> collect = resp.data.makers.stream().collect(
@@ -800,10 +801,10 @@ public class MCPDirectStudio {
                                 if(maker!=null) {
                                     MCPServerConfig mcpServerConfig = new MCPServerConfig(maker.status,config);
                                     if(maker.userId==accountId()) mcpServerConfigs.put(maker.name, mcpServerConfig);
-                                    notificationHandler.onMCPServerNotification(new MCPServer(mcpServerConfig) {{
+                                    notificationHandler.onToolMakerNotification(new MCPServer(mcpServerConfig) {{
                                         id = config.id;
                                         name = maker.name;
-                                        status = Integer.MIN_VALUE;
+                                        status = STATUS_WAITING;
                                     }});
                                     new Thread(() -> {
                                         try {
@@ -812,7 +813,7 @@ public class MCPDirectStudio {
                                             mcpServer.merge(maker, toolAgentDetails.tools);
                                             mcpServer.id = config.id;
                                             mcpServer.tags = maker.tags;
-                                            notificationHandler.onMCPServerNotification(mcpServer);
+                                            notificationHandler.onToolMakerNotification(mcpServer);
                                         } catch (Exception e) {
                                             throw new RuntimeException(e);
                                         }
@@ -829,7 +830,7 @@ public class MCPDirectStudio {
                                     server.merge(toolMaker, toolAgentDetails.tools);
                                     server.id = config.id;
                                     server.tags = toolMaker.tags;
-                                    notificationHandler.onOpenAPIServerNotification(server);
+                                    notificationHandler.onToolMakerNotification(server);
                                 }
                             }
                         }
@@ -867,24 +868,24 @@ public class MCPDirectStudio {
             if(!mcpServerConfigs.containsKey(serverName)) {
                 mcpServerConfigs.put(serverName,config);
                 long mcpServerId = localServerId(serverName);
-                notificationHandler.onMCPServerNotification(new MCPServer(config){{
+                notificationHandler.onToolMakerNotification(new MCPServer(config){{
                     id = mcpServerId;
                     name = serverName;
-                    status = Integer.MIN_VALUE;
+                    status = STATUS_WAITING;
                 }});
                 new Thread(()-> {try {
                     MCPServer mcpServer
                             = AIToolServiceHandler.connectMCPServer(mcpServerId, serverName, config);
                     mcpServer.agentId = studioToolAgentId();
-                    notificationHandler.onMCPServerNotification(mcpServer);
+                    notificationHandler.onToolMakerNotification(mcpServer);
                 } catch (Exception e) {
                     MCPServer mcpServer = new MCPServer(mcpServerId){{
                         name = serverName;
-                        status = -1;
+                        status = STATUS_ERROR;
                         statusMessage = e.getMessage();
                         agentId = studioToolAgentId();
                     }};
-                    notificationHandler.onMCPServerNotification(mcpServer);
+                    notificationHandler.onToolMakerNotification(mcpServer);
                 }}).start();
             }
         });
@@ -895,22 +896,22 @@ public class MCPDirectStudio {
         MCPServer mcpServer = null;
         if(!mcpServerConfigs.containsKey(serverName)) try{
             mcpServerConfigs.put(serverName,config);
-            notificationHandler.onMCPServerNotification(new MCPServer(config){{
+            notificationHandler.onToolMakerNotification(new MCPServer(config){{
                 id = mcpServerId;
                 name = serverName;
-                status = Integer.MIN_VALUE;
+                status = STATUS_WAITING;
             }});
             mcpServer = AIToolServiceHandler.connectMCPServer(mcpServerId, serverName, config);
             mcpServer.agentId = studioToolAgentId();
-            notificationHandler.onMCPServerNotification(mcpServer);
+            notificationHandler.onToolMakerNotification(mcpServer);
         }catch (Exception e) {
             mcpServer = new MCPServer(mcpServerId){{
                 name = serverName;
-                status = -1;
+                status = STATUS_ERROR;
                 statusMessage = e.getMessage();
                 agentId = studioToolAgentId();
             }};
-            notificationHandler.onMCPServerNotification(mcpServer);
+            notificationHandler.onToolMakerNotification(mcpServer);
         }
         return mcpServer;
     }
@@ -923,10 +924,10 @@ public class MCPDirectStudio {
                 continue;
             }
             long serverId = localServerId(serverName);
-            notificationHandler.onOpenAPIServerNotification(new OpenAPIServer(){{
+            notificationHandler.onToolMakerNotification(new OpenAPIServer(){{
                 id = serverId;
                 name = serverName;
-                status = Integer.MIN_VALUE;
+                status = STATUS_WAITING;
                 agentId = studioToolAgentId();
                 url = config.url;
                 securities = config.securities;
@@ -936,19 +937,19 @@ public class MCPDirectStudio {
                 OpenAPIServer server
                         = AIToolServiceHandler.connectOpenAPIServer(serverId, serverName, config);
                 server.userId = accountId();
-                notificationHandler.onOpenAPIServerNotification(server);
+                notificationHandler.onToolMakerNotification(server);
             } catch (Exception e) {
                 OpenAPIServer server = new OpenAPIServer(){{
                     id = serverId;
                     name = serverName;
-                    status = -1;
+                    status = STATUS_ERROR;
                     statusMessage = e.getMessage();
                     agentId = studioToolAgentId();
                     url = config.url;
                     securities = config.securities;
                     userId = accountId();
                 }};
-                notificationHandler.onOpenAPIServerNotification(server);
+                notificationHandler.onToolMakerNotification(server);
             }}).start();
         }
     }
@@ -960,10 +961,10 @@ public class MCPDirectStudio {
             config.name = serverName;
 //            config.status = 1;
             dbHelper.insertOpenAPIServerConfig(config);
-            notificationHandler.onOpenAPIServerNotification(new OpenAPIServer(){{
+            notificationHandler.onToolMakerNotification(new OpenAPIServer(){{
                 id = serverId;
                 name = serverName;
-                status = Integer.MIN_VALUE;
+                status = STATUS_WAITING;
                 agentId = studioToolAgentId();
                 url = config.url;
                 securities = config.securities;
@@ -971,19 +972,19 @@ public class MCPDirectStudio {
             }});
             openapiServer = AIToolServiceHandler.connectOpenAPIServer(serverId, serverName, config);
             openapiServer.userId = accountId();
-            notificationHandler.onOpenAPIServerNotification(openapiServer);
+            notificationHandler.onToolMakerNotification(openapiServer);
         }catch (Exception e) {
             openapiServer = new OpenAPIServer(){{
                 id = serverId;
                 name = serverName;
-                status = -1;
+                status = STATUS_ERROR;
                 statusMessage = e.getMessage();
                 agentId = studioToolAgentId();
                 url = config.url;
                 securities = config.securities;
                 userId = accountId();
             }};
-            notificationHandler.onOpenAPIServerNotification(openapiServer);
+            notificationHandler.onToolMakerNotification(openapiServer);
         }
         return openapiServer;
     }
@@ -1108,6 +1109,8 @@ public class MCPDirectStudio {
             if(c==0){
                 mcpServer.merge(d,null);
                 AIToolServiceHandler.remapMCPServer(oldMCPServerId);
+                MCPDirectStudio.notificationHandler()
+                        .onToolMakerNotification(MCPServer.deprecated(oldMCPServerId));
             }
         }); else code.set(0);
 
@@ -1157,8 +1160,7 @@ public class MCPDirectStudio {
                         tool.makerId = mcpServer.id;
                         tool.lastUpdated = 0;
                     }
-                    MCPDirectStudio.notificationHandler().onMCPServerNotification(new MCPServer(oldMCPServerId));
-                    MCPDirectStudio.notificationHandler().onMCPServerNotification(mcpServer);
+                    MCPDirectStudio.notificationHandler().onToolMakerNotification(mcpServer);
                 }
             }
         }
@@ -1185,7 +1187,7 @@ public class MCPDirectStudio {
                             dbHelper.setOpenAPIServerConfig(oldServerId,config);
                         }
                         AIToolServiceHandler.remapOpenAPIServer(oldServerId);
-                        MCPDirectStudio.notificationHandler().onOpenAPIServerNotification(
+                        MCPDirectStudio.notificationHandler().onToolMakerNotification(
                                 OpenAPIServer.deprecated(oldServerId)
                         );
                     }
@@ -1226,7 +1228,7 @@ public class MCPDirectStudio {
                 message.set(resp.message);
                 if(resp.code==0){
                     server.merge(null,resp.data);
-                    MCPDirectStudio.notificationHandler().onOpenAPIServerNotification(server);
+                    MCPDirectStudio.notificationHandler().onToolMakerNotification(server);
                 }
             }
         }
@@ -2030,7 +2032,7 @@ public class MCPDirectStudio {
                 );
                 if(server.status<0){
                     callback.onResult(255,server.statusMessage(),null);
-                    notificationHandler.onMCPServerNotification(server);
+                    notificationHandler.onToolMakerNotification(server);
                     return;
                 }
             }else{
@@ -2054,7 +2056,7 @@ public class MCPDirectStudio {
                 writeMCPServerConfigs();
             }
             callback.onResult(0,null,server);
-            notificationHandler.onMCPServerNotification(server);
+            notificationHandler.onToolMakerNotification(server);
         } catch (Exception e) {
             callback.onResult(255,e.getMessage(),null);
         } else {
@@ -2077,8 +2079,8 @@ public class MCPDirectStudio {
                         serverId,serverName,conf
                 );
                 if(server.status<0){
-                    callback.onResult(255,server.statusMessage,null);
-                    notificationHandler.onOpenAPIServerNotification(server);
+                    callback.onResult(255,server.statusMessage(),null);
+                    notificationHandler.onToolMakerNotification(server);
                     return;
                 }
             }else{
@@ -2103,7 +2105,7 @@ public class MCPDirectStudio {
                 else dbHelper.setOpenAPIServerConfig(serverId,conf);
             }
             callback.onResult(0,null,server);
-            notificationHandler.onOpenAPIServerNotification(server);
+            notificationHandler.onToolMakerNotification(server);
         } catch (Exception e) {
             callback.onResult(255,e.getMessage(),null);
         } else {
@@ -2118,11 +2120,11 @@ public class MCPDirectStudio {
         return 0;
     }
 
-    public static long studioId(){
+    public static String studioId(){
         if(serviceEngine!=null){
-            return Long.parseLong(serviceEngine.getEngineId());
+            return serviceEngine.getEngineId();
         }
-        return 0;
+        return "";
     }
     public static String studioEngineId(){
         if(serviceEngine!=null){
@@ -2189,23 +2191,23 @@ public class MCPDirectStudio {
         if(details!=null&&(maker=details.maker)!=null &&(config=details.config)!=null) {
             MCPServerConfig mcpServerConfig = new MCPServerConfig(maker.status,config);
             mcpServerConfigs.put(maker.name, mcpServerConfig);
-            notificationHandler.onMCPServerNotification(new MCPServer(mcpServerConfig) {{
+            notificationHandler.onToolMakerNotification(new MCPServer(mcpServerConfig) {{
                 id = config.id;
                 name = maker.name;
                 agentId = maker.agentId;
-                status = Integer.MIN_VALUE;
+                status = STATUS_WAITING;
             }});
             MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(
                     maker.id, maker.name, mcpServerConfig);
             if(mcpServer.status<0){
                 callback.onResult(255,mcpServer.statusMessage(),null);
-                notificationHandler.onMCPServerNotification(mcpServer);
+                notificationHandler.onToolMakerNotification(mcpServer);
                 return;
             }
             mcpServer.merge(maker, details.tools);
             mcpServer.id = config.id;
             mcpServer.tags = maker.tags;
-            notificationHandler.onMCPServerNotification(mcpServer);
+            notificationHandler.onToolMakerNotification(mcpServer);
 
             List<AIPortTool> publishingTools = new ArrayList<>();
             List<AIPortTool> oldTools = new ArrayList<>();

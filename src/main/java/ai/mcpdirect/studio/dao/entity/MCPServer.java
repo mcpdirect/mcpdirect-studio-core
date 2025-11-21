@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MCPServer extends AIPortToolMaker {
     @JsonIgnore
 	protected final Map<String, MCPTool> tools = new ConcurrentHashMap<>();
+    @JsonIgnore
     protected String statusMessage="";
     public int transport;
     public String url;
@@ -49,7 +50,7 @@ public class MCPServer extends AIPortToolMaker {
 	public MCPServer(long id) {
         this.id = id;
         type = TYPE_MCP;
-        status = -1;
+        status = STATUS_WAITING;
 	}
     public MCPServer(MCPServerConfig config){
         type = TYPE_MCP;
@@ -111,4 +112,10 @@ public class MCPServer extends AIPortToolMaker {
 		return null;
 	}
 
+    public static MCPServer deprecated(long id){
+        MCPServer server = new MCPServer(id);
+        server.id = id;
+        server.status = STATUS_ABANDONED;
+        return server;
+    }
 }
