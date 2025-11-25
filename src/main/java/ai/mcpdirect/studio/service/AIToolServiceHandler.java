@@ -24,8 +24,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.INTERNAL_ERROR;
-import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.METHOD_NOT_FOUND;
+import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.*;
 
 @ServiceName("aitools")
 @ServiceRequestMapping("/")
@@ -197,9 +196,15 @@ public class AIToolServiceHandler {
 //            @ServiceRequestAuthentication AIPortAccessKeyCredential key,
             @ServiceRequestHeader("X-MCP-Client-Name") String clientName,
             @ServiceRequestMessage Map<String,Object> parameters,
-            @ServiceResponseMessage ResponseOfAIService<String> resp
+            @ServiceResponseMessage ResponseOfAIService<String> resp,
+            @ServiceRequestException Exception exception
     ){
-
+        if(exception!=null){
+            String result = MCPTool.buildCallResult("Error "+INVALID_PARAMS+": "+ exception.getMessage()
+                    ,true);
+            resp.success(result);
+            return;
+        }
         if(MCPDirectStudio.getAccount()==null){
             resp.success( "The tool is not ready yet. Please try again later.");
             return;
