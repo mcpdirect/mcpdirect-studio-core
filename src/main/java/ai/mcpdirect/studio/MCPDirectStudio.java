@@ -766,7 +766,8 @@ public class MCPDirectStudio {
 
     }
 
-    public static void initToolAgent(){new Thread(()->{
+    public static void initToolAgent(){
+//        new Thread(()->{
         Map<String, MCPServerConfig> localMCPServerConfigs = loadLocalMCPServerConfigs();
         try {
             for (int i = 0; i < 15; i++) {
@@ -848,7 +849,8 @@ public class MCPDirectStudio {
         connectLocalMCPServers(localMCPServerConfigs);
         connectLocalOpenAPIServers();
         writeMCPServerConfigs();
-    }).start();}
+//    }).start();
+    }
 
     private static Map<String, MCPServerConfig> loadLocalMCPServerConfigs(){
         Map<String, MCPServerConfig> map = new HashMap<>();
