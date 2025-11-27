@@ -242,6 +242,9 @@ public class MCPDirectStudio {
         dbHelper = new MCPDirectStudioDBHelper();
         serviceEngine = new HstpServiceEngine(engineConfig,null,
                 "ai.mcpdirect.studio."+machineId+"."+keySeed);
+        serviceEngine.addServiceRegisterListener(((serviceName, serviceDomain, engineId, registeredOrUnregistered)->{
+            System.out.println(serviceName+"@"+serviceDomain+":"+engineId+","+registeredOrUnregistered);
+        }));
         accountServiceUSL = new USL("account.management", adminProvider);
         aitoolsManagementUSL = new USL("aitools.management", adminProvider);
         LOG.info("ServiceEngine {} started", serviceEngine);

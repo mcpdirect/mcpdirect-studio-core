@@ -6,12 +6,14 @@ public class AIPortUser {
     public String language;
     public long created;
     public int type;
+    public String account;
     public AIPortUser(){}
-    public AIPortUser(long id, String name, String language, long created, int type) {
+    public AIPortUser(long id, String name, String language, long created, int type,String account) {
         this.id = id;
         this.name = name;
         this.language = language;
         this.created = created;
         this.type = type;
+        this.account = account;
     }
 }
