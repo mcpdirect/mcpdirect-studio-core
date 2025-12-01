@@ -56,40 +56,41 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
             client.close();
         }
         McpClientTransport transport;
-        if(command!=null&&!command.isEmpty()) {
-            ServerParameters parameters = ServerParameters.builder(command).args(args).env(env).build();
-            transport = new MCPDirectStdioClientTransport(parameters,JSON_MAPPER){
-                @Override
-                public void onException(Throwable throwable) {
-                    statusMessage+=(throwable.getMessage()+"\n");
+        try {
+            if(command!=null&&!command.isEmpty()) {
+                ServerParameters parameters = ServerParameters.builder(command).args(args).env(env).build();
+                transport = new MCPDirectStdioClientTransport(parameters,JSON_MAPPER){
+                    @Override
+                    public void onException(Throwable throwable) {
+                        statusMessage+=(throwable.getMessage()+"\n");
+                    }
+                };
+            }else{
+                HttpRequest.Builder builder = HttpRequest.newBuilder();
+                builder.header("Content-Type", "application/json");
+                if(env!=null) for (Map.Entry<String, String> entry : env.entrySet()) {
+                    builder.header(entry.getKey(),entry.getValue());
                 }
-            };
-        }else{
-            HttpRequest.Builder builder = HttpRequest.newBuilder();
-            builder.header("Content-Type", "application/json");
-            if(env!=null) for (Map.Entry<String, String> entry : env.entrySet()) {
-                builder.header(entry.getKey(),entry.getValue());
-            }
-            if(this.transport ==2)
-                transport = HttpClientStreamableHttpTransport
-                        .builder(baseUrl).endpoint(sseEndpoint)
+                if(this.transport ==2)
+                    transport = HttpClientStreamableHttpTransport
+                            .builder(baseUrl).endpoint(sseEndpoint)
+                            .requestBuilder(builder)
+                            .build();
+                else transport = HttpClientSseClientTransport
+                        .builder(baseUrl).sseEndpoint(sseEndpoint)
                         .requestBuilder(builder)
                         .build();
-            else transport = HttpClientSseClientTransport
-                    .builder(baseUrl).sseEndpoint(sseEndpoint)
-                    .requestBuilder(builder)
-                    .build();
-        }
-        McpClient.SyncSpec builder = McpClient.sync(transport)
-                .clientInfo(clientInfo)
-                .requestTimeout(Duration.ofSeconds(15))
-                .initializationTimeout(Duration.ofSeconds(15))
-                .capabilities(McpSchema.ClientCapabilities.builder()
-                        .roots(true)
-                        .sampling()
-                        .build());
-        client = builder.build();
-        try {
+            }
+            McpClient.SyncSpec builder = McpClient.sync(transport)
+                    .clientInfo(clientInfo)
+                    .requestTimeout(Duration.ofSeconds(15))
+                    .initializationTimeout(Duration.ofSeconds(15))
+                    .capabilities(McpSchema.ClientCapabilities.builder()
+                            .roots(true)
+                            .sampling()
+                            .build());
+            client = builder.build();
+
             client.initialize();
             status = STATUS_ON;
         } catch (Throwable e) {
@@ -98,6 +99,7 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
     }
     public void close(){
         client.close();
+        status = STATUS_ABANDONED;
     }
 //    public void refreshTools(){
 //        try(McpSyncClient mcpClient = createMcpSyncClient()) {

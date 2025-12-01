@@ -67,7 +67,7 @@ public class MCPServer extends AIPortToolMaker {
         id  = maker.id;
         name = maker.name;
         type = maker.type;
-        agentStatus = maker.agentStatus;
+//        agentStatus = maker.agentStatus;
         agentId = maker.agentId;
         userId = maker.userId;
         teamId = maker.teamId;

@@ -12,7 +12,7 @@ public class AIPortToolAgent {
     public String name;
     public String tags;
     public int status;
-
+    public long lastKeepalive;
     public AIPortToolAgent() {}
     public AIPortToolAgent(String name) {
         this.name = name;

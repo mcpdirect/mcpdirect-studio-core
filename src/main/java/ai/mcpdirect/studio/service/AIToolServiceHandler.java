@@ -98,19 +98,20 @@ public class AIToolServiceHandler {
                     + (parsedUrl.getPort() == -1 ? "" : ":" + parsedUrl.getPort());
 
             sseEndpoint = parsedUrl.getPath();
-
-            if (sseEndpoint.startsWith("/")) {
+            if(sseEndpoint.isEmpty()){
+               sseEndpoint = "/";
+            }else if (sseEndpoint.startsWith("/")) {
                 sseEndpoint = sseEndpoint.substring(1);
             }
             provider = new MCPToolProvider(
                     "MCPDirectStudio","1.0.0",
                     baseUrl,sseEndpoint,conf
             );
-            HttpRequest.Builder builder = HttpRequest.newBuilder();
-            builder.header("Content-Type", "application/json");
-            if(conf.env!=null) for (Map.Entry<String, String> entry : conf.env.entrySet()) {
-                builder.header(entry.getKey(),entry.getValue());
-            }
+//            HttpRequest.Builder builder = HttpRequest.newBuilder();
+//            builder.header("Content-Type", "application/json");
+//            if(conf.env!=null) for (Map.Entry<String, String> entry : conf.env.entrySet()) {
+//                builder.header(entry.getKey(),entry.getValue());
+//            }
         }
         provider.id = serverId;
         provider.name = serverName;
@@ -124,7 +125,7 @@ public class AIToolServiceHandler {
     }
     public static MCPServer removeMCPServer(long serverId){
         MCPToolProvider server =  mcpToolsProviders.remove(Long.toString(serverId,Character.MAX_RADIX));
-        server.close();
+        if(server!=null) server.close();
         return server;
     }
     public static void remapMCPServer(long makerId){
@@ -150,6 +151,11 @@ public class AIToolServiceHandler {
         }
         provider.config(conf);
         return provider;
+    }
+    public static OpenAPIServer removeOpenAPIServer(long serverId){
+        OpenAPIToolProvider server =  openapiToolsProviders.remove(Long.toString(serverId,Character.MAX_RADIX));
+        if(server!=null) server.close();
+        return server;
     }
     public static Collection<? extends OpenAPIServer> getOpenAPIServers(){
         return openapiToolsProviders.values();

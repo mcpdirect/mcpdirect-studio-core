@@ -15,11 +15,13 @@
  */
 package ai.mcpdirect.studio.tool.util;
 
-import ai.mcpdirect.backend.dao.entity.aitool.AIPortMCPServerConfig;
+//import ai.mcpdirect.backend.dao.entity.aitool.AIPortMCPServerConfig;
 import appnet.hstp.engine.util.JSON;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +37,10 @@ import java.util.Map;
  * "env": { "API_KEY": "value" } } } }
  */
 public class MCPServerConfig {
+    @JsonProperty
+    public long id;
+    @JsonProperty
+    public String name;
     @JsonProperty
     public int status = 1;
     @JsonProperty
@@ -55,20 +61,43 @@ public class MCPServerConfig {
 //		this.args = args;
 //		this.env = env;
 //	}
-    public MCPServerConfig(int status,AIPortMCPServerConfig c) throws Exception {
-        this.status = status;
-        transport = c.transport;
-        url = fillInputs(c.url,c.inputs);
-        command = fillInputs(c.command,c.inputs);
-        args = JSON.fromJson(fillInputs(c.args,c.inputs), new TypeReference<>() {});
-        env = JSON.fromJson(fillInputs(c.env,c.inputs), new TypeReference<>() {});
-    }
-
-    private static String fillInputs(String text,String inputs) throws Exception {
+//    public MCPServerConfig(int status,AIPortMCPServerConfig c) throws Exception {
+//        this.status = status;
+//        transport = c.transport;
+//        url = fillInputs(c.url,c.inputs);
+//        command = fillInputs(c.command,c.inputs);
+//        args = JSON.fromJson(fillInputs(c.args,c.inputs), new TypeReference<>() {});
+//        env = JSON.fromJson(fillInputs(c.env,c.inputs), new TypeReference<>() {});
+//    }
+    public void fillInputs(String inputs) throws Exception {
         Map<String,String> inputMap;
-        if(text!=null&&inputs!=null&&!(inputs=inputs.trim()).isEmpty()
+        if(inputs!=null&&!(inputs=inputs.trim()).isEmpty()
                 && !(inputMap = JSON.fromJson(inputs, new TypeReference<>() {
-        })).isEmpty()) for (Map.Entry<String, String> entry : inputMap.entrySet()) {
+        })).isEmpty()){
+            url = fillInputs(url,inputMap);
+            command = fillInputs(command,inputMap);
+            if(args!=null&&!args.isEmpty()) {
+                List<String> list = new ArrayList<>(args.size());
+                for (String arg : args) {
+                    list.add(fillInputs(arg,inputMap));
+                }
+                args = list;
+            }
+            if(env!=null&&!env.isEmpty()){
+                Map<String,String> map = new HashMap<>();
+                for (Map.Entry<String, String> entry : env.entrySet()) {
+                    String key = fillInputs(entry.getKey(),inputMap);
+                    map.put(key,fillInputs(entry.getValue(),inputMap));
+                }
+                env = map;
+            }
+//            args = JSON.fromJson(fillInputs(args,inputs), new TypeReference<>() {});
+//            env = JSON.fromJson(fillInputs(env,inputs), new TypeReference<>() {});
+        }
+
+    }
+    private static String fillInputs(String text,Map<String,String> inputMap) throws Exception {
+        if(text!=null) for (Map.Entry<String, String> entry : inputMap.entrySet()) {
             text = text.replace("${"+entry.getKey()+"}", entry.getValue());
         }
         return text;

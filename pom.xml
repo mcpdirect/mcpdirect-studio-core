@@ -61,6 +61,7 @@
         </dependency>
     </dependencies>
     <build>
+        <finalName>mcpdirect-studio-${project.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -76,7 +77,6 @@
                             <mainClass>
                                 ai.mcpdirect.studio.MCPDirectStudioApplication
                             </mainClass>
-                            <finalName>mcpdirect-studio-${version}</finalName>
                         </configuration>
                     </execution>
                 </executions>

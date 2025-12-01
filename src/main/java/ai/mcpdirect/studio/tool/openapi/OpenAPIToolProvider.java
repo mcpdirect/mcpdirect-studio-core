@@ -99,7 +99,7 @@ public class OpenAPIToolProvider extends OpenAPIServer implements AIToolProvider
     public void refreshTools() {
     }
     public void close(){
-
+        status=STATUS_ABANDONED;
     }
 
 

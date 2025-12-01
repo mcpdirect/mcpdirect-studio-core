@@ -1,9 +1,14 @@
 package ai.mcpdirect.studio.service;
 
+import ai.mcpdirect.backend.dao.entity.account.AIPortAccount;
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortTool;
+import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
+import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMakerTemplate;
 import ai.mcpdirect.studio.MCPDirectStudio;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.dao.entity.OpenAPIServer;
+import ai.mcpdirect.studio.dao.entity.ToolMakerTemplate;
+import ai.mcpdirect.studio.dao.entity.ToolMakerTemplateConfig;
 import ai.mcpdirect.studio.tool.openapi.OpenAPIServerConfig;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
 import appnet.hstp.SimpleServiceResponseMessage;
@@ -50,6 +55,14 @@ public class ConsoleServiceHandler {
         resp.success(studioToolMakers);
     }
 
+//    @ServiceRequestMapping("mcp_server/config/query")
+//    public void queryMCPServers(
+//            @ServiceResponseMessage AIPortServiceResponse<List<MCPServer>> resp
+//    ){
+//
+//        List<MCPServer> servers = List.copyOf(AIToolServiceHandler.getMCPServers());
+//        resp.success(servers);
+//    }
     @ServiceRequestMapping("mcp_server/query")
     public void queryMCPServers(
             @ServiceResponseMessage AIPortServiceResponse<List<MCPServer>> resp
@@ -95,7 +108,7 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("mcp_server/modify")
     public void configMCPServer(
             @ServiceRequestMessage RequestOfModifyMCPServer req,
-            @ServiceResponseMessage AIPortServiceResponse<MCPServer> resp
+            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMaker> resp
     ) throws Exception {
         if(req.mcpServerId !=0) {
             MCPDirectStudio.modifyMCPServerConfig(
@@ -159,7 +172,7 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("tool_maker/connect")
     public void connectToolMaker(
             @ServiceRequestMessage RequestOfConnectToolMaker req,
-            @ServiceResponseMessage AIPortServiceResponse<MCPServer> resp
+            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMaker> resp
     ) throws Exception {
         if(req.makerId>0&&req.agentId==MCPDirectStudio.studioToolAgentId()){
             MCPDirectStudio.connectToolMaker(req.makerId,(code,message,mcpServer)->{
@@ -169,6 +182,7 @@ public class ConsoleServiceHandler {
             });
         }
     }
+
     public static class RequestOfParseOpenAPIDoc{
         public String doc;
     }
@@ -322,14 +336,14 @@ public class ConsoleServiceHandler {
             @ServiceRequestMessage RequestOfModifyOpenAPIServer req,
             @ServiceResponseMessage AIPortServiceResponse<OpenAPIServer> resp
     ) throws Exception {
-//        if(req.mcpServerId !=0) {
-//            MCPDirectStudio.removeLocalMCPServer(req.mcpServerId,
-//                    (code,message,server)->{
-//                        resp.code(code);
-//                        resp.message = message;
-//                        resp.data = server;
-//                    });
-//        }
+        if(req.openapiServerId !=0) {
+            MCPDirectStudio.removeLocalOpenAPIServer(req.openapiServerId,
+                    (code,message,server)->{
+                        resp.code(code);
+                        resp.message = message;
+                        resp.data = server;
+                    });
+        }
     }
     public static class RequestOfQueryOpenAPITools{
         public long openapiServerId;
@@ -360,4 +374,95 @@ public class ConsoleServiceHandler {
                     });
         }
     }
+
+    public static class RequestOfCreateToolMakerTemplate{
+        public String name;
+        public int type;
+        public String config;
+        public String inputs;
+    }
+    @ServiceRequestMapping("tool_maker/template/create")
+    public void createToolMakerTemplate(
+//            @ServiceRequestAuthentication("auk") AIPortAccount account,
+            @ServiceRequestMessage RequestOfCreateToolMakerTemplate req,
+            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMakerTemplate> resp
+    ) throws Exception {
+        MCPDirectStudio.createToolMakerTemplate(
+                req.name,req.type,req.config,req.inputs,
+                (code,message,data)->{
+                    resp.code(code);
+                    resp.message = message;
+                    resp.data = data;
+                }
+        );
+    }
+
+    public static class RequestOfConnectToolMakerTemplate{
+        public long userId;
+        public long templateId;
+        public String name;
+        public String inputs;
+    }
+    @ServiceRequestMapping("tool_maker_template/connect")
+    public void connectToolMakerTemplate(
+            @ServiceRequestMessage RequestOfConnectToolMakerTemplate req,
+            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMaker> resp
+    ) throws Exception {
+        MCPDirectStudio.connectToolMakerTemplate(
+                req.userId, req.templateId, req.name,req.inputs,
+                (code,message,data)->{
+                    resp.code(code);
+                    resp.message = message;
+                    resp.data = data;
+                }
+        );
+    }
+
+    public static class RequestOfGetToolMakerTemplate{
+        public long templateId;
+    }
+    @ServiceRequestMapping("tool_maker_template/get")
+    public void getToolMakerTemplate(
+            @ServiceRequestMessage RequestOfGetToolMakerTemplate req,
+            @ServiceResponseMessage AIPortServiceResponse<ToolMakerTemplate> resp
+    ) throws Exception {
+        ToolMakerTemplate template = MCPDirectStudio.getToolMakerTemplate(req.templateId);
+        if(template!=null){
+            resp.success(template);
+        }
+    }
+
+    public static class RequestOfGetToolMakerTemplateConfig{
+        public long toolMakerId;
+    }
+    @ServiceRequestMapping("tool_maker_template/config/get")
+    public void getToolMakerTemplateConfig(
+            @ServiceRequestMessage RequestOfGetToolMakerTemplateConfig req,
+            @ServiceResponseMessage AIPortServiceResponse<ToolMakerTemplateConfig> resp
+    ) throws Exception {
+        ToolMakerTemplateConfig template = MCPDirectStudio.getToolMakerTemplateConfig(req.toolMakerId);
+        if(template!=null){
+            resp.success(template);
+        }
+    }
+
+    public static class RequestOfModifyToolMakerTemplateConfig{
+        public long toolMakerId;
+        public String inputs;
+    }
+    @ServiceRequestMapping("tool_maker_template/config/modify")
+    public void modifyToolMakerTemplateConfig(
+            @ServiceRequestMessage RequestOfModifyToolMakerTemplateConfig req,
+            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMaker> resp
+    ) throws Exception {
+        MCPDirectStudio.modifyToolMakerTemplateConfig(
+                req.toolMakerId,req.inputs,
+                (code,message,data)->{
+                    resp.code(code);
+                    resp.message = message;
+                    resp.data = data;
+                }
+        );
+    }
+
 }

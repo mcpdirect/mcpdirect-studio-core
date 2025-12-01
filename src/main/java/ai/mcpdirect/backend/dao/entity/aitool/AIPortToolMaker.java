@@ -20,12 +20,15 @@ public class AIPortToolMaker {
     public String name;
     public String tags;
     public long agentId;
-    public int agentStatus;
-    public String agentName;
+//    public int agentStatus;
+//    public String agentName;
     public long userId;
     public long teamId;
     public long templateId;
 
+    public boolean mcp(){
+        return type == TYPE_MCP;
+    }
     public boolean openapi(){
         return type==TYPE_OPENAPI;
     }
