@@ -815,49 +815,30 @@ public class MCPDirectStudio {
                     notificationHandler.onToolAgentNotification(toolAgentDetails.toolAgent);
                     if (toolAgentDetails.makers != null) {
                         if(toolAgentDetails.tools==null) toolAgentDetails.tools = new ArrayList<>();
-//                        Map<Long, AIPortToolMaker> collect = resp.data.makers.stream().collect(
-//                                Collectors.toMap(v -> v.id, v -> v));
-//                        if (toolAgentDetails.mcpServerConfigs != null) {
-//                            for (AIPortMCPServerConfig config : toolAgentDetails.mcpServerConfigs) {
-//                                AIPortToolMaker maker = collect.get(config.id);
-//                                if(maker!=null) {
-//                                    MCPServerConfig mcpServerConfig = new MCPServerConfig(maker.status,config);
-//                                    if(maker.userId==accountId()) mcpServerConfigs.put(maker.name, mcpServerConfig);
-//                                    notificationHandler.onToolMakerNotification(new MCPServer(mcpServerConfig) {{
-//                                        id = config.id;
-//                                        name = maker.name;
-//                                        status = STATUS_WAITING;
-//                                        agentId = studioToolAgentId();
-//                                    }});
-//                                    new Thread(() -> {
-//                                        try {
-//                                            MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(
-//                                                    maker.id, maker.name, mcpServerConfig);
-//                                            mcpServer.merge(maker, toolAgentDetails.tools);
-////                                            mcpServer.id = config.id;
-////                                            mcpServer.tags = maker.tags;
-//                                            notificationHandler.onToolMakerNotification(mcpServer);
-//                                        } catch (Exception e) {
-//                                            throw new RuntimeException(e);
-//                                        }
-//                                    }).start();
-//                                }
-//                            }
-//                        }
                         for (AIPortToolMaker toolMaker : toolAgentDetails.makers) {
                             if(toolMaker.mcp()){
-                                MCPServerConfig config = dbHelper.selectMCPServerConfig(toolMaker.id);
+                                MCPServerConfig config = null;
+                                if(toolMaker.templateId>0){
+                                    ToolMakerTemplate template = dbHelper.selectToolMakerTemplate(toolMaker.templateId);
+                                    ToolMakerTemplateConfig templateConfig = dbHelper.selectToolMakerTemplateConfig(toolMaker.id);
+                                    if(template!=null&&templateConfig!=null) {
+                                        config = JSON.fromJson(template.config, MCPServerConfig.class);
+                                        config.fillInputs(templateConfig.inputs);
+                                    }
+                                } else config = dbHelper.selectMCPServerConfig(toolMaker.id);
                                 if(config!=null){
                                     notificationHandler.onToolMakerNotification(new MCPServer(config) {{
-                                        id = config.id;
+                                        id = toolMaker.id;
                                         name = toolMaker.name;
                                         status = STATUS_WAITING;
                                         agentId = studioToolAgentId();
+                                        templateId = toolMaker.templateId;
                                     }});
+                                    MCPServerConfig finalConfig = config;
                                     new Thread(() -> {
                                         try {
                                             MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(
-                                                    toolMaker.id, toolMaker.name, config);
+                                                    toolMaker.id, toolMaker.name, finalConfig);
                                             mcpServer.merge(toolMaker, toolAgentDetails.tools);
 //                                            mcpServer.id = config.id;
 //                                            mcpServer.tags = maker.tags;
@@ -873,6 +854,7 @@ public class MCPDirectStudio {
                                         userId = toolMaker.userId;
                                         statusMessage = "config not found";
                                         agentId = studioToolAgentId();
+                                        templateId = toolMaker.templateId;
                                     }});
                                 }
                             }else if(toolMaker.openapi()){
@@ -893,6 +875,7 @@ public class MCPDirectStudio {
                                         userId = toolMaker.userId;
                                         statusMessage = "config not found";
                                         agentId = studioToolAgentId();
+                                        templateId = toolMaker.templateId;
                                     }});
                                 }
                             }
@@ -2331,7 +2314,7 @@ public class MCPDirectStudio {
         if(templateId>Integer.MAX_VALUE){
             ToolMakerTemplate template = dbHelper.selectToolMakerTemplate(templateId);
             if(template!=null){
-                mcpServerConfig = JSON.fromJson(template.config, new TypeReference<MCPServerConfig>() {});
+                mcpServerConfig = JSON.fromJson(template.config, MCPServerConfig.class);
                 ToolMakerTemplateConfig templateConfig = dbHelper.selectToolMakerTemplateConfig(maker.id);
                 mcpServerConfig.fillInputs(templateConfig.inputs);
             }

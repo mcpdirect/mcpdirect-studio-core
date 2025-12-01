@@ -70,12 +70,12 @@ public class MCPServer extends AIPortToolMaker {
 //        agentStatus = maker.agentStatus;
         agentId = maker.agentId;
         userId = maker.userId;
-        teamId = maker.teamId;
+        templateId = maker.templateId;
         tags = maker.tags;
         status = maker.status;
         lastUpdated = maker.lastUpdated;
         created = maker.created;
-        templateId = maker.templateId;
+//        templateId = maker.templateId;
         if(tools!=null) for (AIPortTool tool : tools) if(tool.makerId==id){
             MCPTool mcpTool = this.tools.get(tool.name);
             if(mcpTool==null){

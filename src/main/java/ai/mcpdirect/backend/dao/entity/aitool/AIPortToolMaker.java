@@ -23,7 +23,7 @@ public class AIPortToolMaker {
 //    public int agentStatus;
 //    public String agentName;
     public long userId;
-    public long teamId;
+//    public long teamId;
     public long templateId;
 
     public boolean mcp(){
