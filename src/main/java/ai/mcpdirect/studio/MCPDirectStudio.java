@@ -2454,7 +2454,23 @@ public class MCPDirectStudio {
             callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
         }
     }
-
+    public static void modifyToolMakerTemplate(
+            long templateId,String name,int type,String config,String inputs,
+            Callback<Boolean> callback) throws Exception{
+        if (config != null && !(config = config.trim()).isEmpty()
+                && inputs != null && !(inputs = inputs.trim()).isEmpty()) {
+            ToolMakerTemplate template = dbHelper.selectToolMakerTemplate(templateId);
+            if(template==null){
+                callback.onResult(255,"Tool maker template not exists",null);
+                return;
+            }
+            template.type = type;
+            template.config = config;
+            template.inputs = inputs;
+            dbHelper.insertToolMakerTemplate(template);
+            callback.onResult(0,null,true);
+        }else callback.onResult(255,"Tool maker template config is invalid",null);
+    }
     public static void connectToolMakerTemplate(
             long userId,long templateId,String name, String inputs,
             Callback<AIPortToolMaker> callback) throws Exception{

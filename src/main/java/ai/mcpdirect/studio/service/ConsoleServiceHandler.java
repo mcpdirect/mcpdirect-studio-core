@@ -386,7 +386,7 @@ public class ConsoleServiceHandler {
         public String config;
         public String inputs;
     }
-    @ServiceRequestMapping("tool_maker/template/create")
+    @ServiceRequestMapping("tool_maker_template/create")
     public void createToolMakerTemplate(
 //            @ServiceRequestAuthentication("auk") AIPortAccount account,
             @ServiceRequestMessage RequestOfCreateToolMakerTemplate req,
@@ -394,6 +394,25 @@ public class ConsoleServiceHandler {
     ) throws Exception {
         MCPDirectStudio.createToolMakerTemplate(
                 req.name,req.type,req.config,req.inputs,
+                (code,message,data)->{
+                    resp.code(code);
+                    resp.message = message;
+                    resp.data = data;
+                }
+        );
+    }
+
+    public static class RequestOfModifyToolMakerTemplate extends RequestOfCreateToolMakerTemplate{
+        public long templateId;
+    }
+    @ServiceRequestMapping("tool_maker_template/modify")
+    public void modifyToolMakerTemplate(
+//            @ServiceRequestAuthentication("auk") AIPortAccount account,
+            @ServiceRequestMessage RequestOfModifyToolMakerTemplate req,
+            @ServiceResponseMessage AIPortServiceResponse<Boolean> resp
+    ) throws Exception {
+        MCPDirectStudio.modifyToolMakerTemplate(
+                req.templateId,req.name,req.type,req.config,req.inputs,
                 (code,message,data)->{
                     resp.code(code);
                     resp.message = message;
