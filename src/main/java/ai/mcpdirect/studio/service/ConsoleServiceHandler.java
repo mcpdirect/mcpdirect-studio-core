@@ -9,7 +9,9 @@ import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.dao.entity.OpenAPIServer;
 import ai.mcpdirect.studio.dao.entity.ToolMakerTemplate;
 import ai.mcpdirect.studio.dao.entity.ToolMakerTemplateConfig;
+import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.tool.openapi.OpenAPIServerConfig;
+import ai.mcpdirect.studio.tool.openapi.OpenAPITool;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
 import appnet.hstp.SimpleServiceResponseMessage;
 import appnet.hstp.annotation.*;
@@ -465,4 +467,34 @@ public class ConsoleServiceHandler {
         );
     }
 
+    public static class RequestOfGetTool{
+        public long toolMakerId;
+        public long toolMakerType;
+        public String toolName;
+    }
+    @ServiceRequestMapping("tool/get")
+    public void getTool(
+            @ServiceRequestMessage RequestOfGetTool req,
+            @ServiceResponseMessage AIPortServiceResponse<AIPortTool> resp
+    ) throws Exception {
+        AIPortTool aiPortTool=null;
+        if (req.toolMakerType==AIPortToolMaker.TYPE_MCP){
+            MCPServer mcpServer = AIToolServiceHandler.getMCPServer(req.toolMakerId);
+            MCPTool tool;
+            if(mcpServer!=null&&(tool=mcpServer.getTool(req.toolName))!=null) {
+                aiPortTool = tool.duplicate();
+                aiPortTool.metaData = tool.metaData();
+            }
+        }else if(req.toolMakerType==AIPortToolMaker.TYPE_OPENAPI){
+            OpenAPIServer openAPIServer = AIToolServiceHandler.getOpenAPIServer(req.toolMakerId);
+            OpenAPITool tool;
+            if(openAPIServer!=null&&(tool=openAPIServer.getTool(req.toolName))!=null){
+                aiPortTool = tool.duplicate();
+                aiPortTool.metaData = tool.metaData();
+            }
+        }
+        if(aiPortTool!=null){
+            resp.success(aiPortTool);
+        }
+    }
 }

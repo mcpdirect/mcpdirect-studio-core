@@ -103,10 +103,10 @@ public class OpenAPIToolProvider extends OpenAPIServer implements AIToolProvider
     }
 
 
-    @Override
-    public AITool getTool(String name) {
-        return tools.get(name);
-    }
+//    @Override
+//    public AITool getTool(String name) {
+//        return tools.get(name);
+//    }
 
     @Override
     public String callTool(String name, Map<String, Object> parameters) {

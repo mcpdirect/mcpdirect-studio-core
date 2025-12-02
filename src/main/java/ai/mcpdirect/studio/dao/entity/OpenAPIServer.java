@@ -2,6 +2,7 @@ package ai.mcpdirect.studio.dao.entity;
 
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortTool;
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
+import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.tool.openapi.OpenAPITool;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -55,7 +56,9 @@ public class OpenAPIServer extends AIPortToolMaker {
     public String statusMessage() {
         return statusMessage;
     }
-
+    public OpenAPITool getTool(String name) {
+        return tools.get(name);
+    }
     public static OpenAPIServer deprecated(long id){
         OpenAPIServer openAPIServer = new OpenAPIServer();
         openAPIServer.id = id;

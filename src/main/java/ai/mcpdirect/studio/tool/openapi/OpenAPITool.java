@@ -2,7 +2,6 @@ package ai.mcpdirect.studio.tool.openapi;
 
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortTool;
 import ai.mcpdirect.studio.tool.AITool;
-import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.util.OpenAPISchemaConverter;
 import appnet.hstp.ServiceDescription;
 import appnet.hstp.engine.util.JSON;
