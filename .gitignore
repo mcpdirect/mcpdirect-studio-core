@@ -37,4 +37,3 @@ build/
 ### Log files ###
 *.log
 *.log.*.gz
-.mcp-stdio-server.log

@@ -46,6 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker.*;
+import static ai.mcpdirect.studio.service.AIPortServiceResponse.TOOL_MAKER_NOT_EXISTS;
 
 @ServiceScan
 public class MCPDirectStudio {
@@ -761,7 +762,29 @@ public class MCPDirectStudio {
     public static long localServerId(String name){
         return name.hashCode()|Long.MIN_VALUE;
     }
-    public static void removeLocalMCPServer(long serverId,Callback<MCPServer> callback){
+    public static void removeLocalMCPServer(long serverId,Callback<AIPortToolMaker> callback) throws Exception {
+        if(serverId>Integer.MAX_VALUE){
+            Service service = aitoolsManagementUSL.appendPath("tool_maker/remove")
+                    .createServiceClient()
+                    .headers(authHeaders)
+                    .content(Map.of(
+                            "makerId", serverId
+                    ))
+                    .request(serviceEngine);
+            int code = service.getErrorCode();
+            String message = service.getErrorMessage();
+            AIPortToolMaker maker = null;
+            if(code==0){
+                SimpleServiceResponseMessage<AIPortToolMaker> resp
+                        = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+                code = resp.code;
+                message = resp.message;
+                maker = resp.data;
+            }
+            if(code!=0){
+                callback.onResult(code,message,maker);
+            }
+        }
         MCPServer server = AIToolServiceHandler.removeMCPServer(serverId);
         if(server!=null) {
 //            mcpServerConfigs.remove(server.name);
@@ -771,18 +794,40 @@ public class MCPDirectStudio {
             notificationHandler.onToolMakerNotification(server);
             callback.onResult(0,null,server);
         }else{
-            callback.onResult(255,null,null);
+            callback.onResult(TOOL_MAKER_NOT_EXISTS,null,null);
         }
     }
 
-    public static void removeLocalOpenAPIServer(long serverId,Callback<OpenAPIServer> callback){
+    public static void removeLocalOpenAPIServer(long serverId,Callback<AIPortToolMaker> callback) throws Exception {
+        if(serverId>Integer.MAX_VALUE){
+            Service service = aitoolsManagementUSL.appendPath("tool_maker/remove")
+                    .createServiceClient()
+                    .headers(authHeaders)
+                    .content(Map.of(
+                            "makerId", serverId
+                    ))
+                    .request(serviceEngine);
+            int code = service.getErrorCode();
+            String message = service.getErrorMessage();
+            AIPortToolMaker maker = null;
+            if(code==0){
+                SimpleServiceResponseMessage<AIPortToolMaker> resp
+                        = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+                code = resp.code;
+                message = resp.message;
+                maker = resp.data;
+            }
+            if(code!=0){
+                callback.onResult(code,message,maker);
+            }
+        }
         OpenAPIServer server = AIToolServiceHandler.removeOpenAPIServer(serverId);
         if(server!=null) {
             dbHelper.deleteOpenAPIServerConfig(server.id);
             notificationHandler.onToolMakerNotification(server);
             callback.onResult(0,null,server);
         }else{
-            callback.onResult(255,null,null);
+            callback.onResult(TOOL_MAKER_NOT_EXISTS,null,null);
         }
     }
 
