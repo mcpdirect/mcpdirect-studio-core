@@ -24,6 +24,9 @@ public class MCPTool extends AIPortTool implements AITool{
         this.makerId = provider.id;
         this.tool = tool;
         this.name = tool.name();
+        rebuildMetaData();
+    }
+    public void rebuildMetaData(){
         String inputSchema;
         try {
             inputSchema = JSON.toJson(tool.inputSchema());

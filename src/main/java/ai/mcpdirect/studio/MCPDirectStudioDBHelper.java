@@ -15,6 +15,8 @@ import org.sqlite.FileException;
 import java.io.File;
 import java.util.List;
 
+import static appnet.hstp.labs.util.db.ComparisonOperator.eq;
+
 public class MCPDirectStudioDBHelper {
     private static final Logger LOG = LoggerFactory.getLogger(MCPDirectStudioDBHelper.class);
     private final SQLiteHelper sqliteHelper;
@@ -60,7 +62,7 @@ public class MCPDirectStudioDBHelper {
     public Long selectOpenAPIServerConfigId(long id){
         try {
             TableResultSet<OpenAPIServerConfig> execute = openAPIServerConfigTable
-                    .select().and(ComparisonOperator.eq("id",id)).execute();
+                    .select().and(eq("id",id)).execute();
             return execute.getLong("id");
         } catch (Exception e) {
             LOG.error("selectOpenAPIServerConfigId()",e);
@@ -71,7 +73,7 @@ public class MCPDirectStudioDBHelper {
     public OpenAPIServerConfig selectOpenAPIServerConfig(long id){
         try {
             TableResultSet<OpenAPIServerConfig> execute = openAPIServerConfigTable
-                    .select().and(ComparisonOperator.eq("id",id)).execute();
+                    .select().and(eq("id",id)).execute();
             return execute.get("config");
         } catch (Exception e) {
             LOG.error("selectOpenAPIServerConfigId()",e);
@@ -96,7 +98,7 @@ public class MCPDirectStudioDBHelper {
             return openAPIServerConfigTable
                     .update("id",config.id)
                     .set("config",config)
-                    .and(ComparisonOperator.eq("id",id))
+                    .and(eq("id",id))
                     .execute().updatedRows()>0;
         }catch (Exception e){
             LOG.error("insertOpenAPIServerConfig()",e);
@@ -106,7 +108,7 @@ public class MCPDirectStudioDBHelper {
     public void deleteOpenAPIServerConfig(long id){
         try {
             openAPIServerConfigTable
-                    .delete(ComparisonOperator.eq("id",id))
+                    .delete(eq("id",id))
                     .execute()
                     .updatedRows();
         }catch (Exception e){
@@ -127,7 +129,7 @@ public class MCPDirectStudioDBHelper {
     public Long selectMCPServerConfigId(long id){
         try {
             TableResultSet<MCPServerConfig> execute = mcpServerConfigTable
-                    .select().and(ComparisonOperator.eq("id",id)).execute();
+                    .select().and(eq("id",id)).execute();
             return execute.getLong("id");
         } catch (Exception e) {
             LOG.error("selectMCPServerConfigId()",e);
@@ -138,7 +140,7 @@ public class MCPDirectStudioDBHelper {
     public MCPServerConfig selectMCPServerConfig(long id){
         try {
             TableResultSet<MCPServerConfig> execute = mcpServerConfigTable
-                    .select().and(ComparisonOperator.eq("id",id)).execute();
+                    .select().and(eq("id",id)).execute();
             return execute.get("config");
         } catch (Exception e) {
             LOG.error("selectMCPServerConfigId()",e);
@@ -163,7 +165,7 @@ public class MCPDirectStudioDBHelper {
             return mcpServerConfigTable
                     .update("id",config.id)
                     .set("config",config)
-                    .and(ComparisonOperator.eq("id",id))
+                    .and(eq("id",id))
                     .execute().updatedRows()>0;
         }catch (Exception e){
             LOG.error("insertOpenAPIServerConfig()",e);
@@ -173,7 +175,7 @@ public class MCPDirectStudioDBHelper {
     public void deleteMCPServerConfig(long id){
         try {
             mcpServerConfigTable
-                    .delete(ComparisonOperator.eq("id",id))
+                    .delete(eq("id",id))
                     .execute()
                     .updatedRows();
         }catch (Exception e){
@@ -197,7 +199,7 @@ public class MCPDirectStudioDBHelper {
     public ToolMakerTemplate selectToolMakerTemplate(long id){
         try {
             TableResultSet<ToolMakerTemplate> execute = templateTable
-                    .select().and(ComparisonOperator.eq("id",id)).execute();
+                    .select().and(eq("id",id)).execute();
             return execute.get();
         } catch (Exception e) {
             LOG.error("selectToolMakerTemplate()",e);
@@ -219,11 +221,20 @@ public class MCPDirectStudioDBHelper {
     public ToolMakerTemplateConfig selectToolMakerTemplateConfig(long id){
         try {
             TableResultSet<ToolMakerTemplateConfig> execute = templateConfigTable
-                    .select().and(ComparisonOperator.eq("id",id)).execute();
+                    .select().and(eq("id",id)).execute();
             return execute.get();
         } catch (Exception e) {
             LOG.error("selectToolMakerTemplateConfig()",e);
             return null;
+        }
+    }
+    public void deleteToolMakerTemplateConfig(long id){
+        try {
+            templateConfigTable
+                    .delete(eq("id",id))
+                    .execute();
+        }catch (Exception e){
+            LOG.error("insertToolMakerTemplateConfig()",e);
         }
     }
 }

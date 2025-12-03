@@ -762,7 +762,7 @@ public class MCPDirectStudio {
     public static long localServerId(String name){
         return name.hashCode()|Long.MIN_VALUE;
     }
-    public static void removeLocalMCPServer(long serverId,Callback<AIPortToolMaker> callback) throws Exception {
+    public static void removeMCPServer(long serverId, Callback<Boolean> callback) throws Exception {
         if(serverId>Integer.MAX_VALUE){
             Service service = aitoolsManagementUSL.appendPath("tool_maker/remove")
                     .createServiceClient()
@@ -782,23 +782,40 @@ public class MCPDirectStudio {
                 maker = resp.data;
             }
             if(code!=0){
-                callback.onResult(code,message,maker);
+                callback.onResult(code,message,null);
             }
         }
-        MCPServer server = AIToolServiceHandler.removeMCPServer(serverId);
-        if(server!=null) {
-//            mcpServerConfigs.remove(server.name);
-//            writeMCPServerConfigs();
-            dbHelper.deleteMCPServerConfig(server.id);
+        if(serverId>Integer.MAX_VALUE){
+            MCPServer server = AIToolServiceHandler.getMCPServer(serverId);
             server.status = STATUS_ABANDONED;
             notificationHandler.onToolMakerNotification(server);
-            callback.onResult(0,null,server);
-        }else{
-            callback.onResult(TOOL_MAKER_NOT_EXISTS,null,null);
+            if(server.templateId>0){
+                AIToolServiceHandler.removeMCPServer(serverId);
+                dbHelper.deleteToolMakerTemplateConfig(server.id);
+            }else {
+                MCPServerConfig mcpServerConfig = dbHelper.selectMCPServerConfig(serverId);
+                server.id = localServerId(mcpServerConfig.name);
+                server.status = mcpServerConfig.status;
+                AIToolServiceHandler.remapMCPServer(serverId);
+                mcpServerConfig.id = server.id;
+                dbHelper.setMCPServerConfig(serverId, mcpServerConfig);
+                notificationHandler.onToolMakerNotification(server);
+            }
+            callback.onResult(0, null, true);
+        }else {
+            MCPServer server = AIToolServiceHandler.removeMCPServer(serverId);
+            if(server!=null) {
+                dbHelper.deleteMCPServerConfig(server.id);
+                server.status = STATUS_ABANDONED;
+                notificationHandler.onToolMakerNotification(server);
+                callback.onResult(0, null, true);
+            }else{
+                callback.onResult(TOOL_MAKER_NOT_EXISTS,null,null);
+            }
         }
     }
 
-    public static void removeLocalOpenAPIServer(long serverId,Callback<AIPortToolMaker> callback) throws Exception {
+    public static void removeOpenAPIServer(long serverId, Callback<Boolean> callback) throws Exception {
         if(serverId>Integer.MAX_VALUE){
             Service service = aitoolsManagementUSL.appendPath("tool_maker/remove")
                     .createServiceClient()
@@ -818,16 +835,37 @@ public class MCPDirectStudio {
                 maker = resp.data;
             }
             if(code!=0){
-                callback.onResult(code,message,maker);
+                callback.onResult(code,message,null);
             }
         }
-        OpenAPIServer server = AIToolServiceHandler.removeOpenAPIServer(serverId);
-        if(server!=null) {
-            dbHelper.deleteOpenAPIServerConfig(server.id);
+        if(serverId>Integer.MAX_VALUE){
+            OpenAPIServer server = AIToolServiceHandler.getOpenAPIServer(serverId);
+            server.status = STATUS_ABANDONED;
             notificationHandler.onToolMakerNotification(server);
-            callback.onResult(0,null,server);
-        }else{
-            callback.onResult(TOOL_MAKER_NOT_EXISTS,null,null);
+            if(server.templateId>0){
+                AIToolServiceHandler.removeOpenAPIServer(serverId);
+                dbHelper.deleteToolMakerTemplateConfig(server.id);
+            }else {
+                OpenAPIServerConfig mcpServerConfig = dbHelper.selectOpenAPIServerConfig(serverId);
+                server.id = localServerId(mcpServerConfig.name);
+                server.status = mcpServerConfig.status;
+                AIToolServiceHandler.remapOpenAPIServer(serverId);
+                mcpServerConfig.id = server.id;
+                dbHelper.setOpenAPIServerConfig(serverId, mcpServerConfig);
+                notificationHandler.onToolMakerNotification(server);
+            }
+
+            callback.onResult(0, null, true);
+        }else {
+            OpenAPIServer server = AIToolServiceHandler.removeOpenAPIServer(serverId);
+            if (server != null) {
+                server.status = STATUS_ABANDONED;
+                dbHelper.deleteOpenAPIServerConfig(server.id);
+                notificationHandler.onToolMakerNotification(server);
+                callback.onResult(0, null, true);
+            } else {
+                callback.onResult(TOOL_MAKER_NOT_EXISTS, null, null);
+            }
         }
     }
 
@@ -1255,6 +1293,11 @@ public class MCPDirectStudio {
             message.set(m);
             if(c==0){
                 mcpServer.merge(d,null);
+                MCPServerConfig config = dbHelper.selectMCPServerConfig(oldMCPServerId);
+                if(config!=null) {
+                    config.id = mcpServer.id;
+                    dbHelper.setMCPServerConfig(oldMCPServerId,config);
+                }
                 AIToolServiceHandler.remapMCPServer(oldMCPServerId);
                 MCPDirectStudio.notificationHandler()
                         .onToolMakerNotification(MCPServer.deprecated(oldMCPServerId));

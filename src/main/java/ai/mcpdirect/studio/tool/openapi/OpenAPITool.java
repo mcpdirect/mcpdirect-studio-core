@@ -29,6 +29,10 @@ public class OpenAPITool extends AIPortTool implements AITool {
     @JsonIgnore
     private OpenAPIToolProvider provider;
     @JsonIgnore
+    private String description;
+    @JsonIgnore
+    private String inputSchema;
+    @JsonIgnore
     private final String path;
     @JsonIgnore
     private final String method;
@@ -78,23 +82,27 @@ public class OpenAPITool extends AIPortTool implements AITool {
             Boolean required = requestBody.getRequired();
             bodyRequired = required != null && required;
         }
-        String description = operation.getDescription();
+        description = operation.getDescription();
         if(description==null){
             description = operation.getSummary();
         }
-        String inputSchema;
+        if(description==null){
+            description = "";
+        }
         try {
             inputSchema = OpenAPISchemaConverter.toJsonSchema(operation).toString();
         }catch (Exception e){
             inputSchema = "{}";
         }
+        rebuildMetaData();
+    }
+    public void rebuildMetaData(){
         try {
             _metaData = JSON.toJson(new ServiceDescription("aitools",
                     "call/openapi/" + Long.toString(provider.id, Character.MAX_RADIX) + "/" + name(),
                     description, inputSchema, "{}"));
             hash = _metaData.hashCode();
         }catch (Exception ignore){}
-
     }
     public void merge(AIPortTool tool){
         id=tool.id;

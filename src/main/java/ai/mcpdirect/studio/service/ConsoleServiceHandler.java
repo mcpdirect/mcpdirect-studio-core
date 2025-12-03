@@ -1,6 +1,5 @@
 package ai.mcpdirect.studio.service;
 
-import ai.mcpdirect.backend.dao.entity.account.AIPortAccount;
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortTool;
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMakerTemplate;
@@ -13,13 +12,9 @@ import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.tool.openapi.OpenAPIServerConfig;
 import ai.mcpdirect.studio.tool.openapi.OpenAPITool;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
-import appnet.hstp.Service;
-import appnet.hstp.SimpleServiceResponseMessage;
 import appnet.hstp.annotation.*;
 import appnet.hstp.engine.util.JSON;
 import appnet.hstp.labs.util.http.HttpClient;
-import appnet.util.crypto.SHA256;
-import com.fasterxml.jackson.core.type.TypeReference;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
@@ -126,20 +121,20 @@ public class ConsoleServiceHandler {
             );
         }
     }
-    @ServiceRequestMapping("mcp_server/remove")
-    public void removeMCPServer(
-            @ServiceRequestMessage RequestOfModifyMCPServer req,
-            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMaker> resp
-    ) throws Exception {
-        if(req.mcpServerId !=0) {
-            MCPDirectStudio.removeLocalMCPServer(req.mcpServerId,
-                    (code,message,server)->{
-                        resp.code(code);
-                        resp.message = message;
-                        resp.data = server;
-                    });
-        }
-    }
+//    @ServiceRequestMapping("mcp_server/remove")
+//    public void removeMCPServer(
+//            @ServiceRequestMessage RequestOfModifyMCPServer req,
+//            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMaker> resp
+//    ) throws Exception {
+//        if(req.mcpServerId !=0) {
+//            MCPDirectStudio.removeMCPServer(req.mcpServerId,
+//                    (code,message,server)->{
+//                        resp.code(code);
+//                        resp.message = message;
+//                        resp.data = server;
+//                    });
+//        }
+//    }
     public static class RequestOfQueryMCPTools{
         public long mcpServerId;
     }
@@ -336,20 +331,20 @@ public class ConsoleServiceHandler {
             );
         }
     }
-    @ServiceRequestMapping("openapi_server/remove")
-    public void removeOpenAPIServer(
-            @ServiceRequestMessage RequestOfModifyOpenAPIServer req,
-            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMaker> resp
-    ) throws Exception {
-        if(req.openapiServerId !=0) {
-            MCPDirectStudio.removeLocalOpenAPIServer(req.openapiServerId,
-                    (code,message,server)->{
-                        resp.code(code);
-                        resp.message = message;
-                        resp.data = server;
-                    });
-        }
-    }
+//    @ServiceRequestMapping("openapi_server/remove")
+//    public void removeOpenAPIServer(
+//            @ServiceRequestMessage RequestOfModifyOpenAPIServer req,
+//            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMaker> resp
+//    ) throws Exception {
+//        if(req.openapiServerId !=0) {
+//            MCPDirectStudio.removeOpenAPIServer(req.openapiServerId,
+//                    (code,message,server)->{
+//                        resp.code(code);
+//                        resp.message = message;
+//                        resp.data = server;
+//                    });
+//        }
+//    }
     public static class RequestOfQueryOpenAPITools{
         public long openapiServerId;
     }
@@ -526,17 +521,17 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("tool_maker/remove")
     public void removeToolMaker(
             @ServiceRequestMessage RequestOfRemoveToolMaker req,
-            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMaker> resp
+            @ServiceResponseMessage AIPortServiceResponse<Boolean> resp
     ) throws Exception {
         if(req.toolMakerType == AIPortToolMaker.TYPE_MCP) {
-            MCPDirectStudio.removeLocalMCPServer(req.toolMakerId,
+            MCPDirectStudio.removeMCPServer(req.toolMakerId,
                     (code,message,server)->{
                         resp.code(code);
                         resp.message = message;
                         resp.data = server;
                     });
         }else if(req.toolMakerType==AIPortToolMaker.TYPE_OPENAPI){
-            MCPDirectStudio.removeLocalOpenAPIServer(req.toolMakerId,
+            MCPDirectStudio.removeOpenAPIServer(req.toolMakerId,
                     (code,message,server)->{
                         resp.code(code);
                         resp.message = message;

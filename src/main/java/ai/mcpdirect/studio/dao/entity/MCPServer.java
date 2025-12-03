@@ -76,6 +76,9 @@ public class MCPServer extends AIPortToolMaker {
         lastUpdated = maker.lastUpdated;
         created = maker.created;
 //        templateId = maker.templateId;
+        for (MCPTool tool : this.tools.values()) {
+            tool.rebuildMetaData();
+        }
         if(tools!=null) for (AIPortTool tool : tools) if(tool.makerId==id){
             MCPTool mcpTool = this.tools.get(tool.name);
             if(mcpTool==null){
