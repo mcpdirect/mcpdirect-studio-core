@@ -181,10 +181,12 @@ public class OpenAPITool extends AIPortTool implements AITool {
                     header.put("Content-Type",mediaType);
 //                    data = content.get("data");
                 }
-                parameters = (Map<String, Object>) parameters.get("parameters");
-                if(parameters==null&&!parameterMap.isEmpty()){
-                    throw new Exception("Missing parameters");
-                } else for (Map.Entry<String, Parameter> entry : parameterMap.entrySet()) {
+//
+                if(parameters.containsKey("parameters")&&!parameterMap.isEmpty()){
+//                    throw new Exception("Missing parameters");
+                    parameters = (Map<String, Object>) parameters.get("parameters");
+                }
+                for (Map.Entry<String, Parameter> entry : parameterMap.entrySet()) {
                     Parameter parameter = entry.getValue();
                     Boolean required = parameter.getRequired();
                     if(required==null){
