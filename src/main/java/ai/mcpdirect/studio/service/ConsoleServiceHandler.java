@@ -20,6 +20,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import io.swagger.v3.oas.models.servers.ServerVariables;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 
@@ -232,7 +233,8 @@ public class ConsoleServiceHandler {
             if(servers!=null) {
                 for (Server server :servers) {
                     AtomicReference<String> url = new AtomicReference<>(server.getUrl());
-                    server.getVariables().forEach((k, v) -> {
+                    ServerVariables variables = server.getVariables();
+                    if(variables!=null) variables.forEach((k, v) -> {
                         String value = v.getDefault();
                         if (value == null && v.getEnum() != null) {
                             for (String s : v.getEnum()) {
@@ -260,6 +262,7 @@ public class ConsoleServiceHandler {
                     }
                 }
             }
+
             resp.success(serverDoc);
         }
     }

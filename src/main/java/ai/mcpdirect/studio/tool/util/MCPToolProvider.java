@@ -1,6 +1,5 @@
 package ai.mcpdirect.studio.tool.util;
 
-import ai.mcpdirect.backend.util.MCPDirectStdioClientTransport;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.tool.AITool;
 import ai.mcpdirect.studio.tool.MCPTool;
@@ -62,7 +61,7 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
                 transport = new MCPDirectStdioClientTransport(parameters,JSON_MAPPER){
                     @Override
                     public void onException(Throwable throwable) {
-                        statusMessage+=(throwable.getMessage()+"\n");
+                        errorMessage +=(throwable.getMessage()+"\n");
                     }
                 };
             }else{
@@ -90,11 +89,14 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
                             .sampling()
                             .build());
             client = builder.build();
-
+            errorCode = 0;
+            errorMessage = "";
             client.initialize();
             status = STATUS_ON;
         } catch (Throwable e) {
-            status = STATUS_ERROR;
+//            status = STATUS_ERROR;
+            errorCode = ERROR;
+            errorMessage += e.getMessage();
         }
     }
     public void close(){
@@ -137,7 +139,8 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
                 mcpTool.setMCPToolProvider(this,tool);
             }
         }catch (Throwable e){
-            status = STATUS_ERROR;
+            errorCode = ERROR;
+            errorMessage = e.getMessage();
         }
     }
 
@@ -167,8 +170,8 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
             );
             return JSON.toJson(result);
         } catch (Throwable e) {
-            status = STATUS_ERROR;
-            error = "Error "+INTERNAL_ERROR+": " + statusMessage;
+            errorCode = ERROR;
+            error = "Error "+INTERNAL_ERROR+": " + errorMessage;
         }
         return MCPTool.buildCallResult(error,true);
     }

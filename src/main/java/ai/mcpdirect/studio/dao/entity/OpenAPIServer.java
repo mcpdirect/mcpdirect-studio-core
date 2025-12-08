@@ -2,7 +2,6 @@ package ai.mcpdirect.studio.dao.entity;
 
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortTool;
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
-import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.tool.openapi.OpenAPITool;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -14,7 +13,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class OpenAPIServer extends AIPortToolMaker {
     @JsonProperty
-    protected String statusMessage="";
+    public int errorCode;
+    @JsonProperty
+    public String errorMessage ="";
     @JsonProperty
     public String url;
     @JsonProperty
@@ -56,9 +57,9 @@ public class OpenAPIServer extends AIPortToolMaker {
         }
     }
 
-    public String statusMessage() {
-        return statusMessage;
-    }
+//    public String statusMessage() {
+//        return statusMessage;
+//    }
     public OpenAPITool getTool(String name) {
         return tools.get(name);
     }

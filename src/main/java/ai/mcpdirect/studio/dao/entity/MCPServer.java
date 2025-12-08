@@ -17,11 +17,9 @@ package ai.mcpdirect.studio.dao.entity;
 
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortTool;
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
-import ai.mcpdirect.studio.tool.AITool;
 import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,8 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MCPServer extends AIPortToolMaker {
     @JsonIgnore
 	protected final Map<String, MCPTool> tools = new ConcurrentHashMap<>();
-    @JsonIgnore
-    protected String statusMessage="";
+    public int errorCode;
+    public String errorMessage ="";
     public int transport;
     public String url;
     public String command;
@@ -95,9 +93,9 @@ public class MCPServer extends AIPortToolMaker {
 	public int status(){
 		return status;
 	}
-    public String statusMessage(){
-        return statusMessage;
-    }
+//    public String statusMessage(){
+//        return errorMessage;
+//    }
 
 	public Collection<? extends MCPTool> getTools(){
 		return tools.values();

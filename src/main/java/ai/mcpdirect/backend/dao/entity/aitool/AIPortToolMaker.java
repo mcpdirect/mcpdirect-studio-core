@@ -6,7 +6,6 @@ public class AIPortToolMaker {
     public static final int STATUS_ABANDONED = -1;
     public static final int STATUS_OFF = 0;
     public static final int STATUS_ON = 1;
-    public static final int STATUS_ERROR = 256;
     public static final int STATUS_WAITING = Integer.MAX_VALUE;
     public int status;
     public long lastUpdated;
@@ -25,6 +24,8 @@ public class AIPortToolMaker {
     public long userId;
 //    public long teamId;
     public long templateId;
+
+    public static final int ERROR = 1;
 
     public boolean mcp(){
         return type == TYPE_MCP;

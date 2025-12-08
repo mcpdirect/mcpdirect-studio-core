@@ -49,7 +49,7 @@ public class AIToolServiceHandler {
         MCPToolProvider provider = mcpToolsProviders.get(Long.toString(serverId, Character.MAX_RADIX));
         if(provider!=null){
             provider.createMcpSyncClient();
-            provider.refreshTools();
+            if(provider.errorCode==0) provider.refreshTools();
         }
     }
     public static synchronized MCPServer connectMCPServer(long serverId, String serverName, MCPServerConfig conf)
@@ -70,12 +70,12 @@ public class AIToolServiceHandler {
                 provider.env = conf.env;
                 if(provider.status!=conf.status) {
                     provider.status = conf.status;
-                    if (conf.status == 1) {
-                        provider.createMcpSyncClient();
-                        provider.refreshTools();
-                    } else {
-                        provider.close();
-                    }
+                }
+                if (conf.status == 1) {
+                    provider.createMcpSyncClient();
+                    if(provider.errorCode==0) provider.refreshTools();
+                } else {
+                    provider.close();
                 }
             }
             return provider;
@@ -118,7 +118,7 @@ public class AIToolServiceHandler {
         provider.agentId = MCPDirectStudio.studioToolAgentId();
         if(conf.status==1) {
             provider.createMcpSyncClient();
-            provider.refreshTools();
+            if(provider.errorCode==0)provider.refreshTools();
         }
         mcpToolsProviders.put(serverKey, provider);
         return provider;

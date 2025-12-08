@@ -1,4 +1,4 @@
-package ai.mcpdirect.backend.util;
+package ai.mcpdirect.studio.tool.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -119,25 +119,39 @@ public class MCPDirectStdioClientTransport implements McpClientTransport {
 			// Start the process
 			try {
 				this.process = processBuilder.start();
-			}
-			catch (IOException e) {
+				// Validate process streams
+				if (this.process.getInputStream() == null || process.getOutputStream() == null) {
+					this.process.destroy();
+					RuntimeException t = new RuntimeException("Process input or output stream is null");
+					onException(t);
+					throw t;
+				}
+
+				// Start threads
+				startInboundProcessing();
+				startOutboundProcessing();
+				startErrorProcessing();
+				logger.info("MCP server started");
+			} catch (IOException e) {
                 onException(e);
-				throw new RuntimeException("Failed to start process with command: " + fullCommand, e);
+				close();
+				logger.info("Failed to start process with command: " + fullCommand, e);
+//				throw new RuntimeException("Failed to start process with command: " + fullCommand, e);
 			}
 
-			// Validate process streams
-			if (this.process.getInputStream() == null || process.getOutputStream() == null) {
-				this.process.destroy();
-                RuntimeException t = new RuntimeException("Process input or output stream is null");
-                onException(t);
-                throw t;
-			}
-
-			// Start threads
-			startInboundProcessing();
-			startOutboundProcessing();
-			startErrorProcessing();
-			logger.info("MCP server started");
+//			// Validate process streams
+//			if (this.process.getInputStream() == null || process.getOutputStream() == null) {
+//				this.process.destroy();
+//                RuntimeException t = new RuntimeException("Process input or output stream is null");
+//                onException(t);
+//                throw t;
+//			}
+//
+//			// Start threads
+//			startInboundProcessing();
+//			startOutboundProcessing();
+//			startErrorProcessing();
+//			logger.info("MCP server started");
 		}).subscribeOn(Schedulers.boundedElastic());
 	}
 

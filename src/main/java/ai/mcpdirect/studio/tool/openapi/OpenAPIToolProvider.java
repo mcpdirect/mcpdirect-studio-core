@@ -1,13 +1,10 @@
 package ai.mcpdirect.studio.tool.openapi;
 
-import ai.mcpdirect.backend.dao.entity.aitool.AIPortTool;
-import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
 import ai.mcpdirect.studio.dao.entity.OpenAPIServer;
 import ai.mcpdirect.studio.tool.AITool;
 import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.tool.util.AIToolProvider;
 import appnet.hstp.labs.util.http.HttpClient;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.models.*;
 import io.swagger.v3.oas.models.security.SecurityScheme;
@@ -15,10 +12,8 @@ import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.INTERNAL_ERROR;
 import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.METHOD_NOT_FOUND;
@@ -81,7 +76,7 @@ public class OpenAPIToolProvider extends OpenAPIServer implements AIToolProvider
             }catch (Exception e) {
                 if(doc==null){
                     status = OPENAPI_DOC_NOT_EXIST;
-                    statusMessage = e.getMessage();
+                    errorMessage = e.getMessage();
                     return;
                 }
             }
@@ -117,8 +112,9 @@ public class OpenAPIToolProvider extends OpenAPIServer implements AIToolProvider
             result = tool.call(parameters);
             error = false;
         } catch (Throwable e) {
-            status = STATUS_ERROR;
-            result = "Error "+INTERNAL_ERROR+": " + statusMessage;
+//            status = STATUS_ERROR;
+            errorCode = ERROR;
+            result = "Error "+INTERNAL_ERROR+": " + errorMessage;
         }
         return MCPTool.buildCallResult(result,error);
     }

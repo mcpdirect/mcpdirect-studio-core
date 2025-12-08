@@ -66,6 +66,7 @@ public class OpenAPITool extends AIPortTool implements AITool {
             }
         }
         return prefix+"_"+method+name;
+//        return method+name;
     }
 
     public void setOpenAPIToolProvider(
@@ -155,7 +156,9 @@ public class OpenAPITool extends AIPortTool implements AITool {
                 } else if(type== SecurityScheme.Type.APIKEY){
                     SecurityScheme.In in = scheme.getIn();
                     if(in== SecurityScheme.In.HEADER){
-
+                        header.put(scheme.getName(), security.security());
+                    }else if(in==SecurityScheme.In.QUERY){
+                        queries.add(scheme.getName()+"="+security.security());
                     }
                 }
             }

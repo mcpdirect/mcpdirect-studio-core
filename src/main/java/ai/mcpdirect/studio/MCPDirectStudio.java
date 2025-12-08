@@ -933,9 +933,10 @@ public class MCPDirectStudio {
                                 }else{
                                     notificationHandler.onToolMakerNotification(new MCPServer(toolMaker.id) {{
                                         name = toolMaker.name;
-                                        status = STATUS_ERROR;
+                                        status = toolMaker.status;
+                                        errorCode = ERROR;
                                         userId = toolMaker.userId;
-                                        statusMessage = "config not found";
+                                        errorMessage = "config not found";
                                         agentId = studioToolAgentId();
                                         templateId = toolMaker.templateId;
                                     }});
@@ -954,9 +955,10 @@ public class MCPDirectStudio {
                                     notificationHandler.onToolMakerNotification(new OpenAPIServer() {{
                                         id = toolMaker.id;
                                         name = toolMaker.name;
-                                        status = STATUS_ERROR;
+                                        status = toolMaker.status;
+                                        errorCode = ERROR;
                                         userId = toolMaker.userId;
-                                        statusMessage = "config not found";
+                                        errorMessage = "config not found";
                                         agentId = studioToolAgentId();
                                         templateId = toolMaker.templateId;
                                     }});
@@ -1061,8 +1063,9 @@ public class MCPDirectStudio {
             } catch (Exception e) {
                 MCPServer mcpServer = new MCPServer(mcpServerId){{
                     name = serverName;
-                    status = STATUS_ERROR;
-                    statusMessage = e.getMessage();
+                    status = config.status;
+                    errorCode = ERROR;
+                    errorMessage = e.getMessage();
                     agentId = studioToolAgentId();
                 }};
                 notificationHandler.onToolMakerNotification(mcpServer);
@@ -1090,8 +1093,9 @@ public class MCPDirectStudio {
         }catch (Exception e) {
             mcpServer = new MCPServer(serverId){{
                 name = serverName;
-                status = STATUS_ERROR;
-                statusMessage = e.getMessage();
+                status = config.status;
+                errorCode = ERROR;
+                errorMessage = e.getMessage();
                 agentId = studioToolAgentId();
             }};
             notificationHandler.onToolMakerNotification(mcpServer);
@@ -1126,8 +1130,9 @@ public class MCPDirectStudio {
                 OpenAPIServer server = new OpenAPIServer(){{
                     id = serverId;
                     name = serverName;
-                    status = STATUS_ERROR;
-                    statusMessage = e.getMessage();
+                    status = config.status;
+                    errorCode = ERROR;
+                    errorMessage = e.getMessage();
                     agentId = studioToolAgentId();
                     url = config.url;
                     securities = config.securities;
@@ -1162,8 +1167,9 @@ public class MCPDirectStudio {
             openapiServer = new OpenAPIServer(){{
                 id = serverId;
                 name = serverName;
-                status = STATUS_ERROR;
-                statusMessage = e.getMessage();
+                status = config.status;
+                errorCode = ERROR;
+                errorMessage = e.getMessage();
                 agentId = studioToolAgentId();
                 url = config.url;
                 securities = config.securities;
@@ -2232,6 +2238,7 @@ public class MCPDirectStudio {
             } else {
                 if(serverName==null) serverName = server.name;
                 if(conf!=null){
+                    conf.id = serverId;
                     conf.status = server.status;
                     if(status!=null) {
                         conf.status = status;
@@ -2240,7 +2247,7 @@ public class MCPDirectStudio {
                             serverId,serverName,conf
                     );
                     if(server.status<0){
-                        callback.onResult(255,server.statusMessage(),null);
+                        callback.onResult(255,server.errorMessage,null);
                         notificationHandler.onToolMakerNotification(server);
                         return;
                     }
@@ -2279,6 +2286,7 @@ public class MCPDirectStudio {
         if(server!=null) try{
             if(serverName==null) serverName = server.name;
             if(conf!=null){
+                conf.id = serverId;
                 conf.status = server.status;
                 if(status!=null) {
                     conf.status = status;
@@ -2286,8 +2294,8 @@ public class MCPDirectStudio {
                 server = AIToolServiceHandler.connectOpenAPIServer(
                         serverId,serverName,conf
                 );
-                if(server.status<0){
-                    callback.onResult(255,server.statusMessage(),null);
+                if(server.errorCode>0){
+                    callback.onResult(0,null,server);
                     notificationHandler.onToolMakerNotification(server);
                     return;
                 }
@@ -2414,7 +2422,8 @@ public class MCPDirectStudio {
                 id = maker.id;
                 name = maker.name;
                 agentId = maker.agentId;
-                status = STATUS_ERROR;
+                status = 0;
+                errorCode = ERROR;
             }});
             return;
         }
@@ -2428,8 +2437,8 @@ public class MCPDirectStudio {
         }});
         MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(
                 maker.id, maker.name, mcpServerConfig);
-        if(mcpServer.status<0){
-            callback.onResult(255,mcpServer.statusMessage(),null);
+        if(mcpServer.errorCode>0){
+            callback.onResult(0,null,mcpServer);
             notificationHandler.onToolMakerNotification(mcpServer);
             return;
         }
