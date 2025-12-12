@@ -9,26 +9,26 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 class SQLiteInsert implements Insert {
-        private final Connection connection;
-        private final String tableName;
-        private final Map<String, Object> values = new LinkedHashMap<>();
+    private final Connection connection;
+    private final String tableName;
+    private final Map<String, Object> values = new LinkedHashMap<>();
 
-        public SQLiteInsert(Connection connection, String tableName) {
-            this.connection = connection;
-            this.tableName = tableName;
-        }
+    public SQLiteInsert(Connection connection, String tableName) {
+        this.connection = connection;
+        this.tableName = tableName;
+    }
 
-        @Override
-        public Insert value(String column, Object value) throws Exception{
+    @Override
+    public Insert value(String column, Object value) throws Exception{
 //            column = column.trim().toLowerCase();
 //            if(!(value instanceof Number)&&!(value instanceof String)
 //                    &&!(value instanceof Boolean)&&!(value instanceof byte[])){
 //                value = JSON.toJson(value);
 //            }
 //            values.put(column, value);
-            SQLiteUpdate.set(values,column,value);
-            return this;
-        }
+        SQLiteUpdate.set(values,column,value);
+        return this;
+    }
 
     private boolean replaceIfExists;
     @Override
@@ -38,28 +38,28 @@ class SQLiteInsert implements Insert {
     }
 
     @Override
-        public boolean execute() throws Exception {
-            String columns = String.join(", ", values.keySet());
-            String placeholders = String.join(", ",
-                    Collections.nCopies(values.size(), "?"));
+    public boolean execute() throws Exception {
+        String columns = String.join(", ", values.keySet());
+        String placeholders = String.join(", ",
+                Collections.nCopies(values.size(), "?"));
 
-            String sql = String.format("INSERT "+(replaceIfExists?"OR REPLACE":"")+" INTO %s (%s) VALUES (%s)",
-                    tableName, columns, placeholders);
-
-            if(connection!=null)try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-                int i = 1;
-                for (Object value : values.values()) {
-                    stmt.setObject(i++, value);
-                }
-                boolean result =  stmt.executeUpdate()>0;
-                return result;
-            }else{
-                System.out.println(sql);
-                int i = 1;
-                for (Object value : values.values()) {
-                    System.out.println((i++)+" : "+value);
-                }
-                return false;
+        String sql = String.format("INSERT "+(replaceIfExists?"OR REPLACE":"")+" INTO %s (%s) VALUES (%s)",
+                tableName, columns, placeholders);
+        System.out.println(sql);
+        if(connection!=null)try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            int i = 1;
+            for (Object value : values.values()) {
+                stmt.setObject(i++, value);
             }
+            int result =  stmt.executeUpdate();
+            System.out.println("Updated: "+result);
+            return result>0;
+        }else{
+            int i = 1;
+            for (Object value : values.values()) {
+                System.out.println((i++)+" : "+value);
+            }
+            return false;
         }
     }
+}

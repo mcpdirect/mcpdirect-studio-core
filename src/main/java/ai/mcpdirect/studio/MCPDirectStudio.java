@@ -759,9 +759,9 @@ public class MCPDirectStudio {
 //            out.write(JSON.toJsonBytes(openapiServerConfigs));
 //        }catch (Exception ignore){}
 //    }
-    public static long localServerId(String name){
-        return name.hashCode()|Long.MIN_VALUE;
-    }
+//    public static long localServerId(String name){
+//        return name.hashCode()|Long.MIN_VALUE;
+//    }
     public static void removeMCPServer(long serverId, Callback<Boolean> callback) throws Exception {
         if(serverId>Integer.MAX_VALUE){
             Service service = aitoolsManagementUSL.appendPath("tool_maker/remove")
@@ -785,34 +785,35 @@ public class MCPDirectStudio {
                 callback.onResult(code,message,null);
             }
         }
-        if(serverId>Integer.MAX_VALUE){
-            MCPServer server = AIToolServiceHandler.getMCPServer(serverId);
-            server.status = STATUS_ABANDONED;
-            notificationHandler.onToolMakerNotification(server);
-            if(server.templateId>0){
-                AIToolServiceHandler.removeMCPServer(serverId);
-                dbHelper.deleteToolMakerTemplateConfig(server.id);
-            }else {
-                MCPServerConfig mcpServerConfig = dbHelper.selectMCPServerConfig(serverId);
-                server.id = localServerId(mcpServerConfig.name);
-                server.status = mcpServerConfig.status;
-                AIToolServiceHandler.remapMCPServer(serverId);
-                mcpServerConfig.id = server.id;
-                dbHelper.setMCPServerConfig(serverId, mcpServerConfig);
-                notificationHandler.onToolMakerNotification(server);
-            }
-            callback.onResult(0, null, true);
-        }else {
+//        if(serverId>Integer.MAX_VALUE){
+//            MCPServer server = AIToolServiceHandler.getMCPServer(serverId);
+//            server.status = STATUS_ABANDONED;
+//            notificationHandler.onToolMakerNotification(server);
+//            if(server.templateId>0){
+//                AIToolServiceHandler.removeMCPServer(serverId);
+//                dbHelper.deleteToolMakerTemplateConfig(server.id);
+//            }else {
+//                MCPServerConfig mcpServerConfig = dbHelper.selectMCPServerConfig(serverId);
+//                server.id = localServerId(mcpServerConfig.name);
+//                server.status = mcpServerConfig.status;
+//                AIToolServiceHandler.remapMCPServer(serverId);
+//                mcpServerConfig.id = server.id;
+//                dbHelper.setMCPServerConfig(serverId, mcpServerConfig);
+//                notificationHandler.onToolMakerNotification(server);
+//            }
+//            callback.onResult(0, null, true);
+//        }else {
             MCPServer server = AIToolServiceHandler.removeMCPServer(serverId);
             if(server!=null) {
                 dbHelper.deleteMCPServerConfig(server.id);
                 server.status = STATUS_ABANDONED;
                 notificationHandler.onToolMakerNotification(server);
+                if(server.templateId>0) dbHelper.deleteToolMakerTemplateConfig(server.id);
                 callback.onResult(0, null, true);
             }else{
                 callback.onResult(TOOL_MAKER_NOT_EXISTS,null,null);
             }
-        }
+//        }
     }
 
     public static void removeOpenAPIServer(long serverId, Callback<Boolean> callback) throws Exception {
@@ -838,35 +839,36 @@ public class MCPDirectStudio {
                 callback.onResult(code,message,null);
             }
         }
-        if(serverId>Integer.MAX_VALUE){
-            OpenAPIServer server = AIToolServiceHandler.getOpenAPIServer(serverId);
-            server.status = STATUS_ABANDONED;
-            notificationHandler.onToolMakerNotification(server);
-            if(server.templateId>0){
-                AIToolServiceHandler.removeOpenAPIServer(serverId);
-                dbHelper.deleteToolMakerTemplateConfig(server.id);
-            }else {
-                OpenAPIServerConfig mcpServerConfig = dbHelper.selectOpenAPIServerConfig(serverId);
-                server.id = localServerId(mcpServerConfig.name);
-                server.status = mcpServerConfig.status;
-                AIToolServiceHandler.remapOpenAPIServer(serverId);
-                mcpServerConfig.id = server.id;
-                dbHelper.setOpenAPIServerConfig(serverId, mcpServerConfig);
-                notificationHandler.onToolMakerNotification(server);
-            }
-
-            callback.onResult(0, null, true);
-        }else {
+//        if(serverId>Integer.MAX_VALUE){
+//            OpenAPIServer server = AIToolServiceHandler.getOpenAPIServer(serverId);
+//            server.status = STATUS_ABANDONED;
+//            notificationHandler.onToolMakerNotification(server);
+//            if(server.templateId>0){
+//                AIToolServiceHandler.removeOpenAPIServer(serverId);
+//                dbHelper.deleteToolMakerTemplateConfig(server.id);
+//            }else {
+//                OpenAPIServerConfig mcpServerConfig = dbHelper.selectOpenAPIServerConfig(serverId);
+//                server.id = localServerId(mcpServerConfig.name);
+//                server.status = mcpServerConfig.status;
+//                AIToolServiceHandler.remapOpenAPIServer(serverId);
+//                mcpServerConfig.id = server.id;
+//                dbHelper.setOpenAPIServerConfig(serverId, mcpServerConfig);
+//                notificationHandler.onToolMakerNotification(server);
+//            }
+//
+//            callback.onResult(0, null, true);
+//        }else {
             OpenAPIServer server = AIToolServiceHandler.removeOpenAPIServer(serverId);
             if (server != null) {
                 server.status = STATUS_ABANDONED;
                 dbHelper.deleteOpenAPIServerConfig(server.id);
                 notificationHandler.onToolMakerNotification(server);
+                if(server.templateId>0) dbHelper.deleteToolMakerTemplateConfig(server.id);
                 callback.onResult(0, null, true);
             } else {
                 callback.onResult(TOOL_MAKER_NOT_EXISTS, null, null);
             }
-        }
+//        }
     }
 
     public static void initToolAgent(){
@@ -992,8 +994,8 @@ public class MCPDirectStudio {
             e.printStackTrace();
         }
 //        connectLocalMCPServers(localMCPServerConfigs);
-        connectLocalMCPServers();
-        connectLocalOpenAPIServers();
+//        connectLocalMCPServers();
+//        connectLocalOpenAPIServers();
 //        writeMCPServerConfigs();
 //    }).start();
     }
@@ -1014,171 +1016,171 @@ public class MCPDirectStudio {
 //        return map;
 //    }
 
-    private static void connectLocalMCPServers(){
-//        configs.forEach((serverName,config)->{
-//            if(!mcpServerConfigs.containsKey(serverName)) {
-//                mcpServerConfigs.put(serverName,config);
-//                long mcpServerId = localServerId(serverName);
-//                notificationHandler.onToolMakerNotification(new MCPServer(config){{
-//                    id = mcpServerId;
-//                    name = serverName;
-//                    status = STATUS_WAITING;
-//                    agentId = studioToolAgentId();
-//                }});
-//                new Thread(()-> {try {
-//                    MCPServer mcpServer
-//                            = AIToolServiceHandler.connectMCPServer(mcpServerId, serverName, config);
-//                    mcpServer.agentId = studioToolAgentId();
-//                    notificationHandler.onToolMakerNotification(mcpServer);
-//                } catch (Exception e) {
-//                    MCPServer mcpServer = new MCPServer(mcpServerId){{
-//                        name = serverName;
-//                        status = STATUS_ERROR;
-//                        statusMessage = e.getMessage();
-//                        agentId = studioToolAgentId();
-//                    }};
-//                    notificationHandler.onToolMakerNotification(mcpServer);
-//                }}).start();
+//    private static void connectLocalMCPServers(){
+////        configs.forEach((serverName,config)->{
+////            if(!mcpServerConfigs.containsKey(serverName)) {
+////                mcpServerConfigs.put(serverName,config);
+////                long mcpServerId = localServerId(serverName);
+////                notificationHandler.onToolMakerNotification(new MCPServer(config){{
+////                    id = mcpServerId;
+////                    name = serverName;
+////                    status = STATUS_WAITING;
+////                    agentId = studioToolAgentId();
+////                }});
+////                new Thread(()-> {try {
+////                    MCPServer mcpServer
+////                            = AIToolServiceHandler.connectMCPServer(mcpServerId, serverName, config);
+////                    mcpServer.agentId = studioToolAgentId();
+////                    notificationHandler.onToolMakerNotification(mcpServer);
+////                } catch (Exception e) {
+////                    MCPServer mcpServer = new MCPServer(mcpServerId){{
+////                        name = serverName;
+////                        status = STATUS_ERROR;
+////                        statusMessage = e.getMessage();
+////                        agentId = studioToolAgentId();
+////                    }};
+////                    notificationHandler.onToolMakerNotification(mcpServer);
+////                }}).start();
+////            }
+////        });
+//        List<MCPServerConfig> configs = dbHelper.selectMCPServerConfigs();
+//        for (MCPServerConfig config : configs) if(config.id<Integer.MAX_VALUE) {
+//            String serverName = config.name;
+//            if (serverName == null) {
+//                dbHelper.deleteMCPServerConfig(config.id);
+//                continue;
 //            }
-//        });
-        List<MCPServerConfig> configs = dbHelper.selectMCPServerConfigs();
-        for (MCPServerConfig config : configs) if(config.id<Integer.MAX_VALUE) {
-            String serverName = config.name;
-            if (serverName == null) {
-                dbHelper.deleteMCPServerConfig(config.id);
-                continue;
-            }
-            long mcpServerId = localServerId(serverName);
-            notificationHandler.onToolMakerNotification(new MCPServer(config){{
-                id = mcpServerId;
-                name = serverName;
-                status = STATUS_WAITING;
-                agentId = studioToolAgentId();
-            }});
-            new Thread(()-> {try {
-                MCPServer mcpServer
-                        = AIToolServiceHandler.connectMCPServer(mcpServerId, serverName, config);
-                mcpServer.agentId = studioToolAgentId();
-                notificationHandler.onToolMakerNotification(mcpServer);
-            } catch (Exception e) {
-                MCPServer mcpServer = new MCPServer(mcpServerId){{
-                    name = serverName;
-                    status = config.status;
-                    errorCode = ERROR;
-                    errorMessage = e.getMessage();
-                    agentId = studioToolAgentId();
-                }};
-                notificationHandler.onToolMakerNotification(mcpServer);
-            }}).start();
-        }
-    }
-
-    public static MCPServer connectLocalMCPServer(String serverName, MCPServerConfig config){
-        long serverId = localServerId(serverName);
-        MCPServer mcpServer = null;
-        if(dbHelper.selectMCPServerConfigId(serverId)==null) try{
-            config.id = serverId;
-            config.name = serverName;
-//            config.status = 1;
-            dbHelper.insertMCPServerConfig(config);
-            notificationHandler.onToolMakerNotification(new MCPServer(config){{
-                id = serverId;
-                name = serverName;
-                status = STATUS_WAITING;
-                agentId = studioToolAgentId();
-            }});
-            mcpServer = AIToolServiceHandler.connectMCPServer(serverId, serverName, config);
-            mcpServer.agentId = studioToolAgentId();
-            notificationHandler.onToolMakerNotification(mcpServer);
-        }catch (Exception e) {
-            mcpServer = new MCPServer(serverId){{
-                name = serverName;
-                status = config.status;
-                errorCode = ERROR;
-                errorMessage = e.getMessage();
-                agentId = studioToolAgentId();
-            }};
-            notificationHandler.onToolMakerNotification(mcpServer);
-        }
-        return mcpServer;
-    }
-    private static void connectLocalOpenAPIServers(){
-        List<OpenAPIServerConfig> configs = dbHelper.selectOpenAPIServerConfigs();
-        for (OpenAPIServerConfig config : configs) if(config.id<Integer.MAX_VALUE){
-            String serverName = config.name;
-            if(serverName==null){
-                dbHelper.deleteOpenAPIServerConfig(config.id);
-                continue;
-            }
-            long serverId = localServerId(serverName);
-            notificationHandler.onToolMakerNotification(new OpenAPIServer(){{
-                id = serverId;
-                name = serverName;
-                status = STATUS_WAITING;
-                agentId = studioToolAgentId();
-                url = config.url;
-                securities = config.securities;
-                userId = accountId();
-            }});
-            new Thread(()-> {try {
-                OpenAPIServer server
-                        = AIToolServiceHandler.connectOpenAPIServer(serverId, serverName, config);
-                server.userId = accountId();
-                server.agentId = studioToolAgentId();
-                notificationHandler.onToolMakerNotification(server);
-            } catch (Exception e) {
-                OpenAPIServer server = new OpenAPIServer(){{
-                    id = serverId;
-                    name = serverName;
-                    status = config.status;
-                    errorCode = ERROR;
-                    errorMessage = e.getMessage();
-                    agentId = studioToolAgentId();
-                    url = config.url;
-                    securities = config.securities;
-                    userId = accountId();
-                }};
-                notificationHandler.onToolMakerNotification(server);
-            }}).start();
-        }
-    }
-    public static OpenAPIServer connectLocalOpenAPIServer(String serverName, OpenAPIServerConfig config){
-        long serverId = localServerId(serverName);
-        OpenAPIServer openapiServer = null;
-        if(dbHelper.selectOpenAPIServerConfigId(serverId)==null) try{
-            config.id = serverId;
-            config.name = serverName;
-//            config.status = 1;
-            dbHelper.insertOpenAPIServerConfig(config);
-            notificationHandler.onToolMakerNotification(new OpenAPIServer(){{
-                id = serverId;
-                name = serverName;
-                status = STATUS_WAITING;
-                agentId = studioToolAgentId();
-                url = config.url;
-                securities = config.securities;
-                userId = accountId();
-            }});
-            openapiServer = AIToolServiceHandler.connectOpenAPIServer(serverId, serverName, config);
-            openapiServer.userId = accountId();
-            openapiServer.agentId = studioToolAgentId();
-            notificationHandler.onToolMakerNotification(openapiServer);
-        }catch (Exception e) {
-            openapiServer = new OpenAPIServer(){{
-                id = serverId;
-                name = serverName;
-                status = config.status;
-                errorCode = ERROR;
-                errorMessage = e.getMessage();
-                agentId = studioToolAgentId();
-                url = config.url;
-                securities = config.securities;
-                userId = accountId();
-            }};
-            notificationHandler.onToolMakerNotification(openapiServer);
-        }
-        return openapiServer;
-    }
+//            long mcpServerId = localServerId(serverName);
+//            notificationHandler.onToolMakerNotification(new MCPServer(config){{
+//                id = mcpServerId;
+//                name = serverName;
+//                status = STATUS_WAITING;
+//                agentId = studioToolAgentId();
+//            }});
+//            new Thread(()-> {try {
+//                MCPServer mcpServer
+//                        = AIToolServiceHandler.connectMCPServer(mcpServerId, serverName, config);
+//                mcpServer.agentId = studioToolAgentId();
+//                notificationHandler.onToolMakerNotification(mcpServer);
+//            } catch (Exception e) {
+//                MCPServer mcpServer = new MCPServer(mcpServerId){{
+//                    name = serverName;
+//                    status = config.status;
+//                    errorCode = ERROR;
+//                    errorMessage = e.getMessage();
+//                    agentId = studioToolAgentId();
+//                }};
+//                notificationHandler.onToolMakerNotification(mcpServer);
+//            }}).start();
+//        }
+//    }
+//
+//    public static MCPServer connectLocalMCPServer(String serverName, MCPServerConfig config){
+//        long serverId = localServerId(serverName);
+//        MCPServer mcpServer = null;
+//        if(dbHelper.selectMCPServerConfigId(serverId)==null) try{
+//            config.id = serverId;
+//            config.name = serverName;
+////            config.status = 1;
+//            dbHelper.insertMCPServerConfig(config);
+//            notificationHandler.onToolMakerNotification(new MCPServer(config){{
+//                id = serverId;
+//                name = serverName;
+//                status = STATUS_WAITING;
+//                agentId = studioToolAgentId();
+//            }});
+//            mcpServer = AIToolServiceHandler.connectMCPServer(serverId, serverName, config);
+//            mcpServer.agentId = studioToolAgentId();
+//            notificationHandler.onToolMakerNotification(mcpServer);
+//        }catch (Exception e) {
+//            mcpServer = new MCPServer(serverId){{
+//                name = serverName;
+//                status = config.status;
+//                errorCode = ERROR;
+//                errorMessage = e.getMessage();
+//                agentId = studioToolAgentId();
+//            }};
+//            notificationHandler.onToolMakerNotification(mcpServer);
+//        }
+//        return mcpServer;
+//    }
+//    private static void connectLocalOpenAPIServers(){
+//        List<OpenAPIServerConfig> configs = dbHelper.selectOpenAPIServerConfigs();
+//        for (OpenAPIServerConfig config : configs) if(config.id<Integer.MAX_VALUE){
+//            String serverName = config.name;
+//            if(serverName==null){
+//                dbHelper.deleteOpenAPIServerConfig(config.id);
+//                continue;
+//            }
+//            long serverId = localServerId(serverName);
+//            notificationHandler.onToolMakerNotification(new OpenAPIServer(){{
+//                id = serverId;
+//                name = serverName;
+//                status = STATUS_WAITING;
+//                agentId = studioToolAgentId();
+//                url = config.url;
+//                securities = config.securities;
+//                userId = accountId();
+//            }});
+//            new Thread(()-> {try {
+//                OpenAPIServer server
+//                        = AIToolServiceHandler.connectOpenAPIServer(serverId, serverName, config);
+//                server.userId = accountId();
+//                server.agentId = studioToolAgentId();
+//                notificationHandler.onToolMakerNotification(server);
+//            } catch (Exception e) {
+//                OpenAPIServer server = new OpenAPIServer(){{
+//                    id = serverId;
+//                    name = serverName;
+//                    status = config.status;
+//                    errorCode = ERROR;
+//                    errorMessage = e.getMessage();
+//                    agentId = studioToolAgentId();
+//                    url = config.url;
+//                    securities = config.securities;
+//                    userId = accountId();
+//                }};
+//                notificationHandler.onToolMakerNotification(server);
+//            }}).start();
+//        }
+//    }
+//    public static OpenAPIServer connectLocalOpenAPIServer(String serverName, OpenAPIServerConfig config){
+//        long serverId = localServerId(serverName);
+//        OpenAPIServer openapiServer = null;
+//        if(dbHelper.selectOpenAPIServerConfigId(serverId)==null) try{
+//            config.id = serverId;
+//            config.name = serverName;
+////            config.status = 1;
+//            dbHelper.insertOpenAPIServerConfig(config);
+//            notificationHandler.onToolMakerNotification(new OpenAPIServer(){{
+//                id = serverId;
+//                name = serverName;
+//                status = STATUS_WAITING;
+//                agentId = studioToolAgentId();
+//                url = config.url;
+//                securities = config.securities;
+//                userId = accountId();
+//            }});
+//            openapiServer = AIToolServiceHandler.connectOpenAPIServer(serverId, serverName, config);
+//            openapiServer.userId = accountId();
+//            openapiServer.agentId = studioToolAgentId();
+//            notificationHandler.onToolMakerNotification(openapiServer);
+//        }catch (Exception e) {
+//            openapiServer = new OpenAPIServer(){{
+//                id = serverId;
+//                name = serverName;
+//                status = config.status;
+//                errorCode = ERROR;
+//                errorMessage = e.getMessage();
+//                agentId = studioToolAgentId();
+//                url = config.url;
+//                securities = config.securities;
+//                userId = accountId();
+//            }};
+//            notificationHandler.onToolMakerNotification(openapiServer);
+//        }
+//        return openapiServer;
+//    }
 
     public static List<AIPortTool> getAIPortTools(MCPServer mcpServer){
         List<AIPortTool> tools = new ArrayList<>();
@@ -2236,7 +2238,20 @@ public class MCPDirectStudio {
                     callback.onResult(255,null,null);
                 }
             } else {
+                if(server.templateId>0){
+                    callback.onResult(255,"canot modify templated MCP server",null);
+                    return;
+                }
                 if(serverName==null) serverName = server.name;
+                MCPServer finalServer = server;
+                notificationHandler.onToolMakerNotification(new MCPServer(conf) {{
+                    id = finalServer.id;
+                    name = finalServer.name;
+                    agentId = finalServer.agentId;
+                    status = STATUS_WAITING;
+                    userId = finalServer.userId;
+                    templateId = finalServer.templateId;
+                }});
                 if(conf!=null){
                     conf.id = serverId;
                     conf.status = server.status;
@@ -2253,13 +2268,13 @@ public class MCPDirectStudio {
                     }
                 }else{
                     conf = dbHelper.selectMCPServerConfig(serverId);
-                    if(serverId<Integer.MAX_VALUE){
-                        server.id = localServerId(serverName);
+//                    if(serverId<Integer.MAX_VALUE){
+//                        server.id = localServerId(serverName);
+//                        server.name = serverName;
+//                        AIToolServiceHandler.remapMCPServer(serverId);
+//                    }else{
                         server.name = serverName;
-                        AIToolServiceHandler.remapMCPServer(serverId);
-                    }else{
-                        server.name = serverName;
-                    }
+//                    }
                     if(status!=null&&server.status!=status) {
                         conf.status = status;
                         server.status = status;
@@ -2279,9 +2294,10 @@ public class MCPDirectStudio {
         }
     }
 
-    public static void modifyOpenAPIServerConfig(long serverId,String serverName,
-                                             Integer status,OpenAPIServerConfig conf,
-                                             Callback<OpenAPIServer> callback){
+    public static void modifyOpenAPIServerConfig(
+            long serverId,String serverName,
+            Integer status,OpenAPIServerConfig conf,
+            Callback<OpenAPIServer> callback){
         OpenAPIServer server = AIToolServiceHandler.getOpenAPIServer(serverId);
         if(server!=null) try{
             if(serverName==null) serverName = server.name;
@@ -2301,14 +2317,14 @@ public class MCPDirectStudio {
                 }
             }else{
                 conf = dbHelper.selectOpenAPIServerConfig(serverId);
-                if(serverId<Integer.MAX_VALUE){
-                    conf.id = localServerId(serverName);
-                    server.id = conf.id;
+//                if(serverId<Integer.MAX_VALUE){
+//                    conf.id = localServerId(serverName);
+//                    server.id = conf.id;
+//                    server.name = serverName;
+//                    AIToolServiceHandler.remapOpenAPIServer(serverId);
+//                }else{
                     server.name = serverName;
-                    AIToolServiceHandler.remapOpenAPIServer(serverId);
-                }else{
-                    server.name = serverName;
-                }
+//                }
                 if(status!=null&&server.status!=status) {
                     conf.status = status;
                     server.status = status;
@@ -2402,8 +2418,10 @@ public class MCPDirectStudio {
             }
         }, (data) -> JSON.fromJson(data, new TypeReference<>() {}));
     }
-    private static void connectMCPServer(ToolMakerDetails details,
-                                        Callback<AIPortToolMaker> callback) throws Exception {
+    private static void connectMCPServer(
+            ToolMakerDetails details,
+            Callback<AIPortToolMaker> callback
+    ) throws Exception {
         AIPortToolMaker maker = details.maker;
         long templateId = maker.templateId;
         MCPServerConfig mcpServerConfig=null;
@@ -2422,18 +2440,21 @@ public class MCPDirectStudio {
                 id = maker.id;
                 name = maker.name;
                 agentId = maker.agentId;
-                status = 0;
+                status = STATUS_OFF;
+                userId = maker.userId;
+                templateId = maker.templateId;
                 errorCode = ERROR;
+                errorMessage = "config not found";
             }});
             return;
         }
-//        MCPServerConfig mcpServerConfig = new MCPServerConfig(maker.status,config);
-//        mcpServerConfigs.put(maker.name, mcpServerConfig);
         notificationHandler.onToolMakerNotification(new MCPServer(mcpServerConfig) {{
             id = maker.id;
             name = maker.name;
             agentId = maker.agentId;
             status = STATUS_WAITING;
+            userId = maker.userId;
+            templateId = maker.templateId;
         }});
         MCPServer mcpServer = AIToolServiceHandler.connectMCPServer(
                 maker.id, maker.name, mcpServerConfig);
@@ -2578,5 +2599,141 @@ public class MCPDirectStudio {
         }
         dbHelper.insertToolMakerTemplateConfig(templateConfig);
         connectToolMaker(toolMakerId,callback);
+    }
+
+    public static void connectMCPServer(
+            MCPServerConfig config,
+            Callback<AIPortToolMaker> callback
+    ) throws Exception {
+        if(config==null||config.name.isBlank()){
+            callback.onResult(255,"invalid MCP server config",null);
+            return;
+        }
+        Service service = aitoolsManagementUSL
+                .appendPath("tool_maker/create")
+                .createServiceClient()
+                .headers(authHeaders)
+                .content(JSON.toJson(Map.of(
+                        "userId",accountId(),
+                        "agentId",studioToolAgentId(),
+                        "name",config.name,
+                        "type", TYPE_MCP
+                )))
+                .request(serviceEngine);
+        if(service.getErrorCode()==0) {
+            AIPortServiceResponse<AIPortToolMaker> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            if(resp.code==0&&resp.data!=null){
+                config.id = resp.data.id;
+                dbHelper.insertMCPServerConfig(config);
+                ToolMakerDetails details = new ToolMakerDetails();
+                details.maker = resp.data;
+                connectMCPServer(details,callback);
+            }else callback.onResult(resp.code,resp.message,null);
+        }else{
+            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+        }
+    }
+    private static void connectOpenAPIServer(
+            ToolMakerDetails details,
+            Callback<AIPortToolMaker> callback
+    ) throws Exception {
+        AIPortToolMaker maker = details.maker;
+        long templateId = maker.templateId;
+        OpenAPIServerConfig config = dbHelper.selectOpenAPIServerConfig(maker.id);
+        if(config==null){
+            notificationHandler.onToolMakerNotification(new OpenAPIServer() {{
+                id = maker.id;
+                name = maker.name;
+                agentId = maker.agentId;
+                status = STATUS_OFF;
+                userId = maker.userId;
+                templateId = maker.templateId;
+                errorCode = ERROR;
+                errorMessage = "config not found";
+            }});
+            return;
+        }
+        notificationHandler.onToolMakerNotification(new OpenAPIServer() {{
+            id = maker.id;
+            name = maker.name;
+            agentId = maker.agentId;
+            status = STATUS_WAITING;
+            userId = maker.userId;
+            templateId = maker.templateId;
+        }});
+        OpenAPIServer server = AIToolServiceHandler.connectOpenAPIServer(
+                maker.id, maker.name, config);
+        if(server.errorCode>0){
+            callback.onResult(0,null,server);
+            notificationHandler.onToolMakerNotification(server);
+            return;
+        }
+        server.merge(maker, details.tools);
+        notificationHandler.onToolMakerNotification(server);
+
+        List<AIPortTool> publishingTools = new ArrayList<>();
+        List<AIPortTool> oldTools = new ArrayList<>();
+        for (OpenAPITool tool : server.getTools())
+            if (tool.lastUpdated != 0) {
+                AIPortTool duplicate = tool.duplicate();
+                duplicate.metaData = tool.metaData();
+                duplicate.hash = duplicate.metaData.hashCode();
+                publishingTools.add(duplicate);
+                oldTools.add(tool);
+            }
+        if (!publishingTools.isEmpty()) hstpRequest(
+                aitoolsManagementUSL, "tool_agent/tools/publish",
+                Map.of("maker", maker, "tools", publishingTools),
+                new Callback<Long>() {
+                    @Override
+                    public void onResult(int code, String message, Long data) {
+                        if(code==0){
+                            for (AIPortTool tool : oldTools) {
+                                tool.makerId = server.id;
+                                tool.lastUpdated = 0;
+                            }
+                            callback.onResult(code, message, server);
+                        }else {
+                            callback.onResult(code, message, null);
+                        }
+                    }
+                }, (data) -> JSON.fromJson(data, new TypeReference<>() {
+                }));
+        else callback.onResult(0,null,server);
+    }
+
+    public static void connectOpenAPIServer(
+            OpenAPIServerConfig config,
+            Callback<AIPortToolMaker> callback
+    ) throws Exception {
+        if(config==null||config.name.isBlank()){
+            callback.onResult(255,"invalid OpenAPI server config",null);
+            return;
+        }
+        Service service = aitoolsManagementUSL
+                .appendPath("tool_maker/create")
+                .createServiceClient()
+                .headers(authHeaders)
+                .content(JSON.toJson(Map.of(
+                        "userId",accountId(),
+                        "agentId",studioToolAgentId(),
+                        "name",config.name,
+                        "type", TYPE_OPENAPI
+                )))
+                .request(serviceEngine);
+        if(service.getErrorCode()==0) {
+            AIPortServiceResponse<AIPortToolMaker> resp
+                    = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
+            if(resp.code==0&&resp.data!=null){
+                config.id = resp.data.id;
+                dbHelper.insertOpenAPIServerConfig(config);
+                ToolMakerDetails details = new ToolMakerDetails();
+                details.maker = resp.data;
+                connectOpenAPIServer(details,callback);
+            }else callback.onResult(resp.code,resp.message,null);
+        }else{
+            callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
+        }
     }
 }

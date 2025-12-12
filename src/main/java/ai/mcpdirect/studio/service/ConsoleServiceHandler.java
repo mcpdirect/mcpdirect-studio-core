@@ -72,34 +72,57 @@ public class ConsoleServiceHandler {
         resp.success(servers);
     }
 
+//    public static class RequestOfConnectMCPServer{
+//        public Map<String, MCPServerConfig> mcpServerConfigs;
+//    }
+//    @ServiceRequestMapping("mcp_server/connect")
+//    public void connectMCPServers(
+//            @ServiceRequestMessage RequestOfConnectMCPServer req,
+//            @ServiceResponseMessage AIPortServiceResponse<List<MCPServer>> resp
+//    ) throws Exception {
+//        if(req.mcpServerConfigs !=null&&!req.mcpServerConfigs.isEmpty()) {
+//            List<MCPServer> servers = new ArrayList<>();
+//            Map<String,String> errors = new HashMap<>();
+//            for (Map.Entry<String, MCPServerConfig> entry : req.mcpServerConfigs.entrySet()) {
+//                String name = entry.getKey();
+//                MCPServerConfig conf = entry.getValue();
+//                try {
+//                    MCPServer server = MCPDirectStudio.connectLocalMCPServer(name, conf);
+//                    if(server!=null) servers.add(server);
+//                    else errors.put(name,"MCP server exists");
+////                    servers.add(MCPDirectStudio.connectMCPServer(name, conf));
+//
+//                }catch (Exception e){
+//                    errors.put(name,e.getMessage());
+//                }
+//            }
+//            resp.success(servers);
+//            resp.message = JSON.toJson(errors);
+//        }
+//    }
+
     public static class RequestOfConnectMCPServer{
-        public Map<String, MCPServerConfig> mcpServerConfigs;
+        public MCPServerConfig mcpServerConfig;
     }
     @ServiceRequestMapping("mcp_server/connect")
     public void connectMCPServers(
             @ServiceRequestMessage RequestOfConnectMCPServer req,
-            @ServiceResponseMessage AIPortServiceResponse<List<MCPServer>> resp
+            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMaker> resp
     ) throws Exception {
-        if(req.mcpServerConfigs !=null&&!req.mcpServerConfigs.isEmpty()) {
-            List<MCPServer> servers = new ArrayList<>();
-            Map<String,String> errors = new HashMap<>();
-            for (Map.Entry<String, MCPServerConfig> entry : req.mcpServerConfigs.entrySet()) {
-                String name = entry.getKey();
-                MCPServerConfig conf = entry.getValue();
-                try {
-                    MCPServer server = MCPDirectStudio.connectLocalMCPServer(name, conf);
-                    if(server!=null) servers.add(server);
-                    else errors.put(name,"MCP server exists");
-//                    servers.add(MCPDirectStudio.connectMCPServer(name, conf));
-
-                }catch (Exception e){
-                    errors.put(name,e.getMessage());
-                }
-            }
-            resp.success(servers);
-            resp.message = JSON.toJson(errors);
+        try {
+            MCPDirectStudio.connectMCPServer(
+                    req.mcpServerConfig,
+                    (code,message,data)->{
+                        resp.code = code;
+                        resp.message = message;
+                        resp.data = data;
+                    }
+            );
+        }catch (Exception e){
+            resp.message = e.getMessage();
         }
     }
+
     public static class RequestOfModifyMCPServer{
         public long mcpServerId;
         public String mcpServerName;
@@ -281,13 +304,13 @@ public class ConsoleServiceHandler {
     }
 
     public static class RequestOfCreateOpenAPIServer{
-        public String openAPIServerName;
+//        public String openAPIServerName;
         public OpenAPIServerConfig openAPIServerConfig;
 
         public boolean validate(){
-            openAPIServerName = validateName(openAPIServerName);
+//            openAPIServerName = validateName(openAPIServerName);
             OpenAPIServerConfig config = openAPIServerConfig;
-            return openAPIServerName!=null&&config!=null
+            return config!=null&&(config.name=validateName(config.name))!=null
                     &&(config.url=validateUrl(config.url))!=null
                     &&((config.docUri=validateUrl(config.docUri))!=null
                     ||config.doc!=null);
@@ -296,12 +319,19 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("openapi_server/connect")
     public void connectOpenAPIServer(
             @ServiceRequestMessage RequestOfCreateOpenAPIServer req,
-            @ServiceResponseMessage AIPortServiceResponse<OpenAPIServer> resp
+            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMaker> resp
     ) throws Exception {
-        if(req.validate()){
-            resp.success(MCPDirectStudio.connectLocalOpenAPIServer(
-                    req.openAPIServerName,req.openAPIServerConfig
-            ));
+        if(req.validate()) try {
+            MCPDirectStudio.connectOpenAPIServer(
+                    req.openAPIServerConfig,
+                    (code, message, data) -> {
+                        resp.code = code;
+                        resp.message = message;
+                        resp.data = data;
+                    }
+            );
+        }catch (Exception e){
+            resp.message = e.getMessage();
         }
     }
     @ServiceRequestMapping("openapi_server/query")

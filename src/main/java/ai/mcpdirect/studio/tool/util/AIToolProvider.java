@@ -8,6 +8,6 @@ import java.util.Map;
 public interface AIToolProvider {
     Collection<? extends AITool> getTools();
 
-    public AITool getTool(String name);
+    AITool getTool(String name);
     String callTool(String name, Map<String,Object> parameters);
 }

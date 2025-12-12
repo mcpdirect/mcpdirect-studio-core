@@ -1,5 +1,6 @@
 package ai.mcpdirect.studio.service;
 
+import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
 import ai.mcpdirect.studio.dao.entity.OpenAPIServer;
 import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.tool.openapi.OpenAPIServerConfig;
@@ -19,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
-import java.net.http.HttpRequest;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,10 +32,16 @@ public class AIToolServiceHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AIToolServiceHandler.class);
     private static final Map<String, MCPToolProvider> mcpToolsProviders = new ConcurrentHashMap<>();
     private static final Map<String, OpenAPIToolProvider> openapiToolsProviders = new ConcurrentHashMap<>();
-
+    private static final Map<String, AIPortToolMaker> toolMakers = new ConcurrentHashMap<>();
     public static Collection<? extends MCPServer> getMCPServers(){
         return mcpToolsProviders.values();
     }
+//    public static List<MCPServer> getMCPServers(){
+//        return toolProviders.values().stream()
+//                .filter(MCPToolProvider.class::isInstance)
+//                .map(MCPToolProvider.class::cast)  // Type-safe cast
+//                .collect(Collectors.toList());
+//    }
     public static MCPServer getMCPServer(long serverId){
         return mcpToolsProviders.get(Long.toString(serverId,Character.MAX_RADIX));
     }
@@ -49,7 +55,10 @@ public class AIToolServiceHandler {
         MCPToolProvider provider = mcpToolsProviders.get(Long.toString(serverId, Character.MAX_RADIX));
         if(provider!=null){
             provider.createMcpSyncClient();
-            if(provider.errorCode==0) provider.refreshTools();
+            if(provider.errorCode==0) {
+                provider.refreshTools();
+                if(provider.errorCode==0) provider.errorMessage="";
+            }
         }
     }
     public static synchronized MCPServer connectMCPServer(long serverId, String serverName, MCPServerConfig conf)
@@ -73,7 +82,10 @@ public class AIToolServiceHandler {
                 }
                 if (conf.status == 1) {
                     provider.createMcpSyncClient();
-                    if(provider.errorCode==0) provider.refreshTools();
+                    if(provider.errorCode==0) {
+                        provider.refreshTools();
+                        if(provider.errorCode==0) provider.errorMessage="";
+                    }
                 } else {
                     provider.close();
                 }
@@ -118,7 +130,10 @@ public class AIToolServiceHandler {
         provider.agentId = MCPDirectStudio.studioToolAgentId();
         if(conf.status==1) {
             provider.createMcpSyncClient();
-            if(provider.errorCode==0)provider.refreshTools();
+            if(provider.errorCode==0) {
+                provider.refreshTools();
+                if(provider.errorCode==0) provider.errorMessage="";
+            }
         }
         mcpToolsProviders.put(serverKey, provider);
         return provider;
