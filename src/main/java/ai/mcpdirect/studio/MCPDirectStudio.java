@@ -42,6 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -119,6 +120,8 @@ public class MCPDirectStudio {
         String env = System.getenv("AI_MCPDIRECT_ADMIN_PROVIDER");
         adminProvider = env == null?"admin.mcpdirect.ai":env;
         authenticationServiceAddress="authentication@"+ adminProvider;
+        accountServiceUSL = new USL("account.management", adminProvider);
+        aitoolsManagementUSL = new USL("aitools.management", adminProvider);
         String mid = null;
         try {
             String os = System.getProperty("os.name");
@@ -241,15 +244,24 @@ public class MCPDirectStudio {
         }
 
     }
-    private static void start(String keySeed) throws Exception {
+    private static void start(String keySeed,Callback<AIPortUser> callback) throws Exception {
         dbHelper = new MCPDirectStudioDBHelper();
         serviceEngine = new HstpServiceEngine(engineConfig,null,
                 "ai.mcpdirect.studio."+machineId+"."+keySeed);
+        AtomicBoolean init = new AtomicBoolean(false);
         serviceEngine.addServiceRegisterListener(((serviceName, serviceDomain, engineId, registeredOrUnregistered)->{
             System.out.println(serviceName+"@"+serviceDomain+":"+engineId+","+registeredOrUnregistered);
+            if(!init.get()) {
+                init.set(true);
+                try {
+                    new Thread(() -> {
+                        initToolAgent();
+                        callback.onResult(0, null, accountDetails.userInfo);
+                    }).start();
+                } catch (Exception ignore) {
+                }
+            }
         }));
-        accountServiceUSL = new USL("account.management", adminProvider);
-        aitoolsManagementUSL = new USL("aitools.management", adminProvider);
         LOG.info("ServiceEngine {} started", serviceEngine);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
@@ -440,18 +452,21 @@ public class MCPDirectStudio {
             userInfoNotificationHandler.onUserInfoNotification(getUserInfo());
         }
     }
-    private static void onLoginHttpResponse(SimpleServiceResponseMessage<AccountDetails> httpResp,String userDevice) throws Exception {
+    private static void onLoginHttpResponse(
+            SimpleServiceResponseMessage<AccountDetails> httpResp,String userDevice,
+            Callback<AIPortUser> callback
+    ) throws Exception {
         if(httpResp.code== Service.SERVICE_SUCCESSFUL){
             accountDetails = httpResp.data;
             if(accountDetails.userInfo.name==null){
                 accountDetails.userInfo.name = accountDetails.account;
             }
             notifyUserInfo();
-            start(accountDetails.accountKeySeed);
             authHeaders = new ServiceHeaders()
                     .addHeader("hstp-auth", accountDetails.accessToken)
                     .addHeader("mcpdirect-device",userDevice);
-            initToolAgent();
+            start(accountDetails.accountKeySeed,callback);
+//            initToolAgent();
         }
     }
     public static boolean login(String account, String password) throws Exception {
@@ -472,13 +487,15 @@ public class MCPDirectStudio {
                         "timestamp",milliseconds
 //                        , "userDevice",serviceEngine.getEngineId().hashCode()
                 ), new TypeReference<>(){});
-        onLoginHttpResponse(httpResp,userDevice);
+        onLoginHttpResponse(httpResp,userDevice,(code,message,data)->{
+
+        });
         return accountDetails !=null;
     }
 
     public static void login(String account, String password,Callback<AIPortUser> callback){
-        int code = -1;
-        String message;
+//        int code = -1;
+//        String message;
         AIPortUser user = null;
         try {
             if (serviceEngine != null) {
@@ -499,16 +516,18 @@ public class MCPDirectStudio {
 //                        , "userDevice",serviceEngine.getEngineId().hashCode()
                     ), new TypeReference<>() {
                     });
-            onLoginHttpResponse(httpResp, userDevice);
-            code = httpResp.code;
-            message = httpResp.message;
-            if(accountDetails!=null){
-                user = accountDetails.userInfo;
-            }
+//            onLoginHttpResponse(httpResp, userDevice,callback);
+//            code = httpResp.code;
+//            message = httpResp.message;
+//            if(accountDetails!=null){
+//                user = accountDetails.userInfo;
+//            }
+            onLoginHttpResponse(httpResp, userDevice,callback);
         } catch (Exception e) {
-            message = e.getMessage();
+//            message = e.getMessage();
+            callback.onResult(-1,e.getMessage(),null);
         }
-        callback.onResult(code,message,user);
+//        callback.onResult(code,message,user);
     }
 
     private static void saveAnonymousKey(String key){
@@ -578,7 +597,9 @@ public class MCPDirectStudio {
                         "timestamp",milliseconds
 //                        , "userDevice",serviceEngine.getEngineId().hashCode()
                 ), new TypeReference<>(){});
-        onLoginHttpResponse(httpResp,userDevice);
+        onLoginHttpResponse(httpResp,userDevice,(code,message,data)->{
+
+        });
         return accountDetails !=null;
     }
     public static void logout() throws Exception {
