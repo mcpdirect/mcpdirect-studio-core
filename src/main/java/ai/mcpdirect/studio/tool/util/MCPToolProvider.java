@@ -1,5 +1,6 @@
 package ai.mcpdirect.studio.tool.util;
 
+import ai.mcpdirect.studio.MCPDirectStudio;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.tool.AITool;
 import ai.mcpdirect.studio.tool.MCPTool;
@@ -57,6 +58,11 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
         McpClientTransport transport;
         try {
             if(command!=null&&!command.isEmpty()) {
+                switch (command) {
+                    case "npx" -> command = MCPDirectStudio.getNpxPath();
+                    case "npm" -> command = MCPDirectStudio.getNpmPath();
+                    case "node" -> command = MCPDirectStudio.getNodePath();
+                }
                 ServerParameters parameters = ServerParameters.builder(command).args(args).env(env).build();
                 transport = new MCPDirectStdioClientTransport(parameters,JSON_MAPPER){
                     @Override

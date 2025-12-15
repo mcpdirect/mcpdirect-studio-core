@@ -13,8 +13,8 @@ import ai.mcpdirect.studio.tool.openapi.OpenAPIServerConfig;
 import ai.mcpdirect.studio.tool.openapi.OpenAPITool;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
 import appnet.hstp.annotation.*;
-import appnet.hstp.engine.util.JSON;
 import appnet.hstp.labs.util.http.HttpClient;
+import com.github.eirslett.maven.plugins.frontend.lib.InstallationException;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
@@ -41,6 +41,33 @@ public class ConsoleServiceHandler {
     public void init(){
         INSTANCE = this;
     }
+
+    public static class RequestOfCheckRTM{
+        public String rtm="";
+    }
+    @ServiceRequestMapping("mcp_server/rtm/check")
+    public void checkRTM(
+            @ServiceRequestMessage RequestOfCheckRTM req,
+            @ServiceResponseMessage AIPortServiceResponse<String> resp
+    ){
+        String rtm = req.rtm.trim().toLowerCase();
+        switch (rtm){
+            case "node" -> resp.success(MCPDirectStudio.checkNode());
+            case "npx" -> resp.success(MCPDirectStudio.checkNpx());
+            case "npm" -> resp.success(MCPDirectStudio.checkNpm());
+        }
+    }
+    @ServiceRequestMapping("mcp_server/rtm/install")
+    public void installRTM(
+            @ServiceRequestMessage RequestOfCheckRTM req,
+            @ServiceResponseMessage AIPortServiceResponse<String> resp
+    ) throws InstallationException {
+        String rtm = req.rtm.trim().toLowerCase();
+        if(rtm.equals("node")||rtm.equals("npm")||rtm.equals("npx")){
+            resp.success(MCPDirectStudio.installNpm());
+        }
+    }
+
     public static class StudioToolMakers{
         public List<MCPServer> mcpServers;
         public List<OpenAPIServer> openapiServers;

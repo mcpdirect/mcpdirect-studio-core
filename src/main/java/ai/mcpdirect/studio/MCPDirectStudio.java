@@ -26,6 +26,9 @@ import appnet.hstp.labs.util.http.HstpHttpClient;
 import appnet.hstp.labs.util.http.HttpClient;
 import appnet.util.crypto.SHA256;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.github.eirslett.maven.plugins.frontend.lib.FrontendPluginFactory;
+import com.github.eirslett.maven.plugins.frontend.lib.InstallationException;
+import com.github.eirslett.maven.plugins.frontend.lib.ProxyConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -2756,5 +2759,94 @@ public class MCPDirectStudio {
         }else{
             callback.onResult(service.getErrorCode(),service.getErrorMessage(),null);
         }
+    }
+    private static String runCommand(File workDir,String... command){
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        processBuilder.directory(workDir);
+        try {
+            Process process = processBuilder.start();
+            return readStream(process.getInputStream());
+        } catch (IOException ignore) {}
+        return null;
+    }
+
+    private static String readStream(InputStream in) throws IOException {
+        StringBuilder stringBuilder = new StringBuilder();
+        try (BufferedReader processReader = new BufferedReader(new InputStreamReader(in))) {
+            String line;
+            while ((line = processReader.readLine()) != null) {
+                stringBuilder.append(line);
+            }
+        }
+        return stringBuilder.toString();
+    }
+    public static String installNpm() throws InstallationException {
+        String nodeVersion = "v22.17.0";
+        String npmVersion = "provided";
+        String nodeDownloadRoot = System.getProperty("user.home")+"/Downloads/mcpdirect/rtm/";
+        File workDir = new File(System.getProperty("user.home"),".mcpdirect/studio/"+Long.toString(accountDetails.userInfo.id,36));
+        File installDir = new File(System.getProperty("user.home")+"/.mcpdirect/rtm/");
+        ProxyConfig proxyConfig = new ProxyConfig(List.of());
+        FrontendPluginFactory factory = new FrontendPluginFactory(workDir, installDir);
+        factory.getNodeInstaller(proxyConfig)
+                .setNodeVersion(nodeVersion)
+//                .setNodeDownloadRoot(nodeDownloadRoot)
+                .setNpmVersion(npmVersion)
+                .install();
+        factory.getNPMInstaller(proxyConfig)
+                .setNodeVersion(nodeVersion)
+                .setNpmVersion(npmVersion)
+//                .setNpmDownloadRoot(nodeDownloadRoot)
+                .install();
+        return checkNpm();
+    }
+    private static Map<String,String> nodejsCommands = new HashMap<>();
+    private static String checkNodejs(String command){
+        File workDir = new File(System.getProperty("user.home"),".mcpdirect/studio/"+Long.toString(accountDetails.userInfo.id,36));
+        String commandPath = System.getProperty("user.home")+"/.mcpdirect/rtm/node/"+command;
+        String result = null;
+        if(new File(commandPath).exists()){
+            result = runCommand(workDir, commandPath,"-v");
+        }
+        if(result==null){
+            commandPath = "npx";
+            result = runCommand(workDir, commandPath,"-v");
+        }
+        nodejsCommands.put(command,commandPath);
+        return result;
+    }
+
+    public static String getNpxPath(){
+        String npxPath = nodejsCommands.get("npx");
+        if(npxPath==null) {
+            checkNpx();
+            npxPath = nodejsCommands.get("npx");
+        }
+        return npxPath;
+    }
+    public static String checkNpx(){
+        return checkNodejs("npx");
+    }
+    public static String getNpmPath(){
+        String npmPath = nodejsCommands.get("npm");
+        if(npmPath==null) {
+            checkNpm();
+            npmPath = nodejsCommands.get("npm");
+        }
+        return npmPath;
+    }
+    public static String checkNpm(){
+        return checkNodejs("npm");
+    }
+    public static String getNodePath(){
+        String path = nodejsCommands.get("node");
+        if(path==null) {
+            checkNode();
+            path = nodejsCommands.get("node");
+        }
+        return path;
+    }
+    public static String checkNode(){
+        return checkNodejs("node");
     }
 }
