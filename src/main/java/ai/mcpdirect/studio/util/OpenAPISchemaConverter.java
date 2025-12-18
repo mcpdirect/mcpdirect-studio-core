@@ -175,7 +175,7 @@ public class OpenAPISchemaConverter {
 
             rootPropertiesSchema.set("responseContentType",parametersSchema);
         }
-        System.out.println(jsonSchemaNode.toPrettyString());
+//        System.out.println(jsonSchemaNode.toPrettyString());
         return jsonSchemaNode;
     }
     public static ObjectNode toJsonSchema(Parameter parameter) {

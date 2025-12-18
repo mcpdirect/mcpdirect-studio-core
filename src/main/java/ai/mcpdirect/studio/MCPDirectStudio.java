@@ -936,13 +936,16 @@ public class MCPDirectStudio {
                                     }
                                 } else config = dbHelper.selectMCPServerConfig(toolMaker.id);
                                 if(config!=null){
-                                    notificationHandler.onToolMakerNotification(new MCPServer(config) {{
+                                    MCPServer noti = new MCPServer(config) {{
                                         id = toolMaker.id;
                                         name = toolMaker.name;
                                         status = STATUS_WAITING;
                                         agentId = studioToolAgentId();
+                                        userId = accountId();
                                         templateId = toolMaker.templateId;
-                                    }});
+                                    }};
+                                    notificationHandler.onToolMakerNotification(noti);
+                                    config.status = toolMaker.status;
                                     MCPServerConfig finalConfig = config;
                                     new Thread(() -> {
                                         try {
@@ -953,7 +956,9 @@ public class MCPDirectStudio {
 //                                            mcpServer.tags = maker.tags;
                                             notificationHandler.onToolMakerNotification(mcpServer);
                                         } catch (Exception e) {
-                                            throw new RuntimeException(e);
+                                            noti.errorCode = 1;
+                                            noti.errorMessage = e.getMessage();
+                                            notificationHandler.onToolMakerNotification(noti);
                                         }
                                     }).start();
                                 }else{
@@ -975,7 +980,7 @@ public class MCPDirectStudio {
                                     server.merge(toolMaker, toolAgentDetails.tools);
 //                                    server.id = config.id;
 //                                    server.tags = toolMaker.tags;
-                                    server.agentId = studioToolAgentId();
+//                                    server.agentId = studioToolAgentId();
                                     notificationHandler.onToolMakerNotification(server);
                                 }else{
                                     notificationHandler.onToolMakerNotification(new OpenAPIServer() {{
@@ -2633,6 +2638,22 @@ public class MCPDirectStudio {
             callback.onResult(255,"invalid MCP server config",null);
             return;
         }
+        if(config.name.isBlank()){
+            callback.onResult(255,"MCP server name can't be empty",null);
+            return;
+        }
+        if(config.transport==0&&(config.command==null||config.command.isBlank())){
+            callback.onResult(255,"MCP server command can't be empty",null);
+            return;
+        }else if (config.url==null||config.url.isBlank()){
+            callback.onResult(255,"MCP server url can't be empty",null);
+            return;
+        }
+        config.name = config.name.trim();
+        if(AIToolServiceHandler.getMCPServer(config.name)!=null){
+            callback.onResult(255,"MCP server "+config.name+" exists",null);
+            return;
+        }
         Service service = aitoolsManagementUSL
                 .appendPath("tool_maker/create")
                 .createServiceClient()
@@ -2649,6 +2670,7 @@ public class MCPDirectStudio {
                     = JSON.fromJson(service.getResponseMessage(), new TypeReference<>() {});
             if(resp.code==0&&resp.data!=null){
                 config.id = resp.data.id;
+                config.status = resp.data.status;
                 dbHelper.insertMCPServerConfig(config);
                 ToolMakerDetails details = new ToolMakerDetails();
                 details.maker = resp.data;

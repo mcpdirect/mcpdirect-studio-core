@@ -45,6 +45,12 @@ public class AIToolServiceHandler {
     public static MCPServer getMCPServer(long serverId){
         return mcpToolsProviders.get(Long.toString(serverId,Character.MAX_RADIX));
     }
+    public static MCPServer getMCPServer(String name){
+        for (MCPToolProvider value : mcpToolsProviders.values()) {
+            if(value.name.equals(name)) return value;
+        }
+        return null;
+    }
     public static void stopMCPServer(long serverId){
         MCPToolProvider provider = mcpToolsProviders.get(Long.toString(serverId, Character.MAX_RADIX));
         if(provider!=null){
