@@ -6,6 +6,7 @@ import ai.mcpdirect.studio.tool.AITool;
 import ai.mcpdirect.studio.tool.MCPTool;
 import appnet.hstp.engine.util.JSON;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
@@ -34,7 +35,7 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
     @JsonIgnore
     private final McpSchema.Implementation clientInfo;
     @JsonIgnore
-    private McpSyncClient client;
+    private McpAsyncClient client;
 
 //    public MCPToolProvider(String clientName, String clientVersion,
 //                           int type,String baseUrl, String sseEndpoint, String command,
@@ -86,13 +87,13 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
                         .requestBuilder(builder)
                         .build();
             }
-            McpClient.SyncSpec builder = McpClient.sync(transport)
+            McpClient.AsyncSpec builder = McpClient.async(transport)
                     .clientInfo(clientInfo)
                     .requestTimeout(Duration.ofSeconds(15))
                     .initializationTimeout(Duration.ofSeconds(15))
                     .capabilities(McpSchema.ClientCapabilities.builder()
                             .roots(true)
-                            .sampling()
+//                            .sampling()
                             .build());
             client = builder.build();
             errorCode = 0;
@@ -134,12 +135,13 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
     public void refreshTools(){
         try{
             status = STATUS_ON;
-            McpSchema.ListToolsResult tools = client.listTools();
-            for (McpSchema.Tool tool : tools.tools()) {
+            McpSchema.ListToolsResult tools = client.listTools().block();
+            if(tools!=null)for (McpSchema.Tool tool : tools.tools()) {
                 LOG.info("refreshTools({},{})",tool.name(),tool.description());
                 MCPTool mcpTool = this.tools.get(tool.name());
                 if(mcpTool==null){
                     mcpTool = new MCPTool();
+                    mcpTool.id = (id+tool.name()).hashCode();
                     this.tools.put(tool.name(),mcpTool);
                 }
                 mcpTool.setMCPToolProvider(this,tool);
@@ -173,7 +175,7 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
         if(tool!=null) try{
             McpSchema.CallToolResult result = client.callTool(
                     new McpSchema.CallToolRequest(tool.name(), parameters)
-            );
+            ).block();
             return JSON.toJson(result);
         } catch (Throwable e) {
             errorCode = ERROR;

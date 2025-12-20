@@ -16,7 +16,7 @@ public class AIPortServiceResponse<T> extends SimpleServiceResponseMessage<T> {
     public static final int TEAM_NOT_EXIST = 1002000;
 
     public static final int TOOL_MAKER_NOT_EXISTS = 1003000;
-    public static final int TOOL_MAKER_OCCUPIED = 1003001;
+    public static final int TOOL_MAKER_EXISTS = 1003001;
     public void code(int code){
         this.code = code;
         if(code==0) status = "success";

@@ -38,7 +38,7 @@ public class MCPTool extends AIPortTool implements AITool{
                     "call/" + Long.toString(provider.id, Character.MAX_RADIX) + "/" + tool.name(),
                     tool.description(), inputSchema, "{}"));
             int hash = _metaData.hashCode();
-            if (id > 0) {
+            if (id > Integer.MAX_VALUE) {
                 if (hash == this.hash) {
                     lastUpdated = 0;
                 } else {

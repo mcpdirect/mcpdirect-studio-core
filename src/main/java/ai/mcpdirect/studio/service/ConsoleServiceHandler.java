@@ -203,7 +203,7 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("mcp_server/tool/publish")
     public void publicMCPTools(
             @ServiceRequestMessage RequestOfQueryMCPTools req,
-            @ServiceResponseMessage AIPortServiceResponse<MCPServer> resp
+            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMaker> resp
     ) throws Exception {
         if(req.mcpServerId !=0) {
             MCPServer mcpServer = AIToolServiceHandler.getMCPServer(req.mcpServerId);
