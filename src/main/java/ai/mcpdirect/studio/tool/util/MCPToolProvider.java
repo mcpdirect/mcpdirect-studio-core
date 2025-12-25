@@ -29,9 +29,9 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
     private static final Logger LOG = LoggerFactory.getLogger(MCPToolProvider.class);
     public static final McpJsonMapper JSON_MAPPER = McpJsonMapper.getDefault();
     @JsonIgnore
-    private final String baseUrl;
+    public String baseUrl;
     @JsonIgnore
-    private final String sseEndpoint;
+    public String sseEndpoint;
     @JsonIgnore
     private final McpSchema.Implementation clientInfo;
     @JsonIgnore
@@ -42,14 +42,19 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
 //                           List<String> args, Map<String, String> env, String serverName) {
 //        super(type,baseUrl==null?sseEndpoint:(baseUrl+(sseEndpoint==null?"":sseEndpoint)),
 //                command, args, env, serverName);
-    public MCPToolProvider(String clientName, String clientVersion,
-                           String baseUrl, String sseEndpoint,MCPServerConfig config) {
+//    public MCPToolProvider(String clientName, String clientVersion,
+//                           String baseUrl, String sseEndpoint,MCPServerConfig config) {
+//        super(config);
+//        this.url = baseUrl==null?sseEndpoint:(baseUrl+(sseEndpoint==null?"":sseEndpoint));
+//        this.baseUrl = baseUrl;
+//        this.sseEndpoint = sseEndpoint;
+//        clientInfo = new McpSchema.Implementation(clientName,clientVersion);
+////        createMcpSyncClient();
+//    }
+    public MCPToolProvider(String clientName, String clientVersion, MCPServerConfig config) {
         super(config);
-        this.url = baseUrl==null?sseEndpoint:(baseUrl+(sseEndpoint==null?"":sseEndpoint));
-        this.baseUrl = baseUrl;
-        this.sseEndpoint = sseEndpoint;
         clientInfo = new McpSchema.Implementation(clientName,clientVersion);
-//        createMcpSyncClient();
+    //        createMcpSyncClient();
     }
 
     public void createMcpSyncClient(){
@@ -108,7 +113,7 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
     }
     public void close(){
         client.close();
-        status = STATUS_ABANDONED;
+//        status = STATUS_ABANDONED;
     }
 //    public void refreshTools(){
 //        try(McpSyncClient mcpClient = createMcpSyncClient()) {
@@ -146,6 +151,8 @@ public class MCPToolProvider extends MCPServer implements AIToolProvider{
                 }
                 mcpTool.setMCPToolProvider(this,tool);
             }
+            errorCode = 0;
+            errorMessage = "";
         }catch (Throwable e){
             errorCode = ERROR;
             errorMessage = e.getMessage();

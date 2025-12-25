@@ -55,7 +55,7 @@ public class OpenAPITool extends AIPortTool implements AITool {
         }
     }
 
-    public static String name(String prefix,String method,String path){
+    public static String name(String method,String path){
         StringBuilder name = new StringBuilder();
         for (String s : path.split("/")) {
             if(!s.isEmpty()){
@@ -65,8 +65,8 @@ public class OpenAPITool extends AIPortTool implements AITool {
                 name.append("_").append(s);
             }
         }
-        return prefix+"_"+method+name;
-//        return method+name;
+//        return prefix+"_"+method+name;
+        return method+name;
     }
 
     public void setOpenAPIToolProvider(

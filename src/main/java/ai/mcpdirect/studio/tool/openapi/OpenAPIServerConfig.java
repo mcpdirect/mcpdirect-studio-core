@@ -14,9 +14,9 @@ public class OpenAPIServerConfig {
     @JsonProperty
     public String url;
     @JsonProperty
+    public Map<String,String> securities;
+    @JsonProperty
     public String docUri;
     @JsonProperty
     public String doc;
-    @JsonProperty
-    public Map<String,String> securities;
 }

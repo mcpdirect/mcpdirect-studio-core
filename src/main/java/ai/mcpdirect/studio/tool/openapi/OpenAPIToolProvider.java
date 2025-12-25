@@ -5,7 +5,6 @@ import ai.mcpdirect.studio.tool.AITool;
 import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.tool.util.AIToolProvider;
 import appnet.hstp.labs.util.http.HttpClient;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.models.*;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.parser.OpenAPIV3Parser;
@@ -20,7 +19,6 @@ import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.METHOD_NOT_FOUND
 
 
 public class OpenAPIToolProvider extends OpenAPIServer implements AIToolProvider {
-    private static final ObjectMapper mapper = new ObjectMapper();
     public static final int OPENAPI_DOC_NOT_EXIST = -1000;
     public List<OpenAPISecurity> openAPISecurities = new ArrayList<>();
     public OpenAPIToolProvider(){
@@ -59,9 +57,14 @@ public class OpenAPIToolProvider extends OpenAPIServer implements AIToolProvider
         if(operation==null){
             return;
         }
-        String name = OpenAPITool.name(this.name,method,path);
+        String operationId = operation.getOperationId();
+        String name = OpenAPITool.name(method,path);
+        if(operationId!=null&&operationId.length()<name.length()){
+            name = operationId;
+        }
+        String finalName = name;
         OpenAPITool tool = tools.computeIfAbsent(
-                name,(key)-> new OpenAPITool(name,method,path)
+                name,(key)-> new OpenAPITool(finalName,method,path)
         );
         tool.setOpenAPIToolProvider(this,operation);
     }

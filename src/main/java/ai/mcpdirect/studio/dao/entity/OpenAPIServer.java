@@ -49,11 +49,16 @@ public class OpenAPIServer extends AIPortToolMaker {
         }
         if(tools!=null) for (AIPortTool tool : tools) if(tool.makerId==id){
             OpenAPITool openapiTool = this.tools.get(tool.name);
-            if(openapiTool==null){
-                openapiTool = new OpenAPITool(tool.name,null,null);
-                openapiTool.id = tool.id;
-                this.tools.put(tool.name,openapiTool);
-            }else openapiTool.merge(tool);
+//            if(openapiTool==null){
+//                openapiTool = new OpenAPITool(tool.name,null,null);
+//                openapiTool.id = tool.id;
+//                openapiTool.makerId = tool.makerId;
+//                openapiTool.agentId = tool.agentId;
+//                this.tools.put(tool.name,openapiTool);
+//            }else openapiTool.merge(tool);
+            if(openapiTool!=null){
+                openapiTool.merge(tool);
+            }
         }
     }
 

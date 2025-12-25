@@ -20,10 +20,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker.ERROR;
 import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.*;
 
 @ServiceName("aitools")
@@ -67,14 +69,14 @@ public class AIToolServiceHandler {
             }
         }
     }
-    public static synchronized MCPServer connectMCPServer(long serverId, String serverName, MCPServerConfig conf)
-            throws MCPServerException, MalformedURLException {
+    public static synchronized MCPServer connectMCPServer(long serverId, String serverName, MCPServerConfig conf) {
         String serverKey = Long.toString(serverId,Character.MAX_RADIX);
         MCPToolProvider provider = mcpToolsProviders.get(serverKey);
         if(provider!=null){
             if(conf!=null&&(conf.url==null||(conf.url=conf.url.trim()).isEmpty())
                     &&(conf.command==null||(conf.command=conf.command.trim()).isEmpty())){
-                throw new MCPServerException("Server URL and command must not be empty both");
+//                throw new MCPServerException("Server URL and command must not be empty both");
+                return provider;
             }
             provider.name = serverName;
             if(conf!=null) {
@@ -98,47 +100,50 @@ public class AIToolServiceHandler {
             }
             return provider;
         }
-        if(conf==null||((conf.url==null||(conf.url=conf.url.trim()).isEmpty())
-                &&(conf.command==null||(conf.command=conf.command.trim()).isEmpty()))){
-            throw new MCPServerException("Server URL and command must not be empty both");
-        }
-        if(conf.command!=null&&!conf.command.isEmpty()) {
+        if(conf==null){
             provider = new MCPToolProvider(
-                    "MCPDirectStudio","1.0.0",
-                    null,null,conf
+                    "MCPDirectStudio","1.0.0",new MCPServerConfig()
             );
-        }else{
-            String baseUrl;
-            String sseEndpoint;
+            provider.errorCode = ERROR;
+            provider.errorMessage = "Config cannot be empty";
+        }else {
+            provider = new MCPToolProvider(
+                    "MCPDirectStudio", "1.0.0", conf
+            );
+            if (conf.transport == 0) {
+                if (conf.command != null && conf.command.isBlank()) {
+                    provider.errorCode = ERROR;
+                    provider.errorMessage = "Command cannot be empty";
+                }
+            } else try {
+                String baseUrl;
+                String sseEndpoint;
 
-            java.net.URL parsedUrl = new java.net.URL(conf.url);
-            baseUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost()
-                    + (parsedUrl.getPort() == -1 ? "" : ":" + parsedUrl.getPort());
+                URL parsedUrl = new URL(conf.url);
+                baseUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost()
+                        + (parsedUrl.getPort() == -1 ? "" : ":" + parsedUrl.getPort());
 
-            sseEndpoint = parsedUrl.getPath();
-            if(sseEndpoint.isEmpty()){
-               sseEndpoint = "/";
-            }else if (sseEndpoint.startsWith("/")) {
-                sseEndpoint = sseEndpoint.substring(1);
+                sseEndpoint = parsedUrl.getPath();
+                if (sseEndpoint.isEmpty()) {
+                    sseEndpoint = "/";
+                } else if (sseEndpoint.startsWith("/")) {
+                    sseEndpoint = sseEndpoint.substring(1);
+                }
+                provider.url = conf.url;
+                provider.baseUrl = baseUrl;
+                provider.sseEndpoint = sseEndpoint;
+            } catch (Exception e) {
+                provider.errorCode = ERROR;
+                provider.errorMessage = e.getMessage();
             }
-            provider = new MCPToolProvider(
-                    "MCPDirectStudio","1.0.0",
-                    baseUrl,sseEndpoint,conf
-            );
-//            HttpRequest.Builder builder = HttpRequest.newBuilder();
-//            builder.header("Content-Type", "application/json");
-//            if(conf.env!=null) for (Map.Entry<String, String> entry : conf.env.entrySet()) {
-//                builder.header(entry.getKey(),entry.getValue());
-//            }
         }
         provider.id = serverId;
         provider.name = serverName;
         provider.agentId = MCPDirectStudio.studioToolAgentId();
-        if(conf.status==1) {
+        if(provider.errorCode==0&&conf.status==1) {
             provider.createMcpSyncClient();
             if(provider.errorCode==0) {
                 provider.refreshTools();
-                if(provider.errorCode==0) provider.errorMessage="";
             }
         }
         mcpToolsProviders.put(serverKey, provider);
@@ -158,7 +163,7 @@ public class AIToolServiceHandler {
 
     public static OpenAPIServer connectOpenAPIServer(
             long serverId, String serverName,
-            OpenAPIServerConfig conf) throws Exception {
+            OpenAPIServerConfig conf){
         String serverKey = Long.toString(serverId,Character.MAX_RADIX);
         OpenAPIToolProvider provider = openapiToolsProviders.get(serverKey);
         if(provider!=null){

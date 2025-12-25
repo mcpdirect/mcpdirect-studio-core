@@ -1,5 +1,6 @@
 package ai.mcpdirect.studio.openapi.util;
 
+import ai.mcpdirect.studio.dao.entity.OpenAPIServerDoc;
 import ai.mcpdirect.studio.service.AIPortServiceResponse;
 import ai.mcpdirect.studio.service.ConsoleServiceHandler;
 import appnet.hstp.engine.util.JSON;
@@ -330,7 +331,7 @@ public class OpenApiToJsonSchemaConverterTest extends TestCase {
         ConsoleServiceHandler consoleServiceHandler = new ConsoleServiceHandler();
         ConsoleServiceHandler.RequestOfParseOpenAPIDoc req = new ConsoleServiceHandler.RequestOfParseOpenAPIDoc();
         req.doc = json;
-        AIPortServiceResponse<ConsoleServiceHandler.OpenAPIServerDoc> resp = new AIPortServiceResponse<>();
+        AIPortServiceResponse<OpenAPIServerDoc> resp = new AIPortServiceResponse<>();
         consoleServiceHandler.parseOpenAPIDoc(req,resp);
 
         System.out.println(JSON.toJson(resp.data));

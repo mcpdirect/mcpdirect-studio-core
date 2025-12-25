@@ -521,6 +521,22 @@
 - Added response content type parameter handling in OpenAPI tool calls
 - Improved parameter processing in OpenAPI tools with content type support
 
+## 2025-12-25
+
+**Summary:** Refactor OpenAPI server documentation handling and remove notification handlers.
+
+**Detail:**
+- Rename OpenAPIServerAuthorization class to OpenAPIServerDoc
+- Update import statements to use wildcard imports for entity classes
+- Remove notification handler interfaces (AccessKeyNotificationHandler, MCPServerNotificationHandler, ToolAgentsDetailsNotificationHandler, ToolLogHandler, ToolMakerNotificationHandler, UserInfoNotificationHandler) and related code
+- Modify MCPDirectStudio to remove tool logging functionality and related methods
+- Update AIToolServiceHandler with improved error handling for server connections
+- Enhance OpenAPIServer and OpenAPIToolProvider with refined tool creation logic
+- Fix path mapping bug in OpenAPIServerDoc.addPath method
+- Update OpenAPITool name generation to use operationId when available
+- Add URL support for retrieving OpenAPI documentation in ConsoleServiceHandler
+- Modify MCPToolProvider to properly reset error codes after successful operations
+
 ## 2025-08-30
 
 **Summary:** Enhance device identification, improve machine ID generation, and add status tracking.

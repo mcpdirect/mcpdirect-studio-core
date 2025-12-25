@@ -79,15 +79,17 @@ public class MCPServer extends AIPortToolMaker {
         }
         if(tools!=null) for (AIPortTool tool : tools) if(tool.makerId==id){
             MCPTool mcpTool = this.tools.get(tool.name);
-            if(mcpTool==null){
-                mcpTool = new MCPTool();
-                mcpTool.name = tool.name;
-                mcpTool.id = tool.id;
-                mcpTool.status = -1;
-                mcpTool.lastUpdated = -1;
-                this.tools.put(tool.name,mcpTool);
-            }
-            mcpTool.merge(tool);
+//            if(mcpTool==null){
+//                mcpTool = new MCPTool();
+//                mcpTool.name = tool.name;
+//                mcpTool.id = tool.id;
+//                mcpTool.makerId = tool.makerId;
+//                mcpTool.agentId = tool.agentId;
+//                mcpTool.status = -1;
+//                mcpTool.lastUpdated = -1;
+//                this.tools.put(tool.name,mcpTool);
+//            }
+            if(mcpTool!=null) mcpTool.merge(tool);
         }
     }
 	public int status(){

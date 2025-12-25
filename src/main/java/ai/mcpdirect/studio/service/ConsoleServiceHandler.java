@@ -4,10 +4,7 @@ import ai.mcpdirect.backend.dao.entity.aitool.AIPortTool;
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker;
 import ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMakerTemplate;
 import ai.mcpdirect.studio.MCPDirectStudio;
-import ai.mcpdirect.studio.dao.entity.MCPServer;
-import ai.mcpdirect.studio.dao.entity.OpenAPIServer;
-import ai.mcpdirect.studio.dao.entity.ToolMakerTemplate;
-import ai.mcpdirect.studio.dao.entity.ToolMakerTemplateConfig;
+import ai.mcpdirect.studio.dao.entity.*;
 import ai.mcpdirect.studio.tool.MCPTool;
 import ai.mcpdirect.studio.tool.openapi.OpenAPIServerConfig;
 import ai.mcpdirect.studio.tool.openapi.OpenAPITool;
@@ -24,8 +21,6 @@ import io.swagger.v3.oas.models.servers.ServerVariables;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -233,52 +228,38 @@ public class ConsoleServiceHandler {
             });
         }
     }
-
     public static class RequestOfParseOpenAPIDoc{
         public String doc;
     }
-    public static class OpenAPIServerDoc {
-        public static class Security{
-            public String description;
-            public String key;
-        }
-        public static class Server{
-            public String description;
-            public String url;
-        }
-        public List<Server> servers;
-        public Map<String,Security> securities;
-        public void addServer(String description,String url){
-            if(servers==null){
-                servers = new ArrayList<>();
-            }
-            Server server = new Server();
-            server.description = description;
-            server.url = url;
-            servers.add(server);
-        }
-        public void addSecurity(String description,String keyName){
-            if(securities==null){
-                securities = new HashMap<>();
-            }
-            Security security = new Security();
-            security.description = description;
-            securities.put(keyName,security);
+
+    @ServiceRequestMapping("openapi_server/doc/retrieve")
+    public void retrieveOpenAPIDoc(
+            @ServiceRequestMessage RequestOfParseOpenAPIDoc req,
+            @ServiceResponseMessage AIPortServiceResponse<String> resp
+    ) throws Exception {
+        if(req.doc.startsWith("http://")||req.doc.startsWith("https://")){
+            resp.success(HttpClient.doGet(req.doc));
+        }else if(req.doc.startsWith("file://")){
+
         }
     }
+
+
     @ServiceRequestMapping("openapi_server/doc/parse")
     public void parseOpenAPIDoc(
             @ServiceRequestMessage RequestOfParseOpenAPIDoc req,
             @ServiceResponseMessage AIPortServiceResponse<OpenAPIServerDoc> resp
     ) throws Exception {
         if(req.doc!=null){
+            OpenAPIServerDoc serverDoc = new OpenAPIServerDoc();
             String doc = req.doc;
             if(req.doc.startsWith("http://")||req.doc.startsWith("https://")){
                 doc = HttpClient.doGet(req.doc);
+                serverDoc.doc = doc;
             }
             SwaggerParseResult swaggerParseResult = new OpenAPIV3Parser().readContents(doc);
             OpenAPI openAPI = swaggerParseResult.getOpenAPI();
-            OpenAPIServerDoc serverDoc = new OpenAPIServerDoc();
+
             List<Server> servers = openAPI.getServers();
             if(servers!=null) {
                 for (Server server :servers) {
@@ -312,7 +293,7 @@ public class ConsoleServiceHandler {
                     }
                 }
             }
-
+//            serverDoc.doc = JSON.toJson(openAPI);
             resp.success(serverDoc);
         }
     }
@@ -368,8 +349,27 @@ public class ConsoleServiceHandler {
         List<OpenAPIServer> servers = List.copyOf(AIToolServiceHandler.getOpenAPIServers());
         resp.success(servers);
     }
-    public static class RequestOfModifyOpenAPIServer{
+
+    public static class RequestOfQueryOpenAPIServer {
         public long openapiServerId;
+    }
+
+    @ServiceRequestMapping("openapi_server/config/query")
+    public void configOpenAPIServer(
+            @ServiceRequestMessage RequestOfQueryOpenAPIServer req,
+            @ServiceResponseMessage AIPortServiceResponse<OpenAPIServerConfig> resp
+    ) throws Exception {
+        if(req.openapiServerId !=0) {
+            MCPDirectStudio.queryOpenAPIServerConfig(req.openapiServerId,
+                    (code,message,data)->{
+                resp.code = code;
+                resp.message = message;
+                resp.data = data;
+            });
+        }
+    }
+
+    public static class RequestOfModifyOpenAPIServer extends RequestOfQueryOpenAPIServer{
         public String openapiServerName;
         public Integer openapiServerStatus;
         public OpenAPIServerConfig openapiServerConfig;
@@ -391,26 +391,12 @@ public class ConsoleServiceHandler {
             );
         }
     }
-//    @ServiceRequestMapping("openapi_server/remove")
-//    public void removeOpenAPIServer(
-//            @ServiceRequestMessage RequestOfModifyOpenAPIServer req,
-//            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMaker> resp
-//    ) throws Exception {
-//        if(req.openapiServerId !=0) {
-//            MCPDirectStudio.removeOpenAPIServer(req.openapiServerId,
-//                    (code,message,server)->{
-//                        resp.code(code);
-//                        resp.message = message;
-//                        resp.data = server;
-//                    });
-//        }
+//    public static class RequestOfQueryOpenAPITools{
+//        public long openapiServerId;
 //    }
-    public static class RequestOfQueryOpenAPITools{
-        public long openapiServerId;
-    }
     @ServiceRequestMapping("openapi_server/tool/query")
     public void queryOpenAPITools(
-            @ServiceRequestMessage RequestOfQueryOpenAPITools req,
+            @ServiceRequestMessage RequestOfQueryOpenAPIServer req,
             @ServiceResponseMessage AIPortServiceResponse<List<AIPortTool>> resp
     ){
         if(req.openapiServerId !=0) {
@@ -421,7 +407,7 @@ public class ConsoleServiceHandler {
 
     @ServiceRequestMapping("openapi_server/tool/publish")
     public void publicOpenAPITools(
-            @ServiceRequestMessage RequestOfQueryOpenAPITools req,
+            @ServiceRequestMessage RequestOfQueryOpenAPIServer req,
             @ServiceResponseMessage AIPortServiceResponse<OpenAPIServer> resp
     ) throws Exception {
         if(req.openapiServerId !=0) {

@@ -1,5 +1,6 @@
 package ai.mcpdirect.studio.openapi.util;
 
+import appnet.hstp.engine.util.JSON;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -45,7 +46,7 @@ public class OpenApiToJsonSchemaConverter {
             }
             
             OpenAPI openAPI = parseResult.getOpenAPI();
-            
+            System.out.println(JSON.toJson(openAPI));
             // Convert the OpenAPI components to JSON Schema
             return convertComponentsToJsonSchema(openAPI);
         } catch (Exception e) {
