@@ -22,6 +22,7 @@ public class OpenAPIServer extends AIPortToolMaker {
     public Map<String, String> securities;
     @JsonIgnore
     protected final ConcurrentHashMap<String,OpenAPITool> tools = new ConcurrentHashMap<>();
+    @JsonIgnore
 
     public OpenAPIServer(){
         type = TYPE_OPENAPI;
@@ -34,7 +35,6 @@ public class OpenAPIServer extends AIPortToolMaker {
             id  = maker.id;
             name = maker.name;
             type = maker.type;
-//            agentStatus = maker.agentStatus;
             agentId = maker.agentId;
             userId = maker.userId;
             templateId = maker.templateId;
@@ -42,31 +42,20 @@ public class OpenAPIServer extends AIPortToolMaker {
             status = maker.status;
             lastUpdated = maker.lastUpdated;
             created = maker.created;
-//            templateId = maker.templateId;
             for (OpenAPITool tool : this.tools.values()) {
                 tool.rebuildMetaData();
             }
         }
         if(tools!=null) for (AIPortTool tool : tools) if(tool.makerId==id){
             OpenAPITool openapiTool = this.tools.get(tool.name);
-//            if(openapiTool==null){
-//                openapiTool = new OpenAPITool(tool.name,null,null);
-//                openapiTool.id = tool.id;
-//                openapiTool.makerId = tool.makerId;
-//                openapiTool.agentId = tool.agentId;
-//                this.tools.put(tool.name,openapiTool);
-//            }else openapiTool.merge(tool);
             if(openapiTool!=null){
                 openapiTool.merge(tool);
             }
         }
     }
 
-//    public String statusMessage() {
-//        return statusMessage;
-//    }
     public OpenAPITool getTool(String name) {
-        return tools.get(name);
+        return status>0?tools.get(name):null;
     }
     public static OpenAPIServer deprecated(long id){
         OpenAPIServer openAPIServer = new OpenAPIServer();

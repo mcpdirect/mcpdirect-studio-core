@@ -12,20 +12,19 @@ import appnet.hstp.ServiceRequest;
 import appnet.hstp.annotation.*;
 import ai.mcpdirect.backend.dao.entity.account.AIPortAccessKeyCredential;
 import ai.mcpdirect.studio.MCPDirectStudio;
-import ai.mcpdirect.studio.exception.MCPServerException;
 import ai.mcpdirect.studio.dao.entity.MCPServer;
 import ai.mcpdirect.studio.tool.AITool;
 import ai.mcpdirect.studio.tool.util.MCPToolProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker.ERROR;
+import static ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker.STATUS_ABANDONED;
 import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.*;
 
 @ServiceName("aitools")
@@ -34,25 +33,25 @@ public class AIToolServiceHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AIToolServiceHandler.class);
     private static final Map<String, MCPToolProvider> mcpToolsProviders = new ConcurrentHashMap<>();
     private static final Map<String, OpenAPIToolProvider> openapiToolsProviders = new ConcurrentHashMap<>();
-    private static final Map<String, AIPortToolMaker> toolMakers = new ConcurrentHashMap<>();
+    private static final Map<String, Long> names = new ConcurrentHashMap<>();
+
+    public static boolean toolMakerExists(long serverId,String serverName){
+        Long id = names.get(serverName);
+        return id!=null&&!id.equals(serverId);
+    }
+
     public static Collection<? extends MCPServer> getMCPServers(){
         return mcpToolsProviders.values();
     }
-//    public static List<MCPServer> getMCPServers(){
-//        return toolProviders.values().stream()
-//                .filter(MCPToolProvider.class::isInstance)
-//                .map(MCPToolProvider.class::cast)  // Type-safe cast
-//                .collect(Collectors.toList());
-//    }
     public static MCPServer getMCPServer(long serverId){
         return mcpToolsProviders.get(Long.toString(serverId,Character.MAX_RADIX));
     }
-    public static MCPServer getMCPServer(String name){
-        for (MCPToolProvider value : mcpToolsProviders.values()) {
-            if(value.name.equals(name)) return value;
-        }
-        return null;
-    }
+//    public static MCPServer getMCPServer(String name){
+//        for (MCPToolProvider value : mcpToolsProviders.values()) {
+//            if(value.name.equals(name)) return value;
+//        }
+//        return null;
+//    }
     public static void stopMCPServer(long serverId){
         MCPToolProvider provider = mcpToolsProviders.get(Long.toString(serverId, Character.MAX_RADIX));
         if(provider!=null){
@@ -69,7 +68,15 @@ public class AIToolServiceHandler {
             }
         }
     }
-    public static synchronized MCPServer connectMCPServer(long serverId, String serverName, MCPServerConfig conf) {
+
+    public static MCPServer connectMCPServer(long serverId, String serverName, MCPServerConfig conf) {
+        synchronized (names) {
+            Long id = names.get(serverName);
+            if(id!=null&&!id.equals(serverId)){
+                return null;
+            }
+            names.put(serverName,serverId);
+        }
         String serverKey = Long.toString(serverId,Character.MAX_RADIX);
         MCPToolProvider provider = mcpToolsProviders.get(serverKey);
         if(provider!=null){
@@ -151,19 +158,30 @@ public class AIToolServiceHandler {
     }
     public static MCPServer removeMCPServer(long serverId){
         MCPToolProvider server =  mcpToolsProviders.remove(Long.toString(serverId,Character.MAX_RADIX));
-        if(server!=null) server.close();
+        if(server!=null) {
+            names.remove(server.name);
+            server.close();
+            server.status = STATUS_ABANDONED;
+        }
         return server;
     }
-    public static void remapMCPServer(long makerId){
-        MCPToolProvider maker = mcpToolsProviders.remove(Long.toString(makerId,Character.MAX_RADIX));
-        if(maker!=null){
-            mcpToolsProviders.put(Long.toString(maker.id,Character.MAX_RADIX),maker);
-        }
-    }
+//    public static void remapMCPServer(long makerId){
+//        MCPToolProvider maker = mcpToolsProviders.remove(Long.toString(makerId,Character.MAX_RADIX));
+//        if(maker!=null){
+//            mcpToolsProviders.put(Long.toString(maker.id,Character.MAX_RADIX),maker);
+//        }
+//    }
 
     public static OpenAPIServer connectOpenAPIServer(
             long serverId, String serverName,
             OpenAPIServerConfig conf){
+        synchronized (names) {
+            Long id = names.get(serverName);
+            if(id!=null&&!id.equals(serverId)){
+                return null;
+            }
+            names.put(serverName,serverId);
+        }
         String serverKey = Long.toString(serverId,Character.MAX_RADIX);
         OpenAPIToolProvider provider = openapiToolsProviders.get(serverKey);
         if(provider!=null){
@@ -180,7 +198,10 @@ public class AIToolServiceHandler {
     }
     public static OpenAPIServer removeOpenAPIServer(long serverId){
         OpenAPIToolProvider server =  openapiToolsProviders.remove(Long.toString(serverId,Character.MAX_RADIX));
-        if(server!=null) server.close();
+        if(server!=null) {
+            names.remove(server.name);
+            server.status = STATUS_ABANDONED;
+        }
         return server;
     }
     public static Collection<? extends OpenAPIServer> getOpenAPIServers(){
@@ -189,12 +210,12 @@ public class AIToolServiceHandler {
     public static OpenAPIServer getOpenAPIServer(long serverId){
         return openapiToolsProviders.get(Long.toString(serverId,Character.MAX_RADIX));
     }
-    public static void remapOpenAPIServer(long serverId){
-        OpenAPIToolProvider maker = openapiToolsProviders.remove(Long.toString(serverId,Character.MAX_RADIX));
-        if(maker!=null){
-            openapiToolsProviders.put(Long.toString(maker.id,Character.MAX_RADIX),maker);
-        }
-    }
+//    public static void remapOpenAPIServer(long serverId){
+//        OpenAPIToolProvider maker = openapiToolsProviders.remove(Long.toString(serverId,Character.MAX_RADIX));
+//        if(maker!=null){
+//            openapiToolsProviders.put(Long.toString(maker.id,Character.MAX_RADIX),maker);
+//        }
+//    }
     private static ServiceEngine serviceEngine;
 
     @ServiceRequestInit

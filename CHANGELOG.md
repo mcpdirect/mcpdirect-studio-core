@@ -523,6 +523,21 @@
 
 ## 2025-12-25
 
+**Summary:** Remove server removal methods and enhance tool maker management.
+
+**Detail:**
+- Remove MCP and OpenAPI server removal methods from MCPDirectStudio
+- Add createToolMaker method with AIPortServiceResponse return type
+- Update modifyOpenAPIServerConfig method with improved parameter handling
+- Add connectOpenAPIServer handling in connectToolMaker method
+- Enhance error handling for duplicate server names
+- Add removeToolMaker method for unified tool maker removal
+- Update tool publishing endpoint from 'tool_agent/tools/publish' to 'tool/publish'
+- Add synchronization for tool maker name uniqueness in AIToolServiceHandler
+- Replace STATUS_ABANDONED with STATUS_OFF in OpenAPIToolProvider.close()
+
+## 2025-12-25
+
 **Summary:** Refactor OpenAPI server documentation handling and remove notification handlers.
 
 **Detail:**

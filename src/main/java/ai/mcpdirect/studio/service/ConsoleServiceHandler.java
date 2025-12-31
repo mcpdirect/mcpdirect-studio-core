@@ -313,11 +313,11 @@ public class ConsoleServiceHandler {
 
     public static class RequestOfCreateOpenAPIServer{
 //        public String openAPIServerName;
-        public OpenAPIServerConfig openAPIServerConfig;
+        public OpenAPIServerConfig openapiServerConfig;
 
         public boolean validate(){
 //            openAPIServerName = validateName(openAPIServerName);
-            OpenAPIServerConfig config = openAPIServerConfig;
+            OpenAPIServerConfig config = openapiServerConfig;
             return config!=null&&(config.name=validateName(config.name))!=null
                     &&(config.url=validateUrl(config.url))!=null
                     &&((config.docUri=validateUrl(config.docUri))!=null
@@ -331,7 +331,7 @@ public class ConsoleServiceHandler {
     ) throws Exception {
         if(req.validate()) try {
             MCPDirectStudio.connectOpenAPIServer(
-                    req.openAPIServerConfig,
+                    req.openapiServerConfig,
                     (code, message, data) -> {
                         resp.code = code;
                         resp.message = message;
@@ -377,19 +377,17 @@ public class ConsoleServiceHandler {
     @ServiceRequestMapping("openapi_server/modify")
     public void configOpenAPIServer(
             @ServiceRequestMessage RequestOfModifyOpenAPIServer req,
-            @ServiceResponseMessage AIPortServiceResponse<OpenAPIServer> resp
+            @ServiceResponseMessage AIPortServiceResponse<AIPortToolMaker> resp
     ) throws Exception {
-        if(req.openapiServerId !=0) {
-            MCPDirectStudio.modifyOpenAPIServerConfig(
-                    req.openapiServerId,req.openapiServerName,
-                    req.openapiServerStatus,req.openapiServerConfig,
-                    (code, message, data)->{
-                        resp.code(code);
-                        resp.message = message;
-                        resp.data = data;
-                    }
-            );
-        }
+        MCPDirectStudio.modifyOpenAPIServerConfig(
+                req.openapiServerId,req.openapiServerName,
+                req.openapiServerStatus,req.openapiServerConfig,
+                (code, message, data)->{
+                    resp.code(code);
+                    resp.message = message;
+                    resp.data = data;
+                }
+        );
     }
 //    public static class RequestOfQueryOpenAPITools{
 //        public long openapiServerId;
