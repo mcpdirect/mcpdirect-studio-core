@@ -1991,7 +1991,7 @@ public class MCPDirectStudio {
                 publishingTools.add(duplicate);
                 oldTools.add(tool);
             }
-        for (AIPortTool tool : details.tools) {
+        if(details.tools!=null)for (AIPortTool tool : details.tools) {
             if(tool.makerId==maker.id&&mcpServer.getTool(tool.name)==null){
                 AIPortTool deprecated = new AIPortTool();
                 deprecated.id = tool.id;
@@ -2309,7 +2309,7 @@ public class MCPDirectStudio {
                 publishingTools.add(duplicate);
                 oldTools.add(tool);
             }
-        for (AIPortTool tool : details.tools) {
+        if(details.tools!=null)for (AIPortTool tool : details.tools) {
             if(tool.makerId==maker.id&&server.getTool(tool.name)==null){
                 AIPortTool deprecated = new AIPortTool();
                 deprecated.id = tool.id;

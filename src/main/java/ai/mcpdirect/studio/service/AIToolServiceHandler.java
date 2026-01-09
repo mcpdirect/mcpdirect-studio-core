@@ -262,7 +262,9 @@ public class AIToolServiceHandler {
             resp.success( "The tool is not ready yet. Please try again later.");
             return;
         }
-        String[] paths = sreq.getUSL().getPath().split("/");
+        String path = sreq.getUSL().getPath();
+        System.out.println(path);
+        String[] paths = path.split("/");
         int p = -1;
         for (int i = 0; i < paths.length; i++) {
             if(paths[i].equals("call")){
