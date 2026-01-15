@@ -413,7 +413,7 @@ public class MCPDirectStudio {
                     .addHeader("mcpdirect-device",userDevice);
             start(accountDetails.accountKeySeed,callback);
 //            initToolAgent();
-        }
+        } else callback.onResult(httpResp.code,httpResp.message,null);
     }
     public static boolean login(String account, String password) throws Exception {
         if(serviceEngine!=null){
