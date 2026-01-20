@@ -136,11 +136,11 @@ public class MCPDirectStudio {
         try {
             String os = System.getProperty("os.name");
             try {
-                machineName = os+","+ InetAddress.getLocalHost().getHostName();
+                machineName = InetAddress.getLocalHost().getHostName();
             } catch (Exception ignore) {
             }
             if(machineName==null){
-                machineName = os+","+System.getProperty("user.name");
+                machineName = System.getProperty("user.name");
             }
             os = os.toLowerCase();
             // Windows系统获取机器GUID
@@ -185,10 +185,10 @@ public class MCPDirectStudio {
                         firstLine = false;
                     }
                     if(name!=null){
-                        machineName = os+","+name;
+                        machineName = name;
                     }
                     if(family!=null){
-                        machineName = family+","+machineName;
+                        machineName = machineName+"'s "+family;
                     }
                 }catch (Exception ignore){}
             }
@@ -200,15 +200,17 @@ public class MCPDirectStudio {
                 BufferedReader reader = new BufferedReader(
                         new InputStreamReader(process.getInputStream()));
                 mid = reader.readLine();
+                String model=null;
                 try {
                     Path path = Paths.get("/sys/class/dmi/id/product_name");
                     if (Files.exists(path)) {
-                        String model = Files.readString(path).trim();
+                        model = Files.readString(path).trim();
                         if (!model.isEmpty() && !model.equals("To be filled by O.E.M.")) {
-                            machineName=model+","+machineName;
-                        }
+                            machineName=machineName+"'s "+model;
+                        }else model = null;
                     }
                 } catch (Exception ignored) {}
+                if(model==null) machineName=machineName+"'s "+os;
             } else if(os.contains("mac os")||os.contains("macos")) {
                 //macOS
                 Process process = Runtime.getRuntime().exec(
@@ -227,7 +229,7 @@ public class MCPDirectStudio {
                         mid = line.split(":")[1].trim();
                     }
                 }
-                if(model!=null) machineName=model+","+machineName;
+                if(model!=null) machineName=machineName+"'s "+model;
 
             }
         } catch (Exception ignore) {}
