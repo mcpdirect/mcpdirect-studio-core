@@ -4,8 +4,6 @@ import com.github.eirslett.maven.plugins.frontend.lib.FrontendPluginFactory;
 import com.github.eirslett.maven.plugins.frontend.lib.InstallationException;
 import com.github.eirslett.maven.plugins.frontend.lib.ProxyConfig;
 import com.github.eirslett.maven.plugins.frontend.lib.TaskRunnerException;
-import com.github.eirslett.maven.plugins.frontend.mojo.RepositoryCacheResolver;
-import io.modelcontextprotocol.spec.McpSchema;
 
 import java.io.*;
 import java.util.List;

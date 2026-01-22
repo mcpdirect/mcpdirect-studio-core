@@ -65,6 +65,8 @@ public class HttpClient {
         if(header!=null) for (Map.Entry<String, String> entry : header.entrySet()) {
             conn.setRequestProperty(entry.getKey(),entry.getValue());
         }
+        int responseCode = conn.getResponseCode();
+        System.out.println("responseCode:"+responseCode);
         InputStream inputStream = conn.getInputStream();
         byte[] bytes = new byte[65536];
         int c;

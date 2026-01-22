@@ -9,6 +9,6 @@ public class AIToolsTest {
 //    /Applications/iMCP.app/Contents/MacOS/imcp-server
     @Test
     public void loadMCPTools() {
-
+        System.out.println(System.getProperty("os.arch"));
     }
 }

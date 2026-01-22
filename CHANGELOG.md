@@ -1,3 +1,16 @@
+## 2026-01-22
+
+**Summary:** Added app version checking functionality and platform/architecture detection.
+
+**Detail:**
+- Added AIPortAppVersion entity with platform and architecture constants
+- Implemented platform detection (Windows, Linux, macOS) in MCPDirectStudio
+- Added architecture detection (x86, x86_64, ARM, ARM64) in MCPDirectStudio
+- Created checkAppVersion method in MCPDirectStudio for version checking
+- Added onAppVersionNotification to NotificationHandler interface
+- Included debug output for HTTP response codes in HttpClient
+- Added OS architecture printing in AIToolsTest
+
 ## 2025-11-07
 
 **Summary:** Enhanced security checks and error message handling.
@@ -202,7 +215,7 @@
 - Added connectMCPServer method in AIToolServiceHandler to connect to MCP servers
 - Changed getMCPServer to use serverId instead of serverName as parameter
 - Added removeMCPServer and reassignMCPServer methods in AIToolServiceHandler
-- Modified publishTools in MCPDirectStudio to be asynchronous with callback
+- Modified publishTools method in MCPDirectStudio to be asynchronous with callback
 - Added login and logout methods with Callback functionality
 - Replaced addMCPServer with connectMCPServer in MCPDirectStudio
 - Added localMCPServerId method to generate unique IDs for local servers
@@ -503,69 +516,4 @@
 - Updated AIToolServiceHandler to handle OpenAPI vs MCP tool calls separately
 - Fixed JSON response formatting in MCPTool.buildCallResult method
 - Enhanced OpenAPITool with proper security handling (bearer, basic, API key)
-- Added URL encoding for path and query parameters in OpenAPI tool calls
-- Improved OpenAPIToolProvider with proper security configuration handling
-- Updated OpenAPITool with proper call result formatting using McpSchema
-
-## 2025-11-17
-
-**Summary:** Enhanced OpenAPI content handling and request/response processing.
-
-**Detail:**
-- Added OpenAPIContent class for handling API response content
-- Enhanced MCPTool with improved metadata hash calculation and status handling
-- Updated OpenAPITool to handle request/response content types and data
-- Enhanced OpenAPISchemaConverter with response content type support
-- Added API response schema conversion capabilities to OpenAPISchemaConverter
-- Updated HttpClient to use the correct HTTP method instead of defaulting to POST
-- Added response content type parameter handling in OpenAPI tool calls
-- Improved parameter processing in OpenAPI tools with content type support
-
-## 2025-12-25
-
-**Summary:** Remove server removal methods and enhance tool maker management.
-
-**Detail:**
-- Remove MCP and OpenAPI server removal methods from MCPDirectStudio
-- Add createToolMaker method with AIPortServiceResponse return type
-- Update modifyOpenAPIServerConfig method with improved parameter handling
-- Add connectOpenAPIServer handling in connectToolMaker method
-- Enhance error handling for duplicate server names
-- Add removeToolMaker method for unified tool maker removal
-- Update tool publishing endpoint from 'tool_agent/tools/publish' to 'tool/publish'
-- Add synchronization for tool maker name uniqueness in AIToolServiceHandler
-- Replace STATUS_ABANDONED with STATUS_OFF in OpenAPIToolProvider.close()
-
-## 2025-12-25
-
-**Summary:** Refactor OpenAPI server documentation handling and remove notification handlers.
-
-**Detail:**
-- Rename OpenAPIServerAuthorization class to OpenAPIServerDoc
-- Update import statements to use wildcard imports for entity classes
-- Remove notification handler interfaces (AccessKeyNotificationHandler, MCPServerNotificationHandler, ToolAgentsDetailsNotificationHandler, ToolLogHandler, ToolMakerNotificationHandler, UserInfoNotificationHandler) and related code
-- Modify MCPDirectStudio to remove tool logging functionality and related methods
-- Update AIToolServiceHandler with improved error handling for server connections
-- Enhance OpenAPIServer and OpenAPIToolProvider with refined tool creation logic
-- Fix path mapping bug in OpenAPIServerDoc.addPath method
-- Update OpenAPITool name generation to use operationId when available
-- Add URL support for retrieving OpenAPI documentation in ConsoleServiceHandler
-- Modify MCPToolProvider to properly reset error codes after successful operations
-
-## 2025-08-30
-
-**Summary:** Enhance device identification, improve machine ID generation, and add status tracking.
-
-**Detail:**
-- Updated project version from 1.0.0-SNAPSHOT to 1.1.0-SNAPSHOT
-- Updated mcp-version from 0.11.2 to 0.11.3
-- Updated hstp-service-engine version from 1.3.0.0-SNAPSHOT to 1.3.0
-- Enhanced device identification by adding deviceId field to AIPortToolAgent
-- Improved machine ID generation using a more robust approach incorporating user name, home directory, and creation time
-- Added statusMessage field to MCPServer and MCPToolProvider for better error tracking
-- Modified login flows to use serviceEngine.getEngineId() instead of ServiceEngineFactory.getEngineId()
-- Added proper null checking in logout method
-- Enhanced tool agent initialization with deviceId parameter
-- Fixed macOS detection in machine ID generation
-- Added accountKeySeed to AccountDetails for better session management
-- Clear mcpServerConfigs on logout
+- Added URL encoding for pat... [truncated]

@@ -67,9 +67,12 @@ public class MCPDirectStudio {
     private static final String hstpWebport;
     private static final String adminProvider;
     private static final String authenticationServiceAddress;
+    private static final String marketplaceServiceAddress;
     private static final ServiceEngineConfiguration engineConfig;
     private static final long machineId;
     private static String machineName;
+    private static int machinePlatform;
+    private static int machineArchitecture;
     private static USL aitoolsManagementUSL;
     private static USL accountServiceUSL;
     private static ServiceEngine serviceEngine;
@@ -132,8 +135,19 @@ public class MCPDirectStudio {
         authenticationServiceAddress="authentication@"+ adminProvider;
         accountServiceUSL = new USL("account.management", adminProvider);
         aitoolsManagementUSL = new USL("aitools.management", adminProvider);
+        marketplaceServiceAddress="aitools.marketplace@"+ adminProvider;
         String mid = null;
         try {
+            String arch = System.getProperty("os.arch");
+            if(arch.contains("64")){
+                machineArchitecture = AIPortAppVersion.ARCH_X86_64;
+            }else if(arch.contains("86")){
+                machineArchitecture = AIPortAppVersion.ARCH_X86;
+            } else if(arch.contains("aarch64")){
+                machineArchitecture = AIPortAppVersion.ARCH_ARM64;
+            } else {
+                machineArchitecture = 0;
+            }
             String os = System.getProperty("os.name");
             try {
                 machineName = InetAddress.getLocalHost().getHostName();
@@ -145,6 +159,7 @@ public class MCPDirectStudio {
             os = os.toLowerCase();
             // Windows系统获取机器GUID
             if (os.contains("win")) {
+                machinePlatform = AIPortAppVersion.PLATFORM_WINDOWS;
                 Process process = Runtime.getRuntime().exec(
                         "reg query HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Cryptography /v MachineGuid");
                 process.waitFor();
@@ -194,6 +209,7 @@ public class MCPDirectStudio {
             }
             // Linux系统可以读取/etc/machine-id或/var/lib/dbus/machine-id
             else if(os.contains("linux")){
+                machinePlatform = AIPortAppVersion.PLATFORM_LINUX;
                 Process process = Runtime.getRuntime().exec("cat /etc/machine-id");
                 process.waitFor();
 
@@ -212,7 +228,7 @@ public class MCPDirectStudio {
                 } catch (Exception ignored) {}
                 if(model==null) machineName=machineName+"'s "+os;
             } else if(os.contains("mac os")||os.contains("macos")) {
-                //macOS
+                machinePlatform = AIPortAppVersion.PLATFORM_MACOS;
                 Process process = Runtime.getRuntime().exec(
                         new String[]{"/bin/sh", "-c", "system_profiler SPHardwareDataType"});
 
@@ -231,6 +247,8 @@ public class MCPDirectStudio {
                 }
                 if(model!=null) machineName=machineName+"'s "+model;
 
+            } else {
+                machinePlatform = 0;
             }
         } catch (Exception ignore) {}
 
@@ -255,6 +273,26 @@ public class MCPDirectStudio {
             machineName = System.getProperty("os.name");
         }
 
+    }
+    public static void checkAppVersion(
+            int appId,int versionCode,Callback<AIPortAppVersion> callback
+    ){
+        String userDevice = Long.toString(machineId);
+        try {
+            AIPortServiceResponse<AIPortAppVersion> httpResp = HstpHttpClient.hstpRequest(
+                    hstpWebport, marketplaceServiceAddress + "/app/check_update", userDevice,
+                    Map.of("appId", appId,
+                            "versionCode", versionCode,
+                            "platform", machinePlatform,
+                            "architecture", machineArchitecture
+                    ), new TypeReference<>() {});
+//            if(httpResp.code==0&&httpResp.data!=null) {
+//                notificationHandler.onAppVersionNotification(httpResp.data);
+//            }
+            if(callback!=null) callback.onResult(httpResp.code,httpResp.message,httpResp.data);
+        }catch (Exception e){
+            if(callback!=null) callback.onResult(-1,e.getMessage(),null);
+        }
     }
     private static void start(String keySeed,Callback<AIPortUser> callback) throws Exception {
         dbHelper = new MCPDirectStudioDBHelper();
