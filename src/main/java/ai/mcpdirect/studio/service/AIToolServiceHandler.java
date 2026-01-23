@@ -34,7 +34,19 @@ public class AIToolServiceHandler {
     private static final Map<String, MCPToolProvider> mcpToolsProviders = new ConcurrentHashMap<>();
     private static final Map<String, OpenAPIToolProvider> openapiToolsProviders = new ConcurrentHashMap<>();
     private static final Map<String, Long> names = new ConcurrentHashMap<>();
-
+    public static void shutdown(){
+        openapiToolsProviders.clear();
+        Collection<MCPToolProvider> values = mcpToolsProviders.values();
+        mcpToolsProviders.clear();
+        names.clear();
+        for (MCPToolProvider value : values) {
+            try{
+                stopMCPServer(value.id);
+            }catch (Exception e){
+                LOG.warn("shutdown():{}", e.getMessage());
+            }
+        }
+    }
     public static boolean toolMakerExists(long serverId,String serverName){
         Long id = names.get(serverName);
         return id!=null&&!id.equals(serverId);

@@ -11,6 +11,17 @@
 - Included debug output for HTTP response codes in HttpClient
 - Added OS architecture printing in AIToolsTest
 
+## 2026-01-22
+
+**Summary:** Updated project version and improved shutdown process.
+
+**Detail:**
+- Updated project version from 2.3.0-SNAPSHOT to 2.3.0 in pom.xml
+- Added ARM architecture detection for aarch64 and arm in MCPDirectStudio
+- Added shutdown method to AIToolServiceHandler for proper cleanup
+- Added AIToolServiceHandler.shutdown() calls during logout in MCPDirectStudio
+- Added clearing of eventListeners and accessKeyCredentials during logout in MCPDirectStudio
+
 ## 2025-11-07
 
 **Summary:** Enhanced security checks and error message handling.

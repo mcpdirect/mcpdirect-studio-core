@@ -139,12 +139,14 @@ public class MCPDirectStudio {
         String mid = null;
         try {
             String arch = System.getProperty("os.arch");
-            if(arch.contains("64")){
+            if(arch.contains("aarch64")||arch.contains("arm64")){
+                machineArchitecture = AIPortAppVersion.ARCH_ARM64;
+            } else if(arch.contains("arm")){
+                machineArchitecture = AIPortAppVersion.ARCH_ARM;
+            }else if(arch.contains("64")){
                 machineArchitecture = AIPortAppVersion.ARCH_X86_64;
             }else if(arch.contains("86")){
                 machineArchitecture = AIPortAppVersion.ARCH_X86;
-            } else if(arch.contains("aarch64")){
-                machineArchitecture = AIPortAppVersion.ARCH_ARM64;
             } else {
                 machineArchitecture = 0;
             }
@@ -579,6 +581,7 @@ public class MCPDirectStudio {
         return accountDetails !=null;
     }
     public static void logout() throws Exception {
+        AIToolServiceHandler.shutdown();
         if(serviceEngine==null){
             return;
         }
@@ -611,6 +614,7 @@ public class MCPDirectStudio {
         if(serviceEngine==null){
             return;
         }
+        AIToolServiceHandler.shutdown();
         try {
             Service service = accountServiceUSL.appendPath("logout")
                     .createServiceClient()
@@ -625,6 +629,8 @@ public class MCPDirectStudio {
                 accountDetails = null;
                 authHeaders = null;
                 toolAgentDetails = null;
+                eventListeners.clear();
+                accessKeyCredentials.clear();
 //                mcpServerConfigs.clear();
                 data = true;
             }
