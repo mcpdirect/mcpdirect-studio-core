@@ -13,10 +13,11 @@
 
 ## 2026-01-22
 
-**Summary:** Updated project version and improved shutdown process.
+**Summary:** Updated project version and MCP dependency.
 
 **Detail:**
 - Updated project version from 2.3.0-SNAPSHOT to 2.3.0 in pom.xml
+- Updated mcp-version from 0.17.0 to 0.17.2 in pom.xml
 - Added ARM architecture detection for aarch64 and arm in MCPDirectStudio
 - Added shutdown method to AIToolServiceHandler for proper cleanup
 - Added AIToolServiceHandler.shutdown() calls during logout in MCPDirectStudio
