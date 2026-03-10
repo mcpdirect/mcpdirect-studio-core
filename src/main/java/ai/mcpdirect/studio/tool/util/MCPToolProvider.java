@@ -12,6 +12,7 @@ import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.client.transport.ServerParameters;
+import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -27,7 +28,7 @@ import static io.modelcontextprotocol.spec.McpSchema.ErrorCodes.METHOD_NOT_FOUND
 
 public class MCPToolProvider extends MCPServer implements AIToolProvider{
     private static final Logger LOG = LoggerFactory.getLogger(MCPToolProvider.class);
-    public static final McpJsonMapper JSON_MAPPER = McpJsonMapper.getDefault();
+    public static final McpJsonMapper JSON_MAPPER = McpJsonDefaults.getMapper();
     @JsonIgnore
     public String baseUrl;
     @JsonIgnore
