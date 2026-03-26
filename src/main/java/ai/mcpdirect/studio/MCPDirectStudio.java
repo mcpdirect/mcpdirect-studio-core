@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static ai.mcpdirect.backend.dao.entity.aitool.AIPortToolMaker.*;
+import static ai.mcpdirect.studio.MCPDirectStudioDBHelper.*;
 import static ai.mcpdirect.studio.service.AIPortServiceResponse.TOOL_MAKER_EXISTS;
 import static ai.mcpdirect.studio.service.AIPortServiceResponse.TOOL_MAKER_NOT_EXISTS;
 
@@ -255,14 +256,14 @@ public class MCPDirectStudio {
         } catch (Exception ignore) {}
 
         if(mid==null) try {
-            String home = System.getProperty("user.home");
+            String home = USER_HOME;
             BasicFileAttributes attrs = Files.readAttributes(
                     Path.of(home), BasicFileAttributes.class);
             
             FileTime creationTime = attrs.creationTime();
-            mid = System.getProperty("user.name")+","+home+","+ creationTime.toMillis();
+            mid = USER_HOME+","+home+","+ creationTime.toMillis();
         } catch (IOException e) {
-            mid = System.getProperty("user.name")+","+System.getProperty("user.home")+",0";
+            mid = USER_HOME+","+USER_HOME+",0";
         }
 
         env = System.getenv("MCPDIRECT_STUDIO_TEST_ID");
@@ -509,7 +510,7 @@ public class MCPDirectStudio {
     }
 
     private static void saveAnonymousKey(String key){
-        File dir = new File(System.getProperty("user.home"),".mcpdirect/studio/");
+        File dir = new File(USER_HOME,STUDIO_DATA);
         if(!dir.exists()&&!dir.mkdirs()){
             return;
         }
@@ -520,7 +521,7 @@ public class MCPDirectStudio {
         }
     }
     public static String getAnonymousKey(){
-        File dir = new File(System.getProperty("user.home"),".mcpdirect/studio/");
+        File dir = new File(USER_HOME,STUDIO_DATA);
         if(!dir.exists()&&!dir.mkdirs()){
             return null;
         }
@@ -1119,7 +1120,7 @@ public class MCPDirectStudio {
     }
 
     public static boolean saveAccessKey(AIPortAccessKeyCredential key){
-        File dir = new File(System.getProperty("user.home"),".mcpdirect/studio/"+Long.toString(accountDetails.userInfo.id,36)+"/credentials/");
+        File dir = new File(USER_HOME,STUDIO_DATA+Long.toString(accountDetails.userInfo.id,36)+"/credentials/");
         if(!dir.exists()&&!dir.mkdirs()){
             return false;
         }
@@ -2452,9 +2453,9 @@ public class MCPDirectStudio {
     public static String installNpm() throws InstallationException {
         String nodeVersion = "v22.17.0";
         String npmVersion = "provided";
-        String nodeDownloadRoot = System.getProperty("user.home")+"/Downloads/mcpdirect/rtm/";
-        File workDir = new File(System.getProperty("user.home"),".mcpdirect/studio/"+Long.toString(accountDetails.userInfo.id,36));
-        File installDir = new File(System.getProperty("user.home")+"/.mcpdirect/rtm/");
+//        String nodeDownloadRoot = System.getProperty("user.home")+STUDIO_RTM+"downloads";
+        File workDir = new File(USER_HOME,STUDIO_DATA+Long.toString(accountDetails.userInfo.id,36));
+        File installDir = new File(USER_HOME+STUDIO_RTM);
         ProxyConfig proxyConfig = new ProxyConfig(List.of());
         FrontendPluginFactory factory = new FrontendPluginFactory(workDir, installDir);
         factory.getNodeInstaller(proxyConfig)
@@ -2471,8 +2472,8 @@ public class MCPDirectStudio {
     }
     private static Map<String,String> nodejsCommands = new HashMap<>();
     private static String checkNodejs(String command){
-        File workDir = new File(System.getProperty("user.home"),".mcpdirect/studio/"+Long.toString(accountDetails.userInfo.id,36));
-        String commandPath = System.getProperty("user.home")+"/.mcpdirect/rtm/node/"+command;
+        File workDir = new File(USER_HOME,STUDIO_DATA+Long.toString(accountDetails.userInfo.id,36));
+        String commandPath = USER_HOME+STUDIO_RTM+"node/"+command;
         String result = null;
         if(new File(commandPath).exists()){
             result = runCommand(workDir, commandPath,"-v");

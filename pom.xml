@@ -6,7 +6,7 @@
 
     <groupId>ai.mcpdirect</groupId>
     <artifactId>mcpdirect-studio-core</artifactId>
-    <version>2.3.2</version>
+    <version>2.3.3</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -34,7 +34,7 @@
         <dependency>
             <groupId>io.swagger.parser.v3</groupId>
             <artifactId>swagger-parser</artifactId>
-            <version>2.1.35</version>
+            <version>2.1.39</version>
         </dependency>
         <dependency>
             <groupId>org.xerial</groupId>
@@ -44,7 +44,7 @@
         <dependency>
             <groupId>com.github.eirslett</groupId>
             <artifactId>frontend-plugin-core</artifactId>
-            <version>1.15.4</version>
+            <version>2.0.0</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

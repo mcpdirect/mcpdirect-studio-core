@@ -4,7 +4,6 @@ import ai.mcpdirect.studio.dao.entity.ToolMakerTemplate;
 import ai.mcpdirect.studio.dao.entity.ToolMakerTemplateConfig;
 import ai.mcpdirect.studio.tool.openapi.OpenAPIServerConfig;
 import ai.mcpdirect.studio.tool.util.MCPServerConfig;
-import appnet.hstp.labs.util.db.ComparisonOperator;
 import appnet.hstp.labs.util.db.Table;
 import appnet.hstp.labs.util.db.TableResultSet;
 import appnet.hstp.labs.util.db.sqlite.SQLiteHelper;
@@ -24,9 +23,24 @@ public class MCPDirectStudioDBHelper {
     private final Table<MCPServerConfig> mcpServerConfigTable;
     private final Table<ToolMakerTemplate> templateTable;
     private final Table<ToolMakerTemplateConfig> templateConfigTable;
+    public final static String STUDIO_DATA;
+    public final static String STUDIO_RTM;
+    public final static String USER_HOME;
+    static {
+        USER_HOME = System.getProperty("user.home");
+        String baseDir = System.getProperty("ai.mcpdirect.studio.data");
+        if(baseDir == null){
+            baseDir = ".mcpdirect/studio/";
+        }
+        STUDIO_DATA = baseDir;
+        baseDir = System.getProperty("ai.mcpdirect.studio.rtm");
+        if(baseDir == null){
+            baseDir = ".mcpdirect/rtm/";
+        }
+        STUDIO_RTM = baseDir;
+    }
     public MCPDirectStudioDBHelper() throws Exception {
-        String userHome = System.getProperty("user.home");
-        File file = new File(userHome, ".mcpdirect/studio/"+Long.toString(MCPDirectStudio.accountId(),36));
+        File file = new File(USER_HOME, STUDIO_DATA+Long.toString(MCPDirectStudio.accountId(),36));
         if(file.exists()||(!file.exists()&&file.mkdirs())){
             sqliteHelper = new SQLiteHelper(new File(file, "mcpdirect-studio.db").getPath());
             openAPIServerConfigTable = sqliteHelper.table("openapi_server_config", OpenAPIServerConfig.class)
